@@ -1,7 +1,13 @@
 import { User, Clock, Settings, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Cashier } from "@/types/pos";
 
-const POSHeader = () => {
+interface POSHeaderProps {
+  cashier: Cashier | null;
+  onLogout: () => void;
+}
+
+const POSHeader = ({ cashier, onLogout }: POSHeaderProps) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -51,8 +57,8 @@ const POSHeader = () => {
           <div className="flex items-center gap-3 px-4 py-2 bg-muted rounded-lg">
             <User className="w-5 h-5 text-muted-foreground" />
             <div className="text-left">
-              <p className="font-semibold text-sm">Blagajnik 1</p>
-              <p className="text-xs text-muted-foreground">Blagajna 01</p>
+              <p className="font-semibold text-sm">{cashier?.name || 'Blagajnik'}</p>
+              <p className="text-xs text-muted-foreground">Koda: {cashier?.id || '-'}</p>
             </div>
           </div>
           
@@ -60,7 +66,11 @@ const POSHeader = () => {
             <Settings className="w-5 h-5 text-muted-foreground" />
           </button>
           
-          <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors">
+          <button 
+            onClick={onLogout}
+            className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
+            title="Odjava"
+          >
             <LogOut className="w-5 h-5 text-destructive" />
           </button>
         </div>

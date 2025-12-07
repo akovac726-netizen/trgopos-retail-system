@@ -11,7 +11,9 @@ import {
   Receipt,
   Package,
   FileText,
-  Warehouse
+  Warehouse,
+  DoorOpen,
+  History
 } from "lucide-react";
 
 interface ActionButtonsProps {
@@ -29,6 +31,8 @@ interface ActionButtonsProps {
   onPackaging: () => void;
   onVatReceipt: () => void;
   onInventory: () => void;
+  onOpenDrawer: () => void;
+  onTransactions: () => void;
   hasItems: boolean;
 }
 
@@ -47,6 +51,8 @@ const ActionButtons = ({
   onPackaging,
   onVatReceipt,
   onInventory,
+  onOpenDrawer,
+  onTransactions,
   hasItems
 }: ActionButtonsProps) => {
   const actionButtons = [
@@ -88,11 +94,27 @@ const ActionButtons = ({
       </button>
       
       <button
+        onClick={onOpenDrawer}
+        className="col-span-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 h-14 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+      >
+        <DoorOpen className="w-5 h-5" />
+        <span>Odpri predal</span>
+      </button>
+      
+      <button
         onClick={onInventory}
-        className="col-span-2 bg-primary/10 hover:bg-primary/20 text-primary h-14 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+        className="bg-primary/10 hover:bg-primary/20 text-primary h-14 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
       >
         <Warehouse className="w-5 h-5" />
-        <span>Zaloge in inventura</span>
+        <span>Zaloge</span>
+      </button>
+      
+      <button
+        onClick={onTransactions}
+        className="bg-primary/10 hover:bg-primary/20 text-primary h-14 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+      >
+        <History className="w-5 h-5" />
+        <span>Transakcije</span>
       </button>
     </div>
   );
