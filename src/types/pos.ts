@@ -14,7 +14,7 @@ export interface PaymentMethod {
   icon: string;
 }
 
-export type POSScreen = 'main' | 'payment' | 'cash' | 'card' | 'complete';
+export type POSScreen = 'main' | 'payment' | 'cash' | 'card' | 'complete' | 'inventory';
 
 export interface Transaction {
   id: string;
