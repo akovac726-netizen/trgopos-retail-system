@@ -10,7 +10,8 @@ import {
   Ticket,
   Receipt,
   Package,
-  FileText
+  FileText,
+  Warehouse
 } from "lucide-react";
 
 interface ActionButtonsProps {
@@ -27,6 +28,7 @@ interface ActionButtonsProps {
   onReceipt: () => void;
   onPackaging: () => void;
   onVatReceipt: () => void;
+  onInventory: () => void;
   hasItems: boolean;
 }
 
@@ -44,6 +46,7 @@ const ActionButtons = ({
   onReceipt,
   onPackaging,
   onVatReceipt,
+  onInventory,
   hasItems
 }: ActionButtonsProps) => {
   const actionButtons = [
@@ -82,6 +85,14 @@ const ActionButtons = ({
       >
         <FileText className="w-5 h-5" />
         <span>DDV Račun</span>
+      </button>
+      
+      <button
+        onClick={onInventory}
+        className="col-span-2 bg-primary/10 hover:bg-primary/20 text-primary h-14 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+      >
+        <Warehouse className="w-5 h-5" />
+        <span>Zaloge in inventura</span>
       </button>
     </div>
   );

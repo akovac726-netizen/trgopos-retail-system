@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { CartItem, POSScreen, Transaction } from "@/types/pos";
+import { Product } from "@/types/inventory";
 import POSHeader from "@/components/pos/POSHeader";
 import CartItemList from "@/components/pos/CartItemList";
 import ActionButtons from "@/components/pos/ActionButtons";
@@ -11,20 +12,29 @@ import PaymentScreen from "@/components/pos/PaymentScreen";
 import CashPaymentScreen from "@/components/pos/CashPaymentScreen";
 import CardPaymentScreen from "@/components/pos/CardPaymentScreen";
 import CompletionScreen from "@/components/pos/CompletionScreen";
+import InventoryScreen from "@/components/inventory/InventoryScreen";
 import { ShoppingCart } from "lucide-react";
 
-// Sample products database
-const products: Record<string, { name: string; price: number }> = {
-  '001': { name: 'Mleko 1L', price: 1.29 },
-  '002': { name: 'Kruh beli', price: 1.49 },
-  '003': { name: 'Maslo 250g', price: 2.89 },
-  '004': { name: 'Jabolka 1kg', price: 1.99 },
-  '005': { name: 'Jogurt naravni', price: 0.89 },
-  '006': { name: 'Piščančje prsi 500g', price: 5.49 },
-  '007': { name: 'Testenine 500g', price: 1.19 },
-  '008': { name: 'Paradižnikova omaka', price: 1.79 },
-  '009': { name: 'Voda 1.5L', price: 0.49 },
-  '010': { name: 'Čokolada mlečna', price: 1.99 },
+// Initial products with stock data
+const initialProducts: Product[] = [
+  { plu: '001', name: 'Mleko 1L', price: 1.29, stock: 45, minStock: 20, category: 'Mlečni izdelki' },
+  { plu: '002', name: 'Kruh beli', price: 1.49, stock: 30, minStock: 15, category: 'Pekarna' },
+  { plu: '003', name: 'Maslo 250g', price: 2.89, stock: 12, minStock: 10, category: 'Mlečni izdelki' },
+  { plu: '004', name: 'Jabolka 1kg', price: 1.99, stock: 50, minStock: 25, category: 'Sadje in zelenjava' },
+  { plu: '005', name: 'Jogurt naravni', price: 0.89, stock: 8, minStock: 15, category: 'Mlečni izdelki' },
+  { plu: '006', name: 'Piščančje prsi 500g', price: 5.49, stock: 20, minStock: 10, category: 'Meso' },
+  { plu: '007', name: 'Testenine 500g', price: 1.19, stock: 60, minStock: 20, category: 'Suhi izdelki' },
+  { plu: '008', name: 'Paradižnikova omaka', price: 1.79, stock: 35, minStock: 15, category: 'Omake' },
+  { plu: '009', name: 'Voda 1.5L', price: 0.49, stock: 100, minStock: 30, category: 'Pijače' },
+  { plu: '010', name: 'Čokolada mlečna', price: 1.99, stock: 5, minStock: 10, category: 'Sladkarije' },
+];
+
+// Convert products to simple lookup for POS
+const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
+  return products.reduce((acc, p) => {
+    acc[p.plu] = { name: p.name, price: p.price };
+    return acc;
+  }, {} as Record<string, { name: string; price: number }>);
 };
 
 const Index = () => {
@@ -33,6 +43,9 @@ const Index = () => {
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+
+  const productsLookup = getProductsLookup(products);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalDiscount = cartItems.reduce((sum, item) => {
@@ -64,7 +77,7 @@ const Index = () => {
   const handleConfirm = () => {
     if (!inputValue) return;
 
-    const product = products[inputValue.padStart(3, '0')];
+    const product = productsLookup[inputValue.padStart(3, '0')];
     if (product) {
       const existingIndex = cartItems.findIndex(item => item.plu === inputValue.padStart(3, '0'));
       
@@ -158,6 +171,16 @@ const Index = () => {
 
   const handleVatReceipt = () => {
     toast.info('DDV račun - funkcija v razvoju');
+  };
+
+  const handleInventory = () => {
+    setScreen('inventory');
+  };
+
+  const handleUpdateProduct = (plu: string, updates: Partial<Product>) => {
+    setProducts(prev => prev.map(p => 
+      p.plu === plu ? { ...p, ...updates } : p
+    ));
   };
 
   const handlePaymentMethod = (method: string) => {
@@ -264,6 +287,7 @@ const Index = () => {
                   onReceipt={handleReceipt}
                   onPackaging={handlePackaging}
                   onVatReceipt={handleVatReceipt}
+                  onInventory={handleInventory}
                   hasItems={cartItems.length > 0}
                 />
               </div>
@@ -322,6 +346,14 @@ const Index = () => {
             transaction={lastTransaction}
             onNewTransaction={handleNewTransaction}
             onPrintCopy={handlePrintCopy}
+          />
+        )}
+
+        {screen === 'inventory' && (
+          <InventoryScreen
+            products={products}
+            onUpdateProduct={handleUpdateProduct}
+            onBack={() => setScreen('main')}
           />
         )}
       </main>
