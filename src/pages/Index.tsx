@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { CartItem, POSScreen, Transaction } from "@/types/pos";
+import { CartItem, POSScreen, Transaction, Cashier } from "@/types/pos";
 import { Product } from "@/types/inventory";
 import POSHeader from "@/components/pos/POSHeader";
 import CartItemList from "@/components/pos/CartItemList";
@@ -13,7 +13,19 @@ import CashPaymentScreen from "@/components/pos/CashPaymentScreen";
 import CardPaymentScreen from "@/components/pos/CardPaymentScreen";
 import CompletionScreen from "@/components/pos/CompletionScreen";
 import InventoryScreen from "@/components/inventory/InventoryScreen";
+import LoginScreen from "@/components/pos/LoginScreen";
+import TransactionHistory from "@/components/pos/TransactionHistory";
+import DrawerCodeDialog from "@/components/pos/DrawerCodeDialog";
 import { ShoppingCart } from "lucide-react";
+
+// Cashiers data
+const cashiers: Cashier[] = [
+  { id: '20106', name: 'Blagajnik 1', password: '20106' },
+  { id: '20107', name: 'Blagajnik 2', password: '20107' },
+];
+
+// Drawer code
+const DRAWER_CODE = '5445';
 
 // Initial products with stock data
 const initialProducts: Product[] = [
@@ -38,12 +50,15 @@ const getProductsLookup = (products: Product[]): Record<string, { name: string; 
 };
 
 const Index = () => {
-  const [screen, setScreen] = useState<POSScreen>('main');
+  const [screen, setScreen] = useState<POSScreen>('login');
+  const [currentCashier, setCurrentCashier] = useState<Cashier | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [showDrawerDialog, setShowDrawerDialog] = useState(false);
 
   const productsLookup = getProductsLookup(products);
 
@@ -55,6 +70,20 @@ const Index = () => {
     return sum;
   }, 0);
   const total = subtotal;
+
+  const handleLogin = (cashier: Cashier) => {
+    setCurrentCashier(cashier);
+    setScreen('main');
+  };
+
+  const handleLogout = () => {
+    setCurrentCashier(null);
+    setCartItems([]);
+    setSelectedItemIndex(null);
+    setInputValue("");
+    setScreen('login');
+    toast.success('Uspešna odjava');
+  };
 
   const handleKeyPress = (key: string) => {
     if (key.includes('x')) {
@@ -177,6 +206,14 @@ const Index = () => {
     setScreen('inventory');
   };
 
+  const handleOpenDrawer = () => {
+    setShowDrawerDialog(true);
+  };
+
+  const handleTransactions = () => {
+    setScreen('transactions');
+  };
+
   const handleUpdateProduct = (plu: string, updates: Partial<Product>) => {
     setProducts(prev => prev.map(p => 
       p.plu === plu ? { ...p, ...updates } : p
@@ -204,8 +241,11 @@ const Index = () => {
       amountPaid,
       change: amountPaid - total,
       timestamp: new Date(),
+      cashierId: currentCashier?.id || '',
+      cashierName: currentCashier?.name || '',
     };
     setLastTransaction(transaction);
+    setTransactions(prev => [transaction, ...prev]);
     setScreen('complete');
     toast.success('Račun zaključen');
   };
@@ -221,8 +261,11 @@ const Index = () => {
       amountPaid: total,
       change: 0,
       timestamp: new Date(),
+      cashierId: currentCashier?.id || '',
+      cashierName: currentCashier?.name || '',
     };
     setLastTransaction(transaction);
+    setTransactions(prev => [transaction, ...prev]);
     setScreen('complete');
     toast.success('Račun zaključen');
   };
@@ -247,9 +290,14 @@ const Index = () => {
     setScreen('payment');
   };
 
+  // Login screen
+  if (screen === 'login') {
+    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} />;
+  }
+
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
-      <POSHeader />
+      <POSHeader cashier={currentCashier} onLogout={handleLogout} />
       
       <main className="flex-1 p-4 overflow-hidden">
         {screen === 'main' && (
@@ -288,6 +336,8 @@ const Index = () => {
                   onPackaging={handlePackaging}
                   onVatReceipt={handleVatReceipt}
                   onInventory={handleInventory}
+                  onOpenDrawer={handleOpenDrawer}
+                  onTransactions={handleTransactions}
                   hasItems={cartItems.length > 0}
                 />
               </div>
@@ -356,7 +406,23 @@ const Index = () => {
             onBack={() => setScreen('main')}
           />
         )}
+
+        {screen === 'transactions' && (
+          <TransactionHistory
+            transactions={transactions}
+            onBack={() => setScreen('main')}
+          />
+        )}
       </main>
+
+      {/* Drawer code dialog */}
+      {showDrawerDialog && (
+        <DrawerCodeDialog
+          drawerCode={DRAWER_CODE}
+          onSuccess={() => {}}
+          onClose={() => setShowDrawerDialog(false)}
+        />
+      )}
     </div>
   );
 };

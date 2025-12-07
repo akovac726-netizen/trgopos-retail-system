@@ -14,7 +14,7 @@ export interface PaymentMethod {
   icon: string;
 }
 
-export type POSScreen = 'main' | 'payment' | 'cash' | 'card' | 'complete' | 'inventory';
+export type POSScreen = 'login' | 'main' | 'payment' | 'cash' | 'card' | 'complete' | 'inventory' | 'transactions';
 
 export interface Transaction {
   id: string;
@@ -26,4 +26,12 @@ export interface Transaction {
   amountPaid: number;
   change: number;
   timestamp: Date;
+  cashierId: string;
+  cashierName: string;
+}
+
+export interface Cashier {
+  id: string;
+  name: string;
+  password: string;
 }
