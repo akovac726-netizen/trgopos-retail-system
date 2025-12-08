@@ -13,7 +13,9 @@ import {
   FileText,
   Warehouse,
   DoorOpen,
-  History
+  History,
+  BarChart3,
+  Lock
 } from "lucide-react";
 
 interface ActionButtonsProps {
@@ -33,7 +35,9 @@ interface ActionButtonsProps {
   onInventory: () => void;
   onOpenDrawer: () => void;
   onTransactions: () => void;
+  onReports: () => void;
   hasItems: boolean;
+  isAdmin: boolean;
 }
 
 const ActionButtons = ({
@@ -53,7 +57,9 @@ const ActionButtons = ({
   onInventory,
   onOpenDrawer,
   onTransactions,
-  hasItems
+  onReports,
+  hasItems,
+  isAdmin
 }: ActionButtonsProps) => {
   const actionButtons = [
     { label: "Popust %", icon: Percent, onClick: onDiscount, disabled: !hasItems },
@@ -102,9 +108,16 @@ const ActionButtons = ({
       </button>
       
       <button
-        onClick={onInventory}
-        className="bg-primary/10 hover:bg-primary/20 text-primary h-14 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+        onClick={isAdmin ? onInventory : undefined}
+        disabled={!isAdmin}
+        className={`h-14 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
+          isAdmin 
+            ? 'bg-primary/10 hover:bg-primary/20 text-primary' 
+            : 'bg-muted text-muted-foreground cursor-not-allowed'
+        }`}
+        title={!isAdmin ? 'Samo za administratorje' : undefined}
       >
+        {!isAdmin && <Lock className="w-4 h-4" />}
         <Warehouse className="w-5 h-5" />
         <span>Zaloge</span>
       </button>
@@ -116,6 +129,16 @@ const ActionButtons = ({
         <History className="w-5 h-5" />
         <span>Transakcije</span>
       </button>
+
+      {isAdmin && (
+        <button
+          onClick={onReports}
+          className="col-span-2 bg-violet-500/20 hover:bg-violet-500/30 text-violet-600 h-14 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span>Poročila prodaje</span>
+        </button>
+      )}
     </div>
   );
 };

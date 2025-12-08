@@ -16,16 +16,15 @@ import InventoryScreen from "@/components/inventory/InventoryScreen";
 import LoginScreen from "@/components/pos/LoginScreen";
 import TransactionHistory from "@/components/pos/TransactionHistory";
 import DrawerCodeDialog from "@/components/pos/DrawerCodeDialog";
+import SalesReports from "@/components/pos/SalesReports";
 import { ShoppingCart } from "lucide-react";
 
-// Cashiers data
+// Cashiers data with roles and individual drawer codes
 const cashiers: Cashier[] = [
-  { id: '20106', name: 'Blagajnik 1', password: '20106' },
-  { id: '20107', name: 'Blagajnik 2', password: '20107' },
+  { id: '00722', name: 'Administrator', password: '00722', role: 'admin', drawerCode: '4268' },
+  { id: '20106', name: 'Blagajnik 1', password: '20106', role: 'cashier', drawerCode: '5445' },
+  { id: '20107', name: 'Blagajnik 2', password: '20107', role: 'cashier', drawerCode: '5445' },
 ];
-
-// Drawer code
-const DRAWER_CODE = '5445';
 
 // Initial products with stock data
 const initialProducts: Product[] = [
@@ -61,6 +60,7 @@ const Index = () => {
   const [showDrawerDialog, setShowDrawerDialog] = useState(false);
 
   const productsLookup = getProductsLookup(products);
+  const isAdmin = currentCashier?.role === 'admin';
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalDiscount = cartItems.reduce((sum, item) => {
@@ -203,6 +203,10 @@ const Index = () => {
   };
 
   const handleInventory = () => {
+    if (!isAdmin) {
+      toast.error('Samo administrator ima dostop do zalog');
+      return;
+    }
     setScreen('inventory');
   };
 
@@ -212,6 +216,14 @@ const Index = () => {
 
   const handleTransactions = () => {
     setScreen('transactions');
+  };
+
+  const handleReports = () => {
+    if (!isAdmin) {
+      toast.error('Samo administrator ima dostop do poročil');
+      return;
+    }
+    setScreen('reports');
   };
 
   const handleUpdateProduct = (plu: string, updates: Partial<Product>) => {
@@ -338,7 +350,9 @@ const Index = () => {
                   onInventory={handleInventory}
                   onOpenDrawer={handleOpenDrawer}
                   onTransactions={handleTransactions}
+                  onReports={handleReports}
                   hasItems={cartItems.length > 0}
+                  isAdmin={isAdmin}
                 />
               </div>
             </div>
@@ -413,12 +427,20 @@ const Index = () => {
             onBack={() => setScreen('main')}
           />
         )}
+
+        {screen === 'reports' && (
+          <SalesReports
+            transactions={transactions}
+            cashiers={cashiers}
+            onBack={() => setScreen('main')}
+          />
+        )}
       </main>
 
       {/* Drawer code dialog */}
-      {showDrawerDialog && (
+      {showDrawerDialog && currentCashier && (
         <DrawerCodeDialog
-          drawerCode={DRAWER_CODE}
+          drawerCode={currentCashier.drawerCode}
           onSuccess={() => {}}
           onClose={() => setShowDrawerDialog(false)}
         />
