@@ -9,23 +9,23 @@ interface ProductListProps {
 
 const ProductList = ({ products, onSelectProduct }: ProductListProps) => {
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<'name' | 'stock' | 'plu'>('plu');
+  const [sortBy, setSortBy] = useState<'name' | 'stock' | 'ean'>('ean');
   const [sortAsc, setSortAsc] = useState(true);
 
   const filteredProducts = products
     .filter(p => 
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.plu.includes(search)
+      p.ean.includes(search)
     )
     .sort((a, b) => {
       let cmp = 0;
       if (sortBy === 'name') cmp = a.name.localeCompare(b.name);
       else if (sortBy === 'stock') cmp = a.stock - b.stock;
-      else cmp = a.plu.localeCompare(b.plu);
+      else cmp = a.ean.localeCompare(b.ean);
       return sortAsc ? cmp : -cmp;
     });
 
-  const handleSort = (field: 'name' | 'stock' | 'plu') => {
+  const handleSort = (field: 'name' | 'stock' | 'ean') => {
     if (sortBy === field) {
       setSortAsc(!sortAsc);
     } else {
@@ -34,7 +34,7 @@ const ProductList = ({ products, onSelectProduct }: ProductListProps) => {
     }
   };
 
-  const SortIcon = ({ field }: { field: 'name' | 'stock' | 'plu' }) => {
+  const SortIcon = ({ field }: { field: 'name' | 'stock' | 'ean' }) => {
     if (sortBy !== field) return null;
     return sortAsc ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
   };
@@ -47,7 +47,7 @@ const ProductList = ({ products, onSelectProduct }: ProductListProps) => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Iskanje po imenu ali PLU..."
+            placeholder="Iskanje po imenu ali EAN..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-muted rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -59,9 +59,9 @@ const ProductList = ({ products, onSelectProduct }: ProductListProps) => {
       <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-muted/50 text-sm font-medium text-muted-foreground border-b border-border">
         <button
           className="col-span-2 flex items-center gap-1 hover:text-foreground"
-          onClick={() => handleSort('plu')}
+          onClick={() => handleSort('ean')}
         >
-          PLU <SortIcon field="plu" />
+          EAN <SortIcon field="ean" />
         </button>
         <button
           className="col-span-5 flex items-center gap-1 text-left hover:text-foreground"
@@ -86,12 +86,12 @@ const ProductList = ({ products, onSelectProduct }: ProductListProps) => {
           
           return (
             <div
-              key={product.plu}
+              key={product.ean}
               className={`grid grid-cols-12 gap-2 px-4 py-3 border-b border-border hover:bg-muted/30 transition-colors ${
                 isLowStock ? 'bg-destructive/5' : ''
               }`}
             >
-              <div className="col-span-2 font-mono text-sm">{product.plu}</div>
+              <div className="col-span-2 font-mono text-xs">{product.ean}</div>
               <div className="col-span-5 font-medium truncate">{product.name}</div>
               <div className={`col-span-2 text-right font-mono font-bold ${
                 isLowStock ? 'text-destructive' : 'text-foreground'

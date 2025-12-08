@@ -5,7 +5,7 @@ import { Plus, Minus, Save, X } from "lucide-react";
 
 interface StockAdjustmentProps {
   product: Product;
-  onSave: (plu: string, newStock: number) => void;
+  onSave: (ean: string, newStock: number) => void;
   onCancel: () => void;
 }
 
@@ -48,7 +48,7 @@ const StockAdjustment = ({ product, onSave, onCancel }: StockAdjustmentProps) =>
   };
 
   const handleSave = () => {
-    onSave(product.plu, stock);
+    onSave(product.ean, stock);
     toast.success(`Zaloga za ${product.name} posodobljena`);
   };
 
@@ -61,7 +61,7 @@ const StockAdjustment = ({ product, onSave, onCancel }: StockAdjustmentProps) =>
         <div>
           <p className="text-sm text-muted-foreground mb-1">Artikel</p>
           <h2 className="text-2xl font-bold">{product.name}</h2>
-          <p className="text-muted-foreground font-mono">PLU: {product.plu}</p>
+          <p className="text-muted-foreground font-mono text-sm">EAN: {product.ean}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-4">

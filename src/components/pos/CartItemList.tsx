@@ -42,7 +42,7 @@ const CartItemList = ({ items, selectedIndex, onSelectItem }: CartItemListProps)
       {/* Header */}
       <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-secondary/50 border-b border-border text-sm font-semibold text-muted-foreground">
         <div className="col-span-1">#</div>
-        <div className="col-span-2">PLU</div>
+        <div className="col-span-2">EAN</div>
         <div className="col-span-4">Artikel</div>
         <div className="col-span-2 text-right">Cena</div>
         <div className="col-span-1 text-center">Kol.</div>
@@ -57,7 +57,7 @@ const CartItemList = ({ items, selectedIndex, onSelectItem }: CartItemListProps)
       >
         {items.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
-            <p>Skenirajte artikel ali vnesite PLU kodo</p>
+            <p>Skenirajte artikel ali vnesite EAN kodo</p>
           </div>
         ) : (
           items.map((item, index) => (
@@ -75,8 +75,8 @@ const CartItemList = ({ items, selectedIndex, onSelectItem }: CartItemListProps)
               <div className="col-span-1 font-mono text-muted-foreground">
                 {index + 1}
               </div>
-              <div className="col-span-2 font-mono text-sm">
-                {item.plu}
+              <div className="col-span-2 font-mono text-xs">
+                {item.ean}
               </div>
               <div className="col-span-4 font-medium truncate">
                 {item.name}

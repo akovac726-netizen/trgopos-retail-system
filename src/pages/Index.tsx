@@ -26,24 +26,24 @@ const cashiers: Cashier[] = [
   { id: '20107', name: 'Blagajnik 2', password: '20107', role: 'cashier', drawerCode: '5445' },
 ];
 
-// Initial products with stock data
+// Initial products with stock data and EAN codes
 const initialProducts: Product[] = [
-  { plu: '001', name: 'Mleko 1L', price: 1.29, stock: 45, minStock: 20, category: 'Mlečni izdelki' },
-  { plu: '002', name: 'Kruh beli', price: 1.49, stock: 30, minStock: 15, category: 'Pekarna' },
-  { plu: '003', name: 'Maslo 250g', price: 2.89, stock: 12, minStock: 10, category: 'Mlečni izdelki' },
-  { plu: '004', name: 'Jabolka 1kg', price: 1.99, stock: 50, minStock: 25, category: 'Sadje in zelenjava' },
-  { plu: '005', name: 'Jogurt naravni', price: 0.89, stock: 8, minStock: 15, category: 'Mlečni izdelki' },
-  { plu: '006', name: 'Piščančje prsi 500g', price: 5.49, stock: 20, minStock: 10, category: 'Meso' },
-  { plu: '007', name: 'Testenine 500g', price: 1.19, stock: 60, minStock: 20, category: 'Suhi izdelki' },
-  { plu: '008', name: 'Paradižnikova omaka', price: 1.79, stock: 35, minStock: 15, category: 'Omake' },
-  { plu: '009', name: 'Voda 1.5L', price: 0.49, stock: 100, minStock: 30, category: 'Pijače' },
-  { plu: '010', name: 'Čokolada mlečna', price: 1.99, stock: 5, minStock: 10, category: 'Sladkarije' },
+  { ean: '3838900015455', name: 'Mleko 1L', price: 1.29, stock: 45, minStock: 20, category: 'Mlečni izdelki' },
+  { ean: '3838900028474', name: 'Kruh beli', price: 1.49, stock: 30, minStock: 15, category: 'Pekarna' },
+  { ean: '3831001025148', name: 'Maslo 250g', price: 2.89, stock: 12, minStock: 10, category: 'Mlečni izdelki' },
+  { ean: '3831018041452', name: 'Jabolka 1kg', price: 1.99, stock: 50, minStock: 25, category: 'Sadje in zelenjava' },
+  { ean: '3838900034154', name: 'Jogurt naravni', price: 0.89, stock: 8, minStock: 15, category: 'Mlečni izdelki' },
+  { ean: '3830019500254', name: 'Piščančje prsi 500g', price: 5.49, stock: 20, minStock: 10, category: 'Meso' },
+  { ean: '8076800195057', name: 'Testenine 500g', price: 1.19, stock: 60, minStock: 20, category: 'Suhi izdelki' },
+  { ean: '8076809513388', name: 'Paradižnikova omaka', price: 1.79, stock: 35, minStock: 15, category: 'Omake' },
+  { ean: '3831070004015', name: 'Voda 1.5L', price: 0.49, stock: 100, minStock: 30, category: 'Pijače' },
+  { ean: '3838900085809', name: 'Čokolada mlečna', price: 1.99, stock: 5, minStock: 10, category: 'Sladkarije' },
 ];
 
-// Convert products to simple lookup for POS
+// Convert products to simple lookup for POS by EAN
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
   return products.reduce((acc, p) => {
-    acc[p.plu] = { name: p.name, price: p.price };
+    acc[p.ean] = { name: p.name, price: p.price };
     return acc;
   }, {} as Record<string, { name: string; price: number }>);
 };
@@ -106,9 +106,9 @@ const Index = () => {
   const handleConfirm = () => {
     if (!inputValue) return;
 
-    const product = productsLookup[inputValue.padStart(3, '0')];
+    const product = productsLookup[inputValue];
     if (product) {
-      const existingIndex = cartItems.findIndex(item => item.plu === inputValue.padStart(3, '0'));
+      const existingIndex = cartItems.findIndex(item => item.ean === inputValue);
       
       if (existingIndex >= 0) {
         const newItems = [...cartItems];
@@ -117,7 +117,7 @@ const Index = () => {
       } else {
         const newItem: CartItem = {
           id: Date.now().toString(),
-          plu: inputValue.padStart(3, '0'),
+          ean: inputValue,
           name: product.name,
           price: product.price,
           quantity: 1,
@@ -226,9 +226,9 @@ const Index = () => {
     setScreen('reports');
   };
 
-  const handleUpdateProduct = (plu: string, updates: Partial<Product>) => {
+  const handleUpdateProduct = (ean: string, updates: Partial<Product>) => {
     setProducts(prev => prev.map(p => 
-      p.plu === plu ? { ...p, ...updates } : p
+      p.ean === ean ? { ...p, ...updates } : p
     ));
   };
 
@@ -359,7 +359,7 @@ const Index = () => {
 
             {/* Right panel - Keypad */}
             <div className="col-span-3 flex flex-col gap-4">
-              <InputDisplay value={inputValue} label="Vnos" />
+              <InputDisplay value={inputValue} label="EAN koda" />
               
               <div className="pos-panel p-4 flex-1">
                 <NumericKeypad

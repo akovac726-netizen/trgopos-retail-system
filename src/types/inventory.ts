@@ -1,16 +1,15 @@
 export interface Product {
-  plu: string;
+  ean: string;
   name: string;
   price: number;
   stock: number;
   minStock: number;
   category: string;
-  barcode?: string;
   lastInventory?: Date;
 }
 
 export interface InventoryCount {
-  plu: string;
+  ean: string;
   expectedStock: number;
   countedStock: number;
   difference: number;
