@@ -5,7 +5,7 @@ import { Check, X, ChevronLeft, ChevronRight, Save } from "lucide-react";
 
 interface InventoryCountProps {
   products: Product[];
-  onComplete: (counts: { plu: string; counted: number }[]) => void;
+  onComplete: (counts: { ean: string; counted: number }[]) => void;
   onCancel: () => void;
 }
 
@@ -31,7 +31,7 @@ const InventoryCount = ({ products, onComplete, onCancel }: InventoryCountProps)
 
     setCounts(prev => ({
       ...prev,
-      [currentProduct.plu]: value
+      [currentProduct.ean]: value
     }));
 
     setInputValue("");
@@ -68,8 +68,8 @@ const InventoryCount = ({ products, onComplete, onCancel }: InventoryCountProps)
       return;
     }
 
-    const countsArray = Object.entries(counts).map(([plu, counted]) => ({
-      plu,
+    const countsArray = Object.entries(counts).map(([ean, counted]) => ({
+      ean,
       counted
     }));
     
@@ -79,7 +79,7 @@ const InventoryCount = ({ products, onComplete, onCancel }: InventoryCountProps)
 
   const numpadKeys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00', 'C'];
 
-  const currentCount = counts[currentProduct?.plu];
+  const currentCount = counts[currentProduct?.ean];
   const hasCount = currentCount !== undefined;
 
   return (
@@ -106,13 +106,13 @@ const InventoryCount = ({ products, onComplete, onCancel }: InventoryCountProps)
           <h3 className="font-semibold mb-3">Preštetji artikli</h3>
           <div className="space-y-2">
             {products.map((product, index) => {
-              const counted = counts[product.plu];
+              const counted = counts[product.ean];
               const isCounted = counted !== undefined;
               const diff = isCounted ? counted - product.stock : 0;
               
               return (
                 <button
-                  key={product.plu}
+                  key={product.ean}
                   onClick={() => setCurrentIndex(index)}
                   className={`w-full text-left p-2 rounded-lg text-sm transition-colors ${
                     index === currentIndex
@@ -187,7 +187,7 @@ const InventoryCount = ({ products, onComplete, onCancel }: InventoryCountProps)
           <>
             <div className="text-center mb-6">
               <p className="text-sm text-muted-foreground font-mono mb-2">
-                PLU: {currentProduct.plu}
+                EAN: {currentProduct.ean}
               </p>
               <h2 className="text-3xl font-bold">{currentProduct.name}</h2>
             </div>

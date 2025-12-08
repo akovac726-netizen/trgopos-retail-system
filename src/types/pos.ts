@@ -1,6 +1,6 @@
 export interface CartItem {
   id: string;
-  plu: string;
+  ean: string;
   name: string;
   price: number;
   quantity: number;

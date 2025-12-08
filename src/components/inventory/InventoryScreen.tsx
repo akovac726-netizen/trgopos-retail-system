@@ -9,7 +9,7 @@ type InventoryView = 'main' | 'stock' | 'count';
 
 interface InventoryScreenProps {
   products: Product[];
-  onUpdateProduct: (plu: string, updates: Partial<Product>) => void;
+  onUpdateProduct: (ean: string, updates: Partial<Product>) => void;
   onBack: () => void;
 }
 
@@ -24,15 +24,15 @@ const InventoryScreen = ({ products, onUpdateProduct, onBack }: InventoryScreenP
     setView('stock');
   };
 
-  const handleStockUpdate = (plu: string, newStock: number) => {
-    onUpdateProduct(plu, { stock: newStock });
+  const handleStockUpdate = (ean: string, newStock: number) => {
+    onUpdateProduct(ean, { stock: newStock });
     setSelectedProduct(null);
     setView('main');
   };
 
-  const handleInventoryComplete = (counts: { plu: string; counted: number }[]) => {
-    counts.forEach(({ plu, counted }) => {
-      onUpdateProduct(plu, { stock: counted, lastInventory: new Date() });
+  const handleInventoryComplete = (counts: { ean: string; counted: number }[]) => {
+    counts.forEach(({ ean, counted }) => {
+      onUpdateProduct(ean, { stock: counted, lastInventory: new Date() });
     });
     setView('main');
   };
@@ -80,9 +80,9 @@ const InventoryScreen = ({ products, onUpdateProduct, onBack }: InventoryScreenP
                   <span className="font-semibold">Nizke zaloge ({lowStockProducts.length})</span>
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {lowStockProducts.map(product => (
+                {lowStockProducts.map(product => (
                     <div
-                      key={product.plu}
+                      key={product.ean}
                       className="flex justify-between items-center text-sm p-2 bg-destructive/10 rounded"
                     >
                       <span>{product.name}</span>
