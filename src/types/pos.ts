@@ -1,11 +1,15 @@
 export interface CartItem {
   id: string;
   ean: string;
+  plu?: string;
   name: string;
   price: number;
   quantity: number;
   discount?: number;
   originalPrice?: number;
+  isReturn?: boolean;
+  isWeighed?: boolean;
+  weight?: number;
 }
 
 export interface PaymentMethod {
@@ -26,6 +30,14 @@ export interface Cashier {
   drawerCode: string;
 }
 
+export interface InvoiceData {
+  companyName: string;
+  taxNumber: string;
+  address: string;
+  city: string;
+  postalCode: string;
+}
+
 export interface Transaction {
   id: string;
   items: CartItem[];
@@ -38,4 +50,5 @@ export interface Transaction {
   timestamp: Date;
   cashierId: string;
   cashierName: string;
+  invoiceData?: InvoiceData;
 }
