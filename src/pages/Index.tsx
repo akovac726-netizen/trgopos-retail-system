@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { CartItem, POSScreen, Transaction, Cashier } from "@/types/pos";
+import { CartItem, POSScreen, Transaction, Cashier, InvoiceData } from "@/types/pos";
 import { Product } from "@/types/inventory";
 import POSHeader from "@/components/pos/POSHeader";
 import CartItemList from "@/components/pos/CartItemList";
@@ -17,13 +17,22 @@ import LoginScreen from "@/components/pos/LoginScreen";
 import TransactionHistory from "@/components/pos/TransactionHistory";
 import DrawerCodeDialog from "@/components/pos/DrawerCodeDialog";
 import SalesReports from "@/components/pos/SalesReports";
+import ManagerCodeDialog from "@/components/pos/ManagerCodeDialog";
+import ProductSearchDialog from "@/components/pos/ProductSearchDialog";
+import QuantityInputDialog from "@/components/pos/QuantityInputDialog";
+import DiscountInputDialog from "@/components/pos/DiscountInputDialog";
+import WeighingDialog from "@/components/pos/WeighingDialog";
+import BakeryDialog from "@/components/pos/BakeryDialog";
+import ReturnDialog from "@/components/pos/ReturnDialog";
+import InvoiceDialog from "@/components/pos/InvoiceDialog";
 import { ShoppingCart } from "lucide-react";
 
 // Cashiers data with roles and individual drawer codes
 const cashiers: Cashier[] = [
-  { id: '00722', name: 'Administrator', password: '00722', role: 'admin', drawerCode: '4268' },
-  { id: '20106', name: 'Blagajnik 1', password: '20106', role: 'cashier', drawerCode: '5445' },
-  { id: '20107', name: 'Blagajnik 2', password: '20107', role: 'cashier', drawerCode: '5445' },
+  { id: '00722', name: 'Dženan Kedić', password: '00722', role: 'admin', drawerCode: '5445' },
+  { id: '11091', name: 'Najla Ramić', password: '11091', role: 'cashier', drawerCode: '7229' },
+  { id: '22413', name: 'Melisa Kedić', password: '22413', role: 'cashier', drawerCode: '2140' },
+  { id: '30431', name: 'Adela Ramić', password: '30431', role: 'cashier', drawerCode: '8404' },
 ];
 
 // Initial products with stock data and EAN codes
@@ -39,6 +48,28 @@ const initialProducts: Product[] = [
   { ean: '3831070004015', name: 'Voda 1.5L', price: 0.49, stock: 100, minStock: 30, category: 'Pijače' },
   { ean: '3838900085809', name: 'Čokolada mlečna', price: 1.99, stock: 5, minStock: 10, category: 'Sladkarije' },
 ];
+
+// PLU products for weighing (9000+) and bakery (1000+)
+const pluProducts: Record<string, { name: string; pricePerKg?: number; pricePerUnit?: number }> = {
+  // Weighing products (9000+)
+  '9001': { name: 'Jabolka', pricePerKg: 1.99 },
+  '9002': { name: 'Banane', pricePerKg: 1.49 },
+  '9003': { name: 'Pomaranče', pricePerKg: 2.29 },
+  '9004': { name: 'Paradižnik', pricePerKg: 2.99 },
+  '9005': { name: 'Paprika', pricePerKg: 3.49 },
+  '9006': { name: 'Grozdje', pricePerKg: 2.99 },
+  '9007': { name: 'Hruške', pricePerKg: 2.49 },
+  '9008': { name: 'Solata', pricePerKg: 1.99 },
+  // Bakery products (1000+)
+  '1001': { name: 'Rogljič', pricePerUnit: 0.89 },
+  '1002': { name: 'Burek sir', pricePerUnit: 2.49 },
+  '1003': { name: 'Burek meso', pricePerUnit: 2.69 },
+  '1004': { name: 'Pizza kruh', pricePerUnit: 1.99 },
+  '1005': { name: 'Pita', pricePerUnit: 1.49 },
+  '1006': { name: 'Kroasant', pricePerUnit: 1.29 },
+  '1007': { name: 'Štrudelj', pricePerUnit: 2.19 },
+  '1008': { name: 'Lepinja', pricePerUnit: 0.59 },
+};
 
 // Convert products to simple lookup for POS by EAN
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
@@ -58,11 +89,27 @@ const Index = () => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showDrawerDialog, setShowDrawerDialog] = useState(false);
+  const [pendingInvoiceData, setPendingInvoiceData] = useState<InvoiceData | undefined>();
+  
+  // Dialog states
+  const [showManagerCodeDialog, setShowManagerCodeDialog] = useState(false);
+  const [showProductSearchDialog, setShowProductSearchDialog] = useState(false);
+  const [showQuantityDialog, setShowQuantityDialog] = useState(false);
+  const [showDiscountDialog, setShowDiscountDialog] = useState(false);
+  const [showWeighingDialog, setShowWeighingDialog] = useState(false);
+  const [showBakeryDialog, setShowBakeryDialog] = useState(false);
+  const [showReturnDialog, setShowReturnDialog] = useState(false);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [pendingStornoIndex, setPendingStornoIndex] = useState<number | null>(null);
 
   const productsLookup = getProductsLookup(products);
   const isAdmin = currentCashier?.role === 'admin';
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => {
+    if (item.isReturn) return sum - item.price * item.quantity;
+    return sum + item.price * item.quantity;
+  }, 0);
+  
   const totalDiscount = cartItems.reduce((sum, item) => {
     if (item.discount && item.originalPrice) {
       return sum + (item.originalPrice - item.price) * item.quantity;
@@ -108,12 +155,13 @@ const Index = () => {
 
     const product = productsLookup[inputValue];
     if (product) {
-      const existingIndex = cartItems.findIndex(item => item.ean === inputValue);
+      const existingIndex = cartItems.findIndex(item => item.ean === inputValue && !item.isReturn);
       
       if (existingIndex >= 0) {
         const newItems = [...cartItems];
         newItems[existingIndex].quantity += 1;
         setCartItems(newItems);
+        setSelectedItemIndex(existingIndex);
       } else {
         const newItem: CartItem = {
           id: Date.now().toString(),
@@ -123,6 +171,7 @@ const Index = () => {
           quantity: 1,
         };
         setCartItems(prev => [...prev, newItem]);
+        setSelectedItemIndex(cartItems.length);
       }
       toast.success(`${product.name} dodan`);
     } else {
@@ -132,7 +181,53 @@ const Index = () => {
   };
 
   const handleDiscount = () => {
-    toast.info('Popust na račun - funkcija v razvoju');
+    if (cartItems.length === 0) {
+      toast.warning('Dodajte artikle pred popustom');
+      return;
+    }
+    setShowDiscountDialog(true);
+  };
+
+  const handleApplyDiscount = (discount: number, isPercentage: boolean) => {
+    if (selectedItemIndex !== null && cartItems[selectedItemIndex]) {
+      // Apply to selected item
+      const newItems = [...cartItems];
+      const item = newItems[selectedItemIndex];
+      item.originalPrice = item.originalPrice || item.price;
+      
+      if (isPercentage) {
+        item.discount = discount;
+        item.price = item.originalPrice * (1 - discount / 100);
+      } else {
+        item.price = Math.max(0, item.originalPrice - discount);
+        item.discount = ((item.originalPrice - item.price) / item.originalPrice) * 100;
+      }
+      setCartItems(newItems);
+      toast.success(`Popust ${isPercentage ? discount + '%' : discount.toFixed(2) + '€'} dodan`);
+    } else {
+      // Apply to all items
+      const newItems = cartItems.map(item => {
+        const originalPrice = item.originalPrice || item.price;
+        if (isPercentage) {
+          return {
+            ...item,
+            originalPrice,
+            discount,
+            price: originalPrice * (1 - discount / 100)
+          };
+        } else {
+          const newPrice = Math.max(0, originalPrice - discount);
+          return {
+            ...item,
+            originalPrice,
+            discount: ((originalPrice - newPrice) / originalPrice) * 100,
+            price: newPrice
+          };
+        }
+      });
+      setCartItems(newItems);
+      toast.success(`Popust ${isPercentage ? discount + '%' : discount.toFixed(2) + '€'} dodan na vse artikle`);
+    }
   };
 
   const handleItemDiscount = () => {
@@ -140,13 +235,7 @@ const Index = () => {
       toast.warning('Izberite artikel');
       return;
     }
-    const newItems = [...cartItems];
-    const item = newItems[selectedItemIndex];
-    item.originalPrice = item.price;
-    item.discount = 10;
-    item.price = item.price * 0.9;
-    setCartItems(newItems);
-    toast.success('10% popust dodan');
+    setShowDiscountDialog(true);
   };
 
   const handlePriceChange = () => {
@@ -168,6 +257,27 @@ const Index = () => {
     toast.success('Artikel storniran');
   };
 
+  const handleStorno = () => {
+    if (cartItems.length === 0) {
+      toast.warning('Ni artiklov za storno');
+      return;
+    }
+    // Set pending storno and request manager code
+    setPendingStornoIndex(cartItems.length - 1);
+    setShowManagerCodeDialog(true);
+  };
+
+  const handleStornoConfirmed = () => {
+    if (pendingStornoIndex !== null && pendingStornoIndex >= 0) {
+      const itemName = cartItems[pendingStornoIndex]?.name;
+      const newItems = cartItems.filter((_, i) => i !== pendingStornoIndex);
+      setCartItems(newItems);
+      setSelectedItemIndex(null);
+      toast.success(`${itemName} storniran`);
+    }
+    setPendingStornoIndex(null);
+  };
+
   const handleVoidTransaction = () => {
     setCartItems([]);
     setSelectedItemIndex(null);
@@ -175,7 +285,20 @@ const Index = () => {
   };
 
   const handleReturn = () => {
-    toast.info('Vračilo - funkcija v razvoju');
+    setShowReturnDialog(true);
+  };
+
+  const handleReturnConfirm = (ean: string, quantity: number, price: number) => {
+    const newItem: CartItem = {
+      id: Date.now().toString(),
+      ean: ean,
+      name: `Vračilo (${ean})`,
+      price: price,
+      quantity: quantity,
+      isReturn: true,
+    };
+    setCartItems(prev => [...prev, newItem]);
+    toast.success(`Vračilo dodano: -${(price * quantity).toFixed(2)} €`);
   };
 
   const handleLoyaltyCard = () => {
@@ -199,7 +322,22 @@ const Index = () => {
   };
 
   const handleVatReceipt = () => {
-    toast.info('DDV račun - funkcija v razvoju');
+    if (cartItems.length === 0) {
+      toast.warning('Dodajte artikle pred nadaljevanjem');
+      return;
+    }
+    setShowInvoiceDialog(true);
+  };
+
+  const handleInvoiceConfirm = (data: InvoiceData) => {
+    setPendingInvoiceData(data);
+    setScreen('payment');
+    toast.success('Faktura pripravljena');
+  };
+
+  const handleInvoiceSkip = () => {
+    setPendingInvoiceData(undefined);
+    setScreen('payment');
   };
 
   const handleInventory = () => {
@@ -224,6 +362,111 @@ const Index = () => {
       return;
     }
     setScreen('reports');
+  };
+
+  const handleProductSearch = () => {
+    setShowProductSearchDialog(true);
+  };
+
+  const handleSelectProduct = (product: Product) => {
+    const existingIndex = cartItems.findIndex(item => item.ean === product.ean && !item.isReturn);
+    
+    if (existingIndex >= 0) {
+      const newItems = [...cartItems];
+      newItems[existingIndex].quantity += 1;
+      setCartItems(newItems);
+      setSelectedItemIndex(existingIndex);
+    } else {
+      const newItem: CartItem = {
+        id: Date.now().toString(),
+        ean: product.ean,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+      };
+      setCartItems(prev => [...prev, newItem]);
+      setSelectedItemIndex(cartItems.length);
+    }
+    toast.success(`${product.name} dodan`);
+  };
+
+  const handleAddProduct = (newProduct: Omit<Product, 'stock' | 'minStock'>) => {
+    const fullProduct: Product = {
+      ...newProduct,
+      stock: 0,
+      minStock: 0
+    };
+    setProducts(prev => [...prev, fullProduct]);
+    toast.success(`Artikel ${newProduct.name} dodan v bazo`);
+    
+    // Also add to cart
+    handleSelectProduct(fullProduct);
+  };
+
+  const handleQuantity = () => {
+    if (selectedItemIndex === null) {
+      toast.warning('Izberite artikel');
+      return;
+    }
+    setShowQuantityDialog(true);
+  };
+
+  const handleQuantityConfirm = (quantity: number) => {
+    if (selectedItemIndex !== null && cartItems[selectedItemIndex]) {
+      const newItems = [...cartItems];
+      newItems[selectedItemIndex].quantity = quantity;
+      setCartItems(newItems);
+      toast.success(`Količina spremenjena na ${quantity}`);
+    }
+  };
+
+  const handleWeighing = () => {
+    setShowWeighingDialog(true);
+  };
+
+  const handleWeighingConfirm = (pluCode: string, weight: number) => {
+    const pluProduct = pluProducts[pluCode];
+    if (pluProduct && pluProduct.pricePerKg) {
+      const totalPrice = pluProduct.pricePerKg * weight;
+      const newItem: CartItem = {
+        id: Date.now().toString(),
+        ean: `PLU-${pluCode}`,
+        plu: pluCode,
+        name: `${pluProduct.name} (${weight.toFixed(3)} kg)`,
+        price: totalPrice,
+        quantity: 1,
+        isWeighed: true,
+        weight: weight,
+      };
+      setCartItems(prev => [...prev, newItem]);
+      setSelectedItemIndex(cartItems.length);
+      toast.success(`${pluProduct.name} - ${weight.toFixed(3)} kg dodan`);
+    } else {
+      toast.error(`PLU koda ${pluCode} ni najdena`);
+    }
+  };
+
+  const handleBakery = () => {
+    setShowBakeryDialog(true);
+  };
+
+  const handleBakeryConfirm = (pluCode: string, quantity: number) => {
+    const pluProduct = pluProducts[pluCode];
+    if (pluProduct && pluProduct.pricePerUnit) {
+      const newItem: CartItem = {
+        id: Date.now().toString(),
+        ean: `PLU-${pluCode}`,
+        plu: pluCode,
+        name: pluProduct.name,
+        price: pluProduct.pricePerUnit,
+        quantity: quantity,
+      };
+      setCartItems(prev => [...prev, newItem]);
+      setSelectedItemIndex(cartItems.length);
+      toast.success(`${pluProduct.name} x${quantity} dodan`);
+    } else {
+      toast.error(`PLU koda ${pluCode} ni najdena`);
+    }
   };
 
   const handleUpdateProduct = (ean: string, updates: Partial<Product>) => {
@@ -255,11 +498,13 @@ const Index = () => {
       timestamp: new Date(),
       cashierId: currentCashier?.id || '',
       cashierName: currentCashier?.name || '',
+      invoiceData: pendingInvoiceData,
     };
     setLastTransaction(transaction);
     setTransactions(prev => [transaction, ...prev]);
     setScreen('complete');
-    toast.success('Račun zaključen');
+    setPendingInvoiceData(undefined);
+    toast.success(pendingInvoiceData ? 'Faktura zaključena' : 'Račun zaključen');
   };
 
   const handleCardComplete = () => {
@@ -275,11 +520,13 @@ const Index = () => {
       timestamp: new Date(),
       cashierId: currentCashier?.id || '',
       cashierName: currentCashier?.name || '',
+      invoiceData: pendingInvoiceData,
     };
     setLastTransaction(transaction);
     setTransactions(prev => [transaction, ...prev]);
     setScreen('complete');
-    toast.success('Račun zaključen');
+    setPendingInvoiceData(undefined);
+    toast.success(pendingInvoiceData ? 'Faktura zaključena' : 'Račun zaključen');
   };
 
   const handleNewTransaction = () => {
@@ -287,6 +534,7 @@ const Index = () => {
     setSelectedItemIndex(null);
     setInputValue("");
     setLastTransaction(null);
+    setPendingInvoiceData(undefined);
     setScreen('main');
   };
 
@@ -332,7 +580,7 @@ const Index = () => {
                 itemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
               />
               
-              <div className="pos-panel p-4 flex-1 overflow-y-auto">
+              <div className="pos-panel p-3 flex-1 overflow-y-auto">
                 <ActionButtons
                   onDiscount={handleDiscount}
                   onItemDiscount={handleItemDiscount}
@@ -351,7 +599,13 @@ const Index = () => {
                   onOpenDrawer={handleOpenDrawer}
                   onTransactions={handleTransactions}
                   onReports={handleReports}
+                  onProductSearch={handleProductSearch}
+                  onWeighing={handleWeighing}
+                  onBakery={handleBakery}
+                  onQuantity={handleQuantity}
+                  onStorno={handleStorno}
                   hasItems={cartItems.length > 0}
+                  hasSelectedItem={selectedItemIndex !== null}
                   isAdmin={isAdmin}
                 />
               </div>
@@ -437,12 +691,77 @@ const Index = () => {
         )}
       </main>
 
-      {/* Drawer code dialog */}
+      {/* Dialogs */}
       {showDrawerDialog && currentCashier && (
         <DrawerCodeDialog
           drawerCode={currentCashier.drawerCode}
           onSuccess={() => {}}
           onClose={() => setShowDrawerDialog(false)}
+        />
+      )}
+
+      {showManagerCodeDialog && (
+        <ManagerCodeDialog
+          title="Koda poslovodje za storno"
+          onSuccess={handleStornoConfirmed}
+          onClose={() => {
+            setShowManagerCodeDialog(false);
+            setPendingStornoIndex(null);
+          }}
+        />
+      )}
+
+      {showProductSearchDialog && (
+        <ProductSearchDialog
+          products={products}
+          isAdmin={isAdmin}
+          onSelectProduct={handleSelectProduct}
+          onAddProduct={isAdmin ? handleAddProduct : undefined}
+          onClose={() => setShowProductSearchDialog(false)}
+        />
+      )}
+
+      {showQuantityDialog && selectedItemIndex !== null && cartItems[selectedItemIndex] && (
+        <QuantityInputDialog
+          currentQuantity={cartItems[selectedItemIndex].quantity}
+          onConfirm={handleQuantityConfirm}
+          onClose={() => setShowQuantityDialog(false)}
+        />
+      )}
+
+      {showDiscountDialog && (
+        <DiscountInputDialog
+          onConfirm={handleApplyDiscount}
+          onClose={() => setShowDiscountDialog(false)}
+        />
+      )}
+
+      {showWeighingDialog && (
+        <WeighingDialog
+          onConfirm={handleWeighingConfirm}
+          onClose={() => setShowWeighingDialog(false)}
+        />
+      )}
+
+      {showBakeryDialog && (
+        <BakeryDialog
+          onConfirm={handleBakeryConfirm}
+          onClose={() => setShowBakeryDialog(false)}
+        />
+      )}
+
+      {showReturnDialog && (
+        <ReturnDialog
+          onConfirm={handleReturnConfirm}
+          onClose={() => setShowReturnDialog(false)}
+        />
+      )}
+
+      {showInvoiceDialog && (
+        <InvoiceDialog
+          onConfirm={handleInvoiceConfirm}
+          onSkip={handleInvoiceSkip}
+          onClose={() => setShowInvoiceDialog(false)}
         />
       )}
     </div>
