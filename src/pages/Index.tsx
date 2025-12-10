@@ -25,6 +25,11 @@ import WeighingDialog from "@/components/pos/WeighingDialog";
 import BakeryDialog from "@/components/pos/BakeryDialog";
 import ReturnDialog from "@/components/pos/ReturnDialog";
 import InvoiceDialog from "@/components/pos/InvoiceDialog";
+import ShiftEndDialog from "@/components/pos/ShiftEndDialog";
+import ReceiptsDialog from "@/components/pos/ReceiptsDialog";
+import PriceCheckDialog from "@/components/pos/PriceCheckDialog";
+import WeightCheckDialog from "@/components/pos/WeightCheckDialog";
+import GiftVoucherDialog from "@/components/pos/GiftVoucherDialog";
 import { ShoppingCart } from "lucide-react";
 
 // Cashiers data with roles and individual drawer codes
@@ -37,38 +42,46 @@ const cashiers: Cashier[] = [
 
 // Initial products with stock data and EAN codes
 const initialProducts: Product[] = [
-  { ean: '3838900015455', name: 'Mleko 1L', price: 1.29, stock: 45, minStock: 20, category: 'Mlečni izdelki' },
-  { ean: '3838900028474', name: 'Kruh beli', price: 1.49, stock: 30, minStock: 15, category: 'Pekarna' },
-  { ean: '3831001025148', name: 'Maslo 250g', price: 2.89, stock: 12, minStock: 10, category: 'Mlečni izdelki' },
-  { ean: '3831018041452', name: 'Jabolka 1kg', price: 1.99, stock: 50, minStock: 25, category: 'Sadje in zelenjava' },
-  { ean: '3838900034154', name: 'Jogurt naravni', price: 0.89, stock: 8, minStock: 15, category: 'Mlečni izdelki' },
-  { ean: '3830019500254', name: 'Piščančje prsi 500g', price: 5.49, stock: 20, minStock: 10, category: 'Meso' },
-  { ean: '8076800195057', name: 'Testenine 500g', price: 1.19, stock: 60, minStock: 20, category: 'Suhi izdelki' },
-  { ean: '8076809513388', name: 'Paradižnikova omaka', price: 1.79, stock: 35, minStock: 15, category: 'Omake' },
-  { ean: '3831070004015', name: 'Voda 1.5L', price: 0.49, stock: 100, minStock: 30, category: 'Pijače' },
-  { ean: '3838900085809', name: 'Čokolada mlečna', price: 1.99, stock: 5, minStock: 10, category: 'Sladkarije' },
+  { ean: '3838980514548', name: 'RAZKUŽILO ZA ROKE IN POVRŠINE (50ML)', price: 2.95, stock: 1, minStock: 1, category: 'Higiena' },
+  { ean: '4002448047766', name: 'RAZKUŽILO (50ML)', price: 2.79, stock: 1, minStock: 1, category: 'Higiena' },
+  { ean: '5999005966662', name: 'DUREX KONDOMI 4 KOS', price: 3.69, stock: 1, minStock: 1, category: 'Osebna nega' },
+  { ean: '5011831092220', name: 'SKYN KONDOMI 10 KOS', price: 7.95, stock: 1, minStock: 1, category: 'Osebna nega' },
+  { ean: '5052197044973', name: 'DUREX KONDOMI 18 KOS', price: 18.79, stock: 1, minStock: 1, category: 'Osebna nega' },
+  { ean: '3830000629782', name: 'RADENSKA NATURAL 1L', price: 0.60, stock: 1, minStock: 1, category: 'Pijače' },
+  { ean: '3830000624589', name: 'RADENSKA NATURAL 0,5L', price: 0.49, stock: 1, minStock: 1, category: 'Pijače' },
+  { ean: '4015100810745', name: 'SCHWARTZKOPF TAFT VOL. 3 (75ML)', price: 6.59, stock: 1, minStock: 1, category: 'Osebna nega' },
+  { ean: '9005800366432', name: 'NIVEA MEN DEO ROLL (50ML)', price: 3.90, stock: 1, minStock: 1, category: 'Osebna nega' },
+  { ean: '3859893870491', name: 'AIRCASH KARTICA', price: 5.00, stock: 2, minStock: 1, category: 'Kartice' },
+  { ean: '50173167', name: 'AIRWAVES MENTOL (14G)', price: 0.79, stock: 2, minStock: 1, category: 'Žvečilni gumi' },
+  { ean: '42101925', name: 'AIRWAVES BLACK MINT (14G)', price: 0.79, stock: 2, minStock: 1, category: 'Žvečilni gumi' },
+  { ean: '42189633', name: 'AIRWAVES EXTREME (14G)', price: 0.90, stock: 2, minStock: 1, category: 'Žvečilni gumi' },
+  { ean: '42070047', name: 'AIRWAVES BLACKCURRANT (14G)', price: 0.49, stock: 4, minStock: 1, category: 'Žvečilni gumi' },
+  { ean: '50173617', name: 'ORBIT EUCALYPTUS (10X)', price: 0.85, stock: 1, minStock: 1, category: 'Žvečilni gumi' },
+  { ean: '50173822', name: 'ORBIT SPEARMINT FLAVOUR (10X)', price: 0.85, stock: 7, minStock: 1, category: 'Žvečilni gumi' },
+  { ean: '4005401874836', name: 'LEPILO V STIKU (20G)', price: 1.50, stock: 1, minStock: 1, category: 'Pisarniški material' },
+  { ean: '4902505355790', name: 'FLOMASTRI ZA PO TABLI (ZELENI)', price: 1.94, stock: 1, minStock: 1, category: 'Pisarniški material' },
+  { ean: '4902505355783', name: 'FLOMASTRI ZA PO TABLI (MODRI)', price: 1.94, stock: 1, minStock: 1, category: 'Pisarniški material' },
+  { ean: '4902505355769', name: 'FLOMASTRI ZA PO TABLI (ČRNI)', price: 1.94, stock: 1, minStock: 1, category: 'Pisarniški material' },
+  { ean: '8720181047725', name: 'AXE DEO SPREJ BLACK (250ML)', price: 6.85, stock: 1, minStock: 1, category: 'Osebna nega' },
+  { ean: '8720181131905', name: 'AXE DEO SPREJ RECHARGE (150ML)', price: 4.65, stock: 1, minStock: 1, category: 'Osebna nega' },
+  { ean: '8720181415678', name: 'AXE DEO V STIKU (50ML)', price: 2.95, stock: 1, minStock: 1, category: 'Osebna nega' },
+  { ean: '4009900550215', name: 'ORBIT ŽVEČILNI GUMIJI PEPERMINT (46X)', price: 3.25, stock: 1, minStock: 1, category: 'Žvečilni gumi' },
+  { ean: '8006540319574', name: 'OLD SPICE CAPITAN DEO V STIKU XXLLLL (85ML)', price: 5.89, stock: 1, minStock: 1, category: 'Osebna nega' },
 ];
 
 // PLU products for weighing (9000+) and bakery (1000+)
 const pluProducts: Record<string, { name: string; pricePerKg?: number; pricePerUnit?: number }> = {
-  // Weighing products (9000+)
-  '9001': { name: 'Jabolka', pricePerKg: 1.99 },
-  '9002': { name: 'Banane', pricePerKg: 1.49 },
-  '9003': { name: 'Pomaranče', pricePerKg: 2.29 },
-  '9004': { name: 'Paradižnik', pricePerKg: 2.99 },
-  '9005': { name: 'Paprika', pricePerKg: 3.49 },
-  '9006': { name: 'Grozdje', pricePerKg: 2.99 },
-  '9007': { name: 'Hruške', pricePerKg: 2.49 },
-  '9008': { name: 'Solata', pricePerKg: 1.99 },
   // Bakery products (1000+)
-  '1001': { name: 'Rogljič', pricePerUnit: 0.89 },
-  '1002': { name: 'Burek sir', pricePerUnit: 2.49 },
-  '1003': { name: 'Burek meso', pricePerUnit: 2.69 },
-  '1004': { name: 'Pizza kruh', pricePerUnit: 1.99 },
-  '1005': { name: 'Pita', pricePerUnit: 1.49 },
-  '1006': { name: 'Kroasant', pricePerUnit: 1.29 },
-  '1007': { name: 'Štrudelj', pricePerUnit: 2.19 },
-  '1008': { name: 'Lepinja', pricePerUnit: 0.59 },
+  '1001': { name: 'Kruh beli', pricePerUnit: 1.89 },
+  '1002': { name: 'Kruh črni', pricePerUnit: 2.19 },
+  '1003': { name: 'Kruh z semeni', pricePerUnit: 2.49 },
+  '1004': { name: 'Kruh koruzni', pricePerUnit: 2.29 },
+  '1005': { name: 'Domače bele žemlje', pricePerUnit: 0.39 },
+  '1006': { name: 'Domače črne žemlje', pricePerUnit: 0.45 },
+  '1007': { name: 'Domače semeni žemlje', pricePerUnit: 0.49 },
+  '1008': { name: 'Domače kajzarice', pricePerUnit: 0.35 },
+  '1009': { name: 'Domače lepinje', pricePerUnit: 0.59 },
+  '1010': { name: 'Domače male lepinje', pricePerUnit: 0.45 },
 };
 
 // Convert products to simple lookup for POS by EAN
@@ -100,6 +113,11 @@ const Index = () => {
   const [showBakeryDialog, setShowBakeryDialog] = useState(false);
   const [showReturnDialog, setShowReturnDialog] = useState(false);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [showShiftEndDialog, setShowShiftEndDialog] = useState(false);
+  const [showReceiptsDialog, setShowReceiptsDialog] = useState(false);
+  const [showPriceCheckDialog, setShowPriceCheckDialog] = useState(false);
+  const [showWeightCheckDialog, setShowWeightCheckDialog] = useState(false);
+  const [showGiftVoucherDialog, setShowGiftVoucherDialog] = useState(false);
   const [pendingStornoIndex, setPendingStornoIndex] = useState<number | null>(null);
 
   const productsLookup = getProductsLookup(products);
@@ -230,33 +248,6 @@ const Index = () => {
     }
   };
 
-  const handleItemDiscount = () => {
-    if (selectedItemIndex === null) {
-      toast.warning('Izberite artikel');
-      return;
-    }
-    setShowDiscountDialog(true);
-  };
-
-  const handlePriceChange = () => {
-    toast.info('Sprememba cene - funkcija v razvoju');
-  };
-
-  const handleDelayPayment = () => {
-    toast.info('Odlog plačila - funkcija v razvoju');
-  };
-
-  const handleVoidItem = () => {
-    if (selectedItemIndex === null) {
-      toast.warning('Izberite artikel za storno');
-      return;
-    }
-    const newItems = cartItems.filter((_, i) => i !== selectedItemIndex);
-    setCartItems(newItems);
-    setSelectedItemIndex(null);
-    toast.success('Artikel storniran');
-  };
-
   const handleStorno = () => {
     if (cartItems.length === 0) {
       toast.warning('Ni artiklov za storno');
@@ -301,43 +292,61 @@ const Index = () => {
     toast.success(`Vračilo dodano: -${(price * quantity).toFixed(2)} €`);
   };
 
-  const handleLoyaltyCard = () => {
-    toast.info('Vnos članske kartice - funkcija v razvoju');
-  };
-
   const handlePriceCheck = () => {
-    toast.info('Informacija o ceni - funkcija v razvoju');
+    setShowPriceCheckDialog(true);
   };
 
-  const handleCoupon = () => {
-    toast.info('Uporaba kupona - funkcija v razvoju');
+  const handleWeightCheck = () => {
+    setShowWeightCheckDialog(true);
   };
 
-  const handleReceipt = () => {
-    toast.info('Kopija računa - funkcija v razvoju');
+  const handleGiftVoucher = () => {
+    setShowGiftVoucherDialog(true);
   };
 
-  const handlePackaging = () => {
-    toast.info('Embalaža - funkcija v razvoju');
-  };
-
-  const handleVatReceipt = () => {
-    if (cartItems.length === 0) {
-      toast.warning('Dodajte artikle pred nadaljevanjem');
-      return;
+  const handleGiftVoucherConfirm = (code: string, amount: number, type: 'use' | 'sell') => {
+    if (type === 'use') {
+      // In real system, would validate code against database
+      toast.success(`Darilni bon ${code} uporabljen`);
+    } else {
+      // Add gift voucher as item to cart
+      const newItem: CartItem = {
+        id: Date.now().toString(),
+        ean: `GIFT-${code}`,
+        name: `Darilni bon (${code})`,
+        price: amount,
+        quantity: 1,
+      };
+      setCartItems(prev => [...prev, newItem]);
+      toast.success(`Darilni bon ${amount} € dodan`);
     }
-    setShowInvoiceDialog(true);
   };
 
-  const handleInvoiceConfirm = (data: InvoiceData) => {
-    setPendingInvoiceData(data);
-    setScreen('payment');
-    toast.success('Faktura pripravljena');
+  const handleReceipts = () => {
+    setShowReceiptsDialog(true);
   };
 
-  const handleInvoiceSkip = () => {
-    setPendingInvoiceData(undefined);
-    setScreen('payment');
+  const handlePrintReceipt = (transaction: Transaction) => {
+    toast.success(`Račun #${transaction.id} se tiska...`);
+  };
+
+  const handlePrintInvoice = (transaction: Transaction) => {
+    toast.success(`Faktura #${transaction.id} se tiska...`);
+  };
+
+  const handleCopyToNew = (transaction: Transaction) => {
+    // Copy items from transaction to cart
+    setCartItems(transaction.items.map(item => ({
+      ...item,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    })));
+    toast.success('Artikli kopirani v nov račun');
+  };
+
+  const handleVoidReceipt = (transaction: Transaction) => {
+    // Mark transaction as voided
+    setTransactions(prev => prev.filter(t => t.id !== transaction.id));
+    toast.success(`Račun #${transaction.id} storniran`);
   };
 
   const handleInventory = () => {
@@ -350,10 +359,6 @@ const Index = () => {
 
   const handleOpenDrawer = () => {
     setShowDrawerDialog(true);
-  };
-
-  const handleTransactions = () => {
-    setScreen('transactions');
   };
 
   const handleReports = () => {
@@ -475,6 +480,20 @@ const Index = () => {
     ));
   };
 
+  const handleShiftEnd = () => {
+    setShowShiftEndDialog(true);
+  };
+
+  const handleEndShift = () => {
+    toast.success('Izmena zaključena');
+    handleLogout();
+  };
+
+  const handleEndDay = () => {
+    toast.success('Blagajna zaključena za danes');
+    handleLogout();
+  };
+
   const handlePaymentMethod = (method: string) => {
     if (method === 'cash') {
       setScreen('cash');
@@ -550,6 +569,25 @@ const Index = () => {
     setScreen('payment');
   };
 
+  const handleVatReceipt = () => {
+    if (cartItems.length === 0) {
+      toast.warning('Dodajte artikle pred nadaljevanjem');
+      return;
+    }
+    setShowInvoiceDialog(true);
+  };
+
+  const handleInvoiceConfirm = (data: InvoiceData) => {
+    setPendingInvoiceData(data);
+    setScreen('payment');
+    toast.success('Faktura pripravljena');
+  };
+
+  const handleInvoiceSkip = () => {
+    setPendingInvoiceData(undefined);
+    setScreen('payment');
+  };
+
   // Login screen
   if (screen === 'login') {
     return <LoginScreen cashiers={cashiers} onLogin={handleLogin} />;
@@ -557,7 +595,11 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
-      <POSHeader cashier={currentCashier} onLogout={handleLogout} />
+      <POSHeader 
+        cashier={currentCashier} 
+        onLogout={handleLogout} 
+        onShiftEnd={handleShiftEnd}
+      />
       
       <main className="flex-1 p-4 overflow-hidden">
         {screen === 'main' && (
@@ -583,21 +625,14 @@ const Index = () => {
               <div className="pos-panel p-3 flex-1 overflow-y-auto">
                 <ActionButtons
                   onDiscount={handleDiscount}
-                  onItemDiscount={handleItemDiscount}
-                  onPriceChange={handlePriceChange}
-                  onDelayPayment={handleDelayPayment}
-                  onVoidItem={handleVoidItem}
                   onVoidTransaction={handleVoidTransaction}
                   onReturn={handleReturn}
-                  onLoyaltyCard={handleLoyaltyCard}
                   onPriceCheck={handlePriceCheck}
-                  onCoupon={handleCoupon}
-                  onReceipt={handleReceipt}
-                  onPackaging={handlePackaging}
-                  onVatReceipt={handleVatReceipt}
+                  onWeightCheck={handleWeightCheck}
+                  onGiftVoucher={handleGiftVoucher}
+                  onReceipts={handleReceipts}
                   onInventory={handleInventory}
                   onOpenDrawer={handleOpenDrawer}
-                  onTransactions={handleTransactions}
                   onReports={handleReports}
                   onProductSearch={handleProductSearch}
                   onWeighing={handleWeighing}
@@ -762,6 +797,49 @@ const Index = () => {
           onConfirm={handleInvoiceConfirm}
           onSkip={handleInvoiceSkip}
           onClose={() => setShowInvoiceDialog(false)}
+        />
+      )}
+
+      {showShiftEndDialog && currentCashier && (
+        <ShiftEndDialog
+          cashier={currentCashier}
+          transactions={transactions}
+          onEndShift={handleEndShift}
+          onEndDay={handleEndDay}
+          onOpenDrawer={() => toast.success('Predal odprt')}
+          onClose={() => setShowShiftEndDialog(false)}
+        />
+      )}
+
+      {showReceiptsDialog && (
+        <ReceiptsDialog
+          transactions={transactions}
+          onPrintReceipt={handlePrintReceipt}
+          onPrintInvoice={handlePrintInvoice}
+          onCopyToNew={handleCopyToNew}
+          onVoidReceipt={handleVoidReceipt}
+          onClose={() => setShowReceiptsDialog(false)}
+        />
+      )}
+
+      {showPriceCheckDialog && (
+        <PriceCheckDialog
+          products={products}
+          pluProducts={pluProducts}
+          onClose={() => setShowPriceCheckDialog(false)}
+        />
+      )}
+
+      {showWeightCheckDialog && (
+        <WeightCheckDialog
+          onClose={() => setShowWeightCheckDialog(false)}
+        />
+      )}
+
+      {showGiftVoucherDialog && (
+        <GiftVoucherDialog
+          onConfirm={handleGiftVoucherConfirm}
+          onClose={() => setShowGiftVoucherDialog(false)}
         />
       )}
     </div>

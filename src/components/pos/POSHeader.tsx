@@ -1,13 +1,14 @@
-import { User, Clock, Settings, LogOut, Shield } from "lucide-react";
+import { User, Settings, LogOut, Shield, Calculator } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Cashier } from "@/types/pos";
 
 interface POSHeaderProps {
   cashier: Cashier | null;
   onLogout: () => void;
+  onShiftEnd: () => void;
 }
 
-const POSHeader = ({ cashier, onLogout }: POSHeaderProps) => {
+const POSHeader = ({ cashier, onLogout, onShiftEnd }: POSHeaderProps) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -37,7 +38,7 @@ const POSHeader = ({ cashier, onLogout }: POSHeaderProps) => {
   return (
     <header className="bg-card border-b border-border px-6 py-3">
       <div className="flex items-center justify-between">
-        {/* Logo and title */}
+        {/* Left - Logo and Shift End button */}
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">T</span>
@@ -46,6 +47,15 @@ const POSHeader = ({ cashier, onLogout }: POSHeaderProps) => {
             <h1 className="text-xl font-bold text-foreground">TrgoPOS</h1>
             <p className="text-xs text-muted-foreground">Blagajniški sistem</p>
           </div>
+          
+          {/* Shift End button */}
+          <button
+            onClick={onShiftEnd}
+            className="ml-4 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-medium flex items-center gap-2 transition-colors"
+          >
+            <Calculator className="w-4 h-4" />
+            <span>Zaključi</span>
+          </button>
         </div>
 
         {/* Center - Date and time */}
