@@ -4,28 +4,13 @@ interface NumericKeypadProps {
   onKeyPress: (key: string) => void;
   onDelete: () => void;
   onConfirm: () => void;
-  showQuantityButtons?: boolean;
 }
 
-const NumericKeypad = ({ onKeyPress, onDelete, onConfirm, showQuantityButtons = true }: NumericKeypadProps) => {
+const NumericKeypad = ({ onKeyPress, onDelete, onConfirm }: NumericKeypadProps) => {
   const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00', '.'];
 
   return (
     <div className="flex flex-col gap-2">
-      {showQuantityButtons && (
-        <div className="grid grid-cols-4 gap-2 mb-2">
-          {['1x', '2x', '5x', '10x'].map((qty) => (
-            <button
-              key={qty}
-              onClick={() => onKeyPress(qty)}
-              className="pos-btn-secondary h-12 text-lg"
-            >
-              {qty}
-            </button>
-          ))}
-        </div>
-      )}
-      
       <div className="grid grid-cols-3 gap-2">
         {keys.map((key) => (
           <button

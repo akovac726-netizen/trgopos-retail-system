@@ -1,4 +1,4 @@
-import { Banknote, CreditCard, Gift, FileText, MoreHorizontal, ArrowLeft } from "lucide-react";
+import { Banknote, CreditCard, FileText, SplitSquareHorizontal, ArrowLeft } from "lucide-react";
 
 interface PaymentScreenProps {
   total: number;
@@ -12,11 +12,10 @@ const PaymentScreen = ({ total, onPaymentMethod, onBack }: PaymentScreenProps) =
   };
 
   const paymentMethods = [
-    { id: 'cash', label: 'Gotovina', icon: Banknote },
-    { id: 'card', label: 'Kartica', icon: CreditCard },
-    { id: 'gift', label: 'Darilna kartica', icon: Gift },
-    { id: 'credit', label: 'Dobropis', icon: FileText },
-    { id: 'other', label: 'Drugo', icon: MoreHorizontal },
+    { id: 'cash', label: 'Gotovina', icon: Banknote, className: 'bg-green-500/20 hover:bg-green-500/30 text-green-700' },
+    { id: 'card', label: 'Kartica', icon: CreditCard, className: 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-700' },
+    { id: 'partial', label: 'Kombinirano plačilo', icon: SplitSquareHorizontal, className: 'bg-violet-500/20 hover:bg-violet-500/30 text-violet-700' },
+    { id: 'invoice', label: 'Plačilo na fakturo', icon: FileText, className: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-700' },
   ];
 
   return (
@@ -39,12 +38,12 @@ const PaymentScreen = ({ total, onPaymentMethod, onBack }: PaymentScreenProps) =
       </div>
 
       {/* Payment method buttons */}
-      <div className="grid grid-cols-1 gap-4 flex-1">
+      <div className="grid grid-cols-2 gap-4 flex-1">
         {paymentMethods.map((method) => (
           <button
             key={method.id}
             onClick={() => onPaymentMethod(method.id)}
-            className="pos-btn-confirm h-20 flex items-center justify-center gap-4 text-xl"
+            className={`h-24 flex items-center justify-center gap-4 text-xl font-semibold rounded-xl transition-colors ${method.className}`}
           >
             <method.icon className="w-8 h-8" />
             <span>{method.label}</span>

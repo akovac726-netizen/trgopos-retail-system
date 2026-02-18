@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { CartItem, POSScreen, Transaction, Cashier, InvoiceData } from "@/types/pos";
 import { Product } from "@/types/inventory";
@@ -13,22 +13,19 @@ import PaymentScreen from "@/components/pos/PaymentScreen";
 import CashPaymentScreen from "@/components/pos/CashPaymentScreen";
 import CardPaymentScreen from "@/components/pos/CardPaymentScreen";
 import CompletionScreen from "@/components/pos/CompletionScreen";
-import InventoryScreen from "@/components/inventory/InventoryScreen";
 import LoginScreen from "@/components/pos/LoginScreen";
-import TransactionHistory from "@/components/pos/TransactionHistory";
 import DrawerCodeDialog from "@/components/pos/DrawerCodeDialog";
-import SalesReports from "@/components/pos/SalesReports";
 import ManagerCodeDialog from "@/components/pos/ManagerCodeDialog";
 import ProductSearchDialog from "@/components/pos/ProductSearchDialog";
 import QuantityInputDialog from "@/components/pos/QuantityInputDialog";
 import DiscountInputDialog from "@/components/pos/DiscountInputDialog";
 import ReturnDialog from "@/components/pos/ReturnDialog";
-import InvoiceDialog from "@/components/pos/InvoiceDialog";
 import ShiftEndDialog from "@/components/pos/ShiftEndDialog";
 import ReceiptsDialog from "@/components/pos/ReceiptsDialog";
 import PriceCheckDialog from "@/components/pos/PriceCheckDialog";
-import GiftVoucherDialog from "@/components/pos/GiftVoucherDialog";
 import BackOfficeDashboard from "@/components/backoffice/BackOfficeDashboard";
+import PartnerInvoiceDialog from "@/components/pos/PartnerInvoiceDialog";
+import PartialPaymentDialog from "@/components/pos/PartialPaymentDialog";
 import { ShoppingCart } from "lucide-react";
 
 // Cashiers data
@@ -37,7 +34,6 @@ const cashiers: Cashier[] = [
   { id: '7002', name: 'Eva Zakrajšek', password: '7002', role: 'cashier', drawerCode: '4268' },
 ];
 
-// Convert products to simple lookup for POS by EAN
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
   return products.reduce((acc, p) => {
     acc[p.ean] = { name: p.name, price: p.price };
@@ -64,11 +60,11 @@ const Index = () => {
   const [showQuantityDialog, setShowQuantityDialog] = useState(false);
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
   const [showReturnDialog, setShowReturnDialog] = useState(false);
-  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [showShiftEndDialog, setShowShiftEndDialog] = useState(false);
   const [showReceiptsDialog, setShowReceiptsDialog] = useState(false);
   const [showPriceCheckDialog, setShowPriceCheckDialog] = useState(false);
-  const [showGiftVoucherDialog, setShowGiftVoucherDialog] = useState(false);
+  const [showPartnerInvoiceDialog, setShowPartnerInvoiceDialog] = useState(false);
+  const [showPartialPaymentDialog, setShowPartialPaymentDialog] = useState(false);
   const [pendingStornoIndex, setPendingStornoIndex] = useState<number | null>(null);
 
   // Fetch products from database
@@ -88,7 +84,6 @@ const Index = () => {
     };
     fetchProducts();
 
-    // Realtime sync
     const channel = supabase
       .channel('pos-products')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
@@ -136,16 +131,6 @@ const Index = () => {
   };
 
   const handleKeyPress = (key: string) => {
-    if (key.includes('x')) {
-      const qty = parseInt(key.replace('x', ''));
-      if (selectedItemIndex !== null && cartItems[selectedItemIndex]) {
-        const newItems = [...cartItems];
-        newItems[selectedItemIndex].quantity = qty;
-        setCartItems(newItems);
-        toast.success(`Količina spremenjena na ${qty}`);
-      }
-      return;
-    }
     setInputValue(prev => prev + key);
   };
 
@@ -173,8 +158,10 @@ const Index = () => {
           price: product.price,
           quantity: 1,
         };
-        setCartItems(prev => [...prev, newItem]);
-        setSelectedItemIndex(cartItems.length);
+        setCartItems(prev => {
+          setSelectedItemIndex(prev.length);
+          return [...prev, newItem];
+        });
       }
       toast.success(`${product.name} dodan`);
     } else {
@@ -205,7 +192,7 @@ const Index = () => {
         item.discount = ((item.originalPrice - item.price) / item.originalPrice) * 100;
       }
       setCartItems(newItems);
-      toast.success(`Popust ${isPercentage ? discount + '%' : discount.toFixed(2) + '€'} dodan`);
+      toast.success(`Popust ${discount}% dodan na artikel`);
     } else {
       const newItems = cartItems.map(item => {
         const originalPrice = item.originalPrice || item.price;
@@ -217,13 +204,14 @@ const Index = () => {
         }
       });
       setCartItems(newItems);
-      toast.success(`Popust dodan na vse artikle`);
+      toast.success(`Popust ${discount}% dodan na vse artikle`);
     }
   };
 
+  // Storno: only selected item, requires manager code
   const handleStorno = () => {
-    if (cartItems.length === 0) { toast.warning('Ni artiklov za storno'); return; }
-    setPendingStornoIndex(cartItems.length - 1);
+    if (selectedItemIndex === null) { toast.warning('Izberite artikel za storno'); return; }
+    setPendingStornoIndex(selectedItemIndex);
     setShowManagerCodeDialog(true);
   };
 
@@ -237,12 +225,6 @@ const Index = () => {
     setPendingStornoIndex(null);
   };
 
-  const handleVoidTransaction = () => {
-    setCartItems([]);
-    setSelectedItemIndex(null);
-    toast.success('Račun storniran');
-  };
-
   const handleReturnConfirm = (ean: string, quantity: number, price: number) => {
     const newItem: CartItem = {
       id: Date.now().toString(),
@@ -252,23 +234,11 @@ const Index = () => {
     toast.success(`Vračilo dodano: -${(price * quantity).toFixed(2)} €`);
   };
 
-  const handleGiftVoucherConfirm = (code: string, amount: number, type: 'use' | 'sell') => {
-    if (type === 'use') {
-      toast.success(`Darilni bon ${code} uporabljen`);
-    } else {
-      const newItem: CartItem = {
-        id: Date.now().toString(),
-        ean: `GIFT-${code}`, name: `Darilni bon (${code})`, price: amount, quantity: 1,
-      };
-      setCartItems(prev => [...prev, newItem]);
-      toast.success(`Darilni bon ${amount} € dodan`);
-    }
-  };
-
   const handlePrintReceipt = (transaction: Transaction) => { toast.success(`Račun #${transaction.id} se tiska...`); };
   const handlePrintInvoice = (transaction: Transaction) => { toast.success(`Faktura #${transaction.id} se tiska...`); };
   const handleCopyToNew = (transaction: Transaction) => {
     setCartItems(transaction.items.map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) })));
+    setShowReceiptsDialog(false);
     toast.success('Artikli kopirani v nov račun');
   };
   const handleVoidReceipt = (transaction: Transaction) => {
@@ -285,8 +255,10 @@ const Index = () => {
       setSelectedItemIndex(existingIndex);
     } else {
       const newItem: CartItem = { id: Date.now().toString(), ean: product.ean, name: product.name, price: product.price, quantity: 1 };
-      setCartItems(prev => [...prev, newItem]);
-      setSelectedItemIndex(cartItems.length);
+      setCartItems(prev => {
+        setSelectedItemIndex(prev.length);
+        return [...prev, newItem];
+      });
     }
     toast.success(`${product.name} dodan`);
   };
@@ -294,7 +266,7 @@ const Index = () => {
   const handleQuantityConfirm = (quantity: number) => {
     if (selectedItemIndex !== null && cartItems[selectedItemIndex]) {
       const newItems = [...cartItems];
-      newItems[selectedItemIndex].quantity = quantity;
+      newItems[selectedItemIndex] = { ...newItems[selectedItemIndex], quantity };
       setCartItems(newItems);
       toast.success(`Količina spremenjena na ${quantity}`);
     }
@@ -311,16 +283,28 @@ const Index = () => {
   const handlePaymentMethod = (method: string) => {
     if (method === 'cash') setScreen('cash');
     else if (method === 'card') setScreen('card');
+    else if (method === 'invoice') setShowPartnerInvoiceDialog(true);
+    else if (method === 'partial') setShowPartialPaymentDialog(true);
     else toast.info(`${method} - funkcija v razvoju`);
   };
 
+  const createTransaction = (paymentMethod: string, amountPaid: number, change: number = 0): Transaction => ({
+    id: Date.now().toString().slice(-6),
+    items: cartItems,
+    subtotal,
+    discount: totalDiscount,
+    total,
+    paymentMethod,
+    amountPaid,
+    change,
+    timestamp: new Date(),
+    cashierId: currentCashier?.id || '',
+    cashierName: currentCashier?.name || '',
+    invoiceData: pendingInvoiceData,
+  });
+
   const handleCashComplete = (amountPaid: number) => {
-    const transaction: Transaction = {
-      id: Date.now().toString().slice(-6), items: cartItems, subtotal, discount: totalDiscount,
-      total, paymentMethod: 'gotovina', amountPaid, change: amountPaid - total,
-      timestamp: new Date(), cashierId: currentCashier?.id || '', cashierName: currentCashier?.name || '',
-      invoiceData: pendingInvoiceData,
-    };
+    const transaction = createTransaction('gotovina', amountPaid, amountPaid - total);
     setLastTransaction(transaction);
     setTransactions(prev => [transaction, ...prev]);
     setScreen('complete');
@@ -329,12 +313,7 @@ const Index = () => {
   };
 
   const handleCardComplete = () => {
-    const transaction: Transaction = {
-      id: Date.now().toString().slice(-6), items: cartItems, subtotal, discount: totalDiscount,
-      total, paymentMethod: 'kartica', amountPaid: total, change: 0,
-      timestamp: new Date(), cashierId: currentCashier?.id || '', cashierName: currentCashier?.name || '',
-      invoiceData: pendingInvoiceData,
-    };
+    const transaction = createTransaction('kartica', total, 0);
     setLastTransaction(transaction);
     setTransactions(prev => [transaction, ...prev]);
     setScreen('complete');
@@ -342,20 +321,36 @@ const Index = () => {
     toast.success(pendingInvoiceData ? 'Faktura zaključena' : 'Račun zaključen');
   };
 
+  const handlePartialPaymentComplete = (cashAmount: number, cardAmount: number, invoiceData?: InvoiceData) => {
+    const transaction = createTransaction('gotovina+kartica', total, 0);
+    if (invoiceData) transaction.invoiceData = invoiceData;
+    setLastTransaction(transaction);
+    setTransactions(prev => [transaction, ...prev]);
+    setShowPartialPaymentDialog(false);
+    setScreen('complete');
+    setPendingInvoiceData(undefined);
+    toast.success(`Plačilo: ${cashAmount.toFixed(2)}€ gotovina + ${cardAmount.toFixed(2)}€ kartica`);
+  };
+
+  const handlePartnerInvoiceConfirm = (invoiceData: InvoiceData, paymentMethod: string) => {
+    setPendingInvoiceData(invoiceData);
+    setShowPartnerInvoiceDialog(false);
+    if (paymentMethod === 'cash') setScreen('cash');
+    else if (paymentMethod === 'card') setScreen('card');
+  };
+
   const handleNewTransaction = () => {
-    setCartItems([]); setSelectedItemIndex(null); setInputValue(""); setLastTransaction(null);
-    setPendingInvoiceData(undefined); setScreen('main');
+    setCartItems([]);
+    setSelectedItemIndex(null);
+    setInputValue("");
+    setLastTransaction(null);
+    setPendingInvoiceData(undefined);
+    setScreen('main');
   };
 
   const handleProceedToPayment = () => {
     if (cartItems.length === 0) { toast.warning('Dodajte artikle pred plačilom'); return; }
     setScreen('payment');
-  };
-
-  const handleInvoiceConfirm = (data: InvoiceData) => {
-    setPendingInvoiceData(data);
-    setScreen('payment');
-    toast.success('Faktura pripravljena');
   };
 
   // Login screen
@@ -389,16 +384,15 @@ const Index = () => {
               <div className="pos-panel p-3 flex-1 overflow-y-auto">
                 <ActionButtons
                   onDiscount={handleDiscount}
-                  onVoidTransaction={handleVoidTransaction}
                   onReturn={() => setShowReturnDialog(true)}
                   onPriceCheck={() => setShowPriceCheckDialog(true)}
-                  onGiftVoucher={() => setShowGiftVoucherDialog(true)}
                   onReceipts={() => setShowReceiptsDialog(true)}
-                  onInventory={() => { if (isAdmin) setScreen('inventory'); else toast.error('Samo administrator ima dostop do zalog'); }}
                   onOpenDrawer={() => setShowDrawerDialog(true)}
-                  onReports={() => { if (isAdmin) setScreen('reports'); else toast.error('Samo administrator ima dostop do poročil'); }}
                   onProductSearch={() => setShowProductSearchDialog(true)}
-                  onQuantity={() => { if (selectedItemIndex === null) { toast.warning('Izberite artikel'); return; } setShowQuantityDialog(true); }}
+                  onQuantity={() => {
+                    if (selectedItemIndex === null) { toast.warning('Izberite artikel'); return; }
+                    setShowQuantityDialog(true);
+                  }}
                   onStorno={handleStorno}
                   hasItems={cartItems.length > 0}
                   hasSelectedItem={selectedItemIndex !== null}
@@ -436,15 +430,6 @@ const Index = () => {
         {screen === 'complete' && lastTransaction && (
           <CompletionScreen transaction={lastTransaction} onNewTransaction={handleNewTransaction} onPrintCopy={() => toast.success('Kopija računa se tiska...')} />
         )}
-        {screen === 'inventory' && (
-          <InventoryScreen products={products} onUpdateProduct={handleUpdateProduct} onBack={() => setScreen('main')} />
-        )}
-        {screen === 'transactions' && (
-          <TransactionHistory transactions={transactions} onBack={() => setScreen('main')} />
-        )}
-        {screen === 'reports' && (
-          <SalesReports transactions={transactions} cashiers={cashiers} onBack={() => setScreen('main')} />
-        )}
       </main>
 
       {/* Dialogs */}
@@ -466,9 +451,6 @@ const Index = () => {
       {showReturnDialog && (
         <ReturnDialog onConfirm={handleReturnConfirm} onClose={() => setShowReturnDialog(false)} />
       )}
-      {showInvoiceDialog && (
-        <InvoiceDialog onConfirm={handleInvoiceConfirm} onSkip={() => { setPendingInvoiceData(undefined); setScreen('payment'); }} onClose={() => setShowInvoiceDialog(false)} />
-      )}
       {showShiftEndDialog && currentCashier && (
         <ShiftEndDialog cashier={currentCashier} transactions={transactions} onEndShift={handleEndShift} onEndDay={handleEndDay} onOpenDrawer={() => toast.success('Predal odprt')} onClose={() => setShowShiftEndDialog(false)} />
       )}
@@ -478,8 +460,11 @@ const Index = () => {
       {showPriceCheckDialog && (
         <PriceCheckDialog products={products} pluProducts={{}} onClose={() => setShowPriceCheckDialog(false)} />
       )}
-      {showGiftVoucherDialog && (
-        <GiftVoucherDialog onConfirm={handleGiftVoucherConfirm} onClose={() => setShowGiftVoucherDialog(false)} />
+      {showPartnerInvoiceDialog && (
+        <PartnerInvoiceDialog onConfirm={handlePartnerInvoiceConfirm} onClose={() => setShowPartnerInvoiceDialog(false)} />
+      )}
+      {showPartialPaymentDialog && (
+        <PartialPaymentDialog total={total} onConfirm={handlePartialPaymentComplete} onClose={() => setShowPartialPaymentDialog(false)} />
       )}
     </div>
   );
