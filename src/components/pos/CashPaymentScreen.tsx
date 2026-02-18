@@ -130,7 +130,6 @@ const CashPaymentScreen = ({ total, onComplete, onBack }: CashPaymentScreenProps
             onKeyPress={handleKeyPress}
             onDelete={handleDelete}
             onConfirm={() => canComplete && onComplete(amountPaid)}
-            showQuantityButtons={false}
           />
           
           <button
