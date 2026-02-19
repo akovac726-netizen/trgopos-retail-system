@@ -66,13 +66,46 @@ const ShiftEndDialog = ({
     setShowDrawerDialog(true);
   };
 
+  const generateClosingPDF = (type: 'Zaključek izmene' | 'Dnevni zaključek') => {
+    const now = new Date();
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${type}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:20mm;color:#111;}
+      h1{font-size:20pt;margin-bottom:2mm;}
+      .sub{color:#666;font-size:10pt;margin-bottom:8mm;}
+      table{width:100%;border-collapse:collapse;margin:6mm 0;}
+      th,td{padding:4px 8px;text-align:left;border-bottom:1px solid #eee;}
+      th{background:#f5f5f5;font-size:9pt;color:#444;}
+      .total{font-size:16pt;font-weight:bold;margin-top:8mm;padding-top:5mm;border-top:2px solid #333;}
+    </style></head><body>
+    <h1>${type}</h1>
+    <div class="sub">Blagajnik: ${cashier.name} | Datum: ${now.toLocaleDateString('sl-SI')} | Čas: ${now.toLocaleTimeString('sl-SI')}</div>
+    <table>
+      <thead><tr><th>Plačilna metoda</th><th style="text-align:right">Znesek</th></tr></thead>
+      <tbody>
+        <tr><td>Gotovina</td><td style="text-align:right">${totalCash.toFixed(2)} €</td></tr>
+        <tr><td>Kartica</td><td style="text-align:right">${totalCard.toFixed(2)} €</td></tr>
+        ${totalOther > 0 ? `<tr><td>Ostalo</td><td style="text-align:right">${totalOther.toFixed(2)} €</td></tr>` : ''}
+      </tbody>
+    </table>
+    <p>Število transakcij: <strong>${cashierTransactions.length}</strong></p>
+    <p>Število artiklov: <strong>${totalItems}</strong></p>
+    <div class="total">SKUPAJ: ${totalRevenue.toFixed(2)} €</div>
+    <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}</script>
+    </body></html>`;
+    const win = window.open('', '_blank', 'width=800,height=600');
+    if (win) { win.document.write(html); win.document.close(); }
+  };
+
   const handleDrawerSuccess = () => {
     if (pendingAction === 'drawer') {
       onOpenDrawer();
     } else if (pendingAction === 'shift') {
-      onEndShift();
+      generateClosingPDF('Zaključek izmene');
+      setTimeout(() => onEndShift(), 500);
     } else if (pendingAction === 'day') {
-      onEndDay();
+      generateClosingPDF('Dnevni zaključek');
+      setTimeout(() => onEndDay(), 500);
     }
     setPendingAction(null);
     onClose();
