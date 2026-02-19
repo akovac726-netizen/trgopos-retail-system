@@ -32,6 +32,9 @@ import { ShoppingCart } from "lucide-react";
 const cashiers: Cashier[] = [
   { id: '7001', name: 'Dženan Kedić', password: '7001', role: 'admin', drawerCode: '2082' },
   { id: '7002', name: 'Eva Zakrajšek', password: '7002', role: 'cashier', drawerCode: '4268' },
+  { id: '8001', name: 'Študent 1', password: '8001', role: 'cashier', drawerCode: '0000' },
+  { id: '8002', name: 'Študent 2', password: '8002', role: 'cashier', drawerCode: '0000' },
+  { id: '8003', name: 'Študent 3', password: '8003', role: 'cashier', drawerCode: '0000' },
 ];
 
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
@@ -303,29 +306,57 @@ const Index = () => {
     invoiceData: pendingInvoiceData,
   });
 
-  const handleCashComplete = (amountPaid: number) => {
+  // Deduct stock from DB for all items in cart
+  const deductStock = async (items: typeof cartItems) => {
+    for (const item of items) {
+      if (item.isReturn) {
+        // On return, add back stock
+        const { data } = await supabase.from('products').select('stock').eq('ean', item.ean as any).single();
+        if (data) {
+          const currentStock = (data as any).stock || 0;
+          await supabase.from('products').update({ stock: currentStock + item.quantity } as any).eq('ean', item.ean as any);
+        }
+      } else {
+        const { data } = await supabase.from('products').select('stock, name, min_stock').eq('ean', item.ean as any).single();
+        if (data) {
+          const d = data as any;
+          const newStock = Math.max(0, (d.stock || 0) - item.quantity);
+          await supabase.from('products').update({ stock: newStock } as any).eq('ean', item.ean as any);
+          // Low stock warning
+          if (newStock <= (d.min_stock || 0)) {
+            toast.warning(`⚠ Nizka zaloga: ${d.name} (${newStock} kosov)`);
+          }
+        }
+      }
+    }
+  };
+
+  const handleCashComplete = async (amountPaid: number) => {
     const transaction = createTransaction('gotovina', amountPaid, amountPaid - total);
     setLastTransaction(transaction);
     setTransactions(prev => [transaction, ...prev]);
+    await deductStock(cartItems);
     setScreen('complete');
     setPendingInvoiceData(undefined);
     toast.success(pendingInvoiceData ? 'Faktura zaključena' : 'Račun zaključen');
   };
 
-  const handleCardComplete = () => {
+  const handleCardComplete = async () => {
     const transaction = createTransaction('kartica', total, 0);
     setLastTransaction(transaction);
     setTransactions(prev => [transaction, ...prev]);
+    await deductStock(cartItems);
     setScreen('complete');
     setPendingInvoiceData(undefined);
     toast.success(pendingInvoiceData ? 'Faktura zaključena' : 'Račun zaključen');
   };
 
-  const handlePartialPaymentComplete = (cashAmount: number, cardAmount: number, invoiceData?: InvoiceData) => {
+  const handlePartialPaymentComplete = async (cashAmount: number, cardAmount: number, invoiceData?: InvoiceData) => {
     const transaction = createTransaction('gotovina+kartica', total, 0);
     if (invoiceData) transaction.invoiceData = invoiceData;
     setLastTransaction(transaction);
     setTransactions(prev => [transaction, ...prev]);
+    await deductStock(cartItems);
     setShowPartialPaymentDialog(false);
     setScreen('complete');
     setPendingInvoiceData(undefined);
