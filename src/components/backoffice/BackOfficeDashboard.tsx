@@ -37,13 +37,28 @@ interface OrderItem {
   quantity: number;
 }
 
+interface ClosingReportData {
+  id: string;
+  type: string;
+  cashier: string;
+  cashierId: string;
+  date: string;
+  total: number;
+  cash: number;
+  card: number;
+  other: number;
+  transactionCount: number;
+  itemCount: number;
+}
+
 interface BackOfficeDashboardProps {
   onLogout: () => void;
+  closingReports?: ClosingReportData[];
 }
 
 type Tab = 'products' | 'orders' | 'documents' | 'labels' | 'schedules' | 'opening' | 'closing' | 'inventory' | 'reports' | 'logout';
 
-const BackOfficeDashboard = ({ onLogout }: BackOfficeDashboardProps) => {
+const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [] }: BackOfficeDashboardProps) => {
   const [activeTab, setActiveTab] = useState<Tab>('products');
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -98,8 +113,8 @@ const BackOfficeDashboard = ({ onLogout }: BackOfficeDashboardProps) => {
   const [newStart, setNewStart] = useState("08:00");
   const [newEnd, setNewEnd] = useState("16:00");
 
-  // Closing reports
-  const [closingReports, setClosingReports] = useState<{ id: string; type: string; cashier: string; date: string; total: number; cash: number; card: number }[]>([]);
+  // Closing reports - merge external (from POS) with local
+  const closingReports = externalReports;
 
   const categories = ['Higiena', 'Osebna nega', 'Pijače', 'Žvečilni gumi', 'Pisarniški material', 'Kartice', 'Ostalo'];
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];

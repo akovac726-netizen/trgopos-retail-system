@@ -1,4 +1,4 @@
-import { User, Settings, LogOut, Shield, Calculator } from "lucide-react";
+import { User, Settings, LogOut, Shield, Wrench } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Cashier } from "@/types/pos";
 
@@ -53,8 +53,8 @@ const POSHeader = ({ cashier, onLogout, onShiftEnd }: POSHeaderProps) => {
             onClick={onShiftEnd}
             className="ml-4 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
-            <Calculator className="w-4 h-4" />
-            <span>Zaključi</span>
+            <Wrench className="w-4 h-4" />
+            <span>Orodja</span>
           </button>
         </div>
 
