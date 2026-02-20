@@ -3,8 +3,6 @@ import {
   XCircle, 
   RotateCcw, 
   Tag,
-  DoorOpen,
-  Lock,
   Search,
   Hash,
   Receipt
@@ -15,7 +13,6 @@ interface ActionButtonsProps {
   onReturn: () => void;
   onPriceCheck: () => void;
   onReceipts: () => void;
-  onOpenDrawer: () => void;
   onProductSearch: () => void;
   onQuantity: () => void;
   onStorno: () => void;
@@ -29,7 +26,6 @@ const ActionButtons = ({
   onReturn,
   onPriceCheck,
   onReceipts,
-  onOpenDrawer,
   onProductSearch,
   onQuantity,
   onStorno,
@@ -60,14 +56,6 @@ const ActionButtons = ({
           <span className="text-xs">{btn.label}</span>
         </button>
       ))}
-      
-      <button
-        onClick={onOpenDrawer}
-        className="col-span-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 h-12 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
-      >
-        <DoorOpen className="w-5 h-5" />
-        <span>Odpri predal</span>
-      </button>
     </div>
   );
 };

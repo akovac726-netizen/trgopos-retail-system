@@ -20,7 +20,8 @@ import ProductSearchDialog from "@/components/pos/ProductSearchDialog";
 import QuantityInputDialog from "@/components/pos/QuantityInputDialog";
 import DiscountInputDialog from "@/components/pos/DiscountInputDialog";
 import ReturnDialog from "@/components/pos/ReturnDialog";
-import ShiftEndDialog from "@/components/pos/ShiftEndDialog";
+import ShiftEndDialog, { ClosingReport } from "@/components/pos/ShiftEndDialog";
+import ToolsDialog from "@/components/pos/ToolsDialog";
 import ReceiptsDialog from "@/components/pos/ReceiptsDialog";
 import PriceCheckDialog from "@/components/pos/PriceCheckDialog";
 import BackOfficeDashboard from "@/components/backoffice/BackOfficeDashboard";
@@ -64,6 +65,8 @@ const Index = () => {
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
   const [showReturnDialog, setShowReturnDialog] = useState(false);
   const [showShiftEndDialog, setShowShiftEndDialog] = useState(false);
+  const [showToolsDialog, setShowToolsDialog] = useState(false);
+  const [closingHistory, setClosingHistory] = useState<ClosingReport[]>([]);
   const [showReceiptsDialog, setShowReceiptsDialog] = useState(false);
   const [showPriceCheckDialog, setShowPriceCheckDialog] = useState(false);
   const [showPartnerInvoiceDialog, setShowPartnerInvoiceDialog] = useState(false);
@@ -279,10 +282,18 @@ const Index = () => {
     setProducts(prev => prev.map(p => p.ean === ean ? { ...p, ...updates } : p));
   };
 
-  const handleShiftEnd = () => { setShowShiftEndDialog(true); };
-  const handleEndShift = () => { toast.success('Izmena zaključena'); handleLogout(); };
-  const handleEndDay = () => { toast.success('Blagajna zaključena za danes'); handleLogout(); };
-
+  const handleShiftEnd = () => { setShowToolsDialog(true); };
+  const handleOpenClosing = () => { setShowShiftEndDialog(true); };
+  const handleEndShift = (report: ClosingReport) => { 
+    setClosingHistory(prev => [report, ...prev]);
+    toast.success('Izmena zaključena'); 
+    handleLogout(); 
+  };
+  const handleEndDay = (report: ClosingReport) => { 
+    setClosingHistory(prev => [report, ...prev]);
+    toast.success('Blagajna zaključena za danes'); 
+    handleLogout(); 
+  };
   const handlePaymentMethod = (method: string) => {
     if (method === 'cash') setScreen('cash');
     else if (method === 'card') setScreen('card');
@@ -391,7 +402,7 @@ const Index = () => {
 
   // BackOffice
   if (appMode === 'backoffice') {
-    return <BackOfficeDashboard onLogout={handleLogout} />;
+    return <BackOfficeDashboard onLogout={handleLogout} closingReports={closingHistory} />;
   }
 
   return (
@@ -418,7 +429,7 @@ const Index = () => {
                   onReturn={() => setShowReturnDialog(true)}
                   onPriceCheck={() => setShowPriceCheckDialog(true)}
                   onReceipts={() => setShowReceiptsDialog(true)}
-                  onOpenDrawer={() => setShowDrawerDialog(true)}
+                  
                   onProductSearch={() => setShowProductSearchDialog(true)}
                   onQuantity={() => {
                     if (selectedItemIndex === null) { toast.warning('Izberite artikel'); return; }
@@ -482,8 +493,16 @@ const Index = () => {
       {showReturnDialog && (
         <ReturnDialog onConfirm={handleReturnConfirm} onClose={() => setShowReturnDialog(false)} />
       )}
+      {showToolsDialog && (
+        <ToolsDialog
+          hasItems={cartItems.length > 0}
+          onClosingClick={handleOpenClosing}
+          onOpenDrawer={() => toast.success('Predal odprt')}
+          onClose={() => setShowToolsDialog(false)}
+        />
+      )}
       {showShiftEndDialog && currentCashier && (
-        <ShiftEndDialog cashier={currentCashier} transactions={transactions} onEndShift={handleEndShift} onEndDay={handleEndDay} onOpenDrawer={() => toast.success('Predal odprt')} onClose={() => setShowShiftEndDialog(false)} />
+        <ShiftEndDialog cashier={currentCashier} transactions={transactions} closingHistory={closingHistory} onEndShift={handleEndShift} onEndDay={handleEndDay} onClose={() => setShowShiftEndDialog(false)} />
       )}
       {showReceiptsDialog && (
         <ReceiptsDialog transactions={transactions} onPrintReceipt={handlePrintReceipt} onPrintInvoice={handlePrintInvoice} onCopyToNew={handleCopyToNew} onVoidReceipt={handleVoidReceipt} onClose={() => setShowReceiptsDialog(false)} />
