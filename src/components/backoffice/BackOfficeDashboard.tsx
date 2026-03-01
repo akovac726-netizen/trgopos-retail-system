@@ -3,7 +3,7 @@ import {
   Briefcase, LogOut, Plus, Pencil, Trash2, Package, Tag, ClipboardList, 
   Search, Building2, BarChart3, ShoppingCart, FileText, CheckSquare, 
   BookOpen, Printer, X, Save, ChevronRight, AlertTriangle, Send,
-  Calendar, Clock, User, Bell, TrendingUp, DoorOpen
+  Calendar, Clock, User, Bell, TrendingUp, DoorOpen, Shield
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +56,7 @@ interface BackOfficeDashboardProps {
   closingReports?: ClosingReportData[];
 }
 
-type Tab = 'products' | 'orders' | 'documents' | 'labels' | 'schedules' | 'opening' | 'closing' | 'inventory' | 'reports' | 'logout';
+type Tab = 'products' | 'orders' | 'documents' | 'labels' | 'schedules' | 'opening' | 'closing' | 'inventory' | 'reports' | 'authorization' | 'logout';
 
 const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [] }: BackOfficeDashboardProps) => {
   const [activeTab, setActiveTab] = useState<Tab>('products');
@@ -100,6 +100,34 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [] }:
 
   // Label selection
   const [selectedForLabel, setSelectedForLabel] = useState<string[]>([]);
+
+  // Authorization state
+  const [authCode, setAuthCode] = useState<string | null>(null);
+  const [authCodeExpiry, setAuthCodeExpiry] = useState<number>(0);
+  const [authCountdown, setAuthCountdown] = useState<number>(0);
+
+  // Auth code countdown timer
+  useEffect(() => {
+    if (authCodeExpiry <= 0) return;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((authCodeExpiry - Date.now()) / 1000));
+      setAuthCountdown(remaining);
+      if (remaining <= 0) {
+        setAuthCode(null);
+        setAuthCodeExpiry(0);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [authCodeExpiry]);
+
+  const generateAuthCode = () => {
+    const code = Math.floor(10000 + Math.random() * 90000).toString();
+    setAuthCode(code);
+    const expiry = Date.now() + 60000; // 60 seconds
+    setAuthCodeExpiry(expiry);
+    setAuthCountdown(60);
+    toast.success('Admin koda generirana – veljavna 60 sekund');
+  };
 
   // Tasks
   const [tasks, setTasks] = useState<{ id: string; text: string; done: boolean; priority: string }[]>([]);
@@ -313,6 +341,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [] }:
     { id: 'closing', label: 'Zaključevanje', icon: BookOpen },
     { id: 'inventory', label: 'Inventura', icon: ClipboardList },
     { id: 'reports', label: 'Finančna poročila', icon: BarChart3 },
+    { id: 'authorization', label: 'Avtorizacija', icon: Shield },
   ];
 
   return (
@@ -1076,6 +1105,53 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [] }:
               </div>
             </div>
           )}
+          {/* AVTORIZACIJA */}
+          {activeTab === 'authorization' && (
+            <div className="space-y-4 max-w-lg">
+              <h2 className="text-xl font-bold">Avtorizacija</h2>
+              <div className="bg-card border border-border rounded-xl p-6 space-y-6">
+                <p className="text-sm text-muted-foreground">
+                  Generirajte enkratno admin kodo za avtorizacijo varnostnih operacij na blagajni (storno, popusti, odpiranje predala itd.). Koda je časovno omejena.
+                </p>
+                
+                {authCode && authCountdown > 0 ? (
+                  <div className="text-center space-y-4">
+                    <div className="bg-muted rounded-2xl p-8">
+                      <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">Admin koda</p>
+                      <p className="font-mono text-5xl font-black tracking-[0.3em] text-foreground">{authCode}</p>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className={`text-lg font-bold ${authCountdown <= 10 ? 'text-destructive animate-pulse' : 'text-foreground'}`}>
+                        {authCountdown}s
+                      </span>
+                      <span className="text-sm text-muted-foreground">preostane</span>
+                    </div>
+                    <button
+                      onClick={generateAuthCode}
+                      className="px-6 h-10 bg-muted hover:bg-muted/80 text-foreground rounded-lg font-medium text-sm transition-colors"
+                    >
+                      Nova koda
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <button
+                      onClick={generateAuthCode}
+                      className="h-14 px-8 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-3 mx-auto transition-colors shadow-lg"
+                    >
+                      <Shield className="w-6 h-6" />
+                      ADMIN KODA
+                    </button>
+                    {authCode && authCountdown <= 0 && (
+                      <p className="text-sm text-destructive mt-3">Koda je potekla. Generirajte novo.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </main>
       </div>
     </div>
