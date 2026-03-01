@@ -122,7 +122,7 @@ const Index = () => {
     setScreen('main');
   };
 
-  const handleBackOfficeLogin = () => {
+  const handleBackOfficeLogin = (role?: 'admin' | 'shop') => {
     setAppMode('backoffice');
   };
 
@@ -397,7 +397,7 @@ const Index = () => {
 
   // Login screen
   if (appMode === 'login') {
-    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={handleBackOfficeLogin} />;
+    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={(role) => handleBackOfficeLogin(role)} />;
   }
 
   // BackOffice
