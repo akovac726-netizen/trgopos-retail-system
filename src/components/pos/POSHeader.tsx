@@ -1,99 +1,58 @@
-import { User, Settings, LogOut, Shield, Wrench } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Settings, LogOut } from "lucide-react";
 import { Cashier } from "@/types/pos";
+
+export type POSTab = 'blagajna' | 'racuni' | 'zakljucek';
 
 interface POSHeaderProps {
   cashier: Cashier | null;
+  activeTab: POSTab;
+  onTabChange: (tab: POSTab) => void;
   onLogout: () => void;
-  onShiftEnd: () => void;
 }
 
-const POSHeader = ({ cashier, onLogout, onShiftEnd }: POSHeaderProps) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('sl-SI', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('sl-SI', { 
-      weekday: 'long',
-      day: 'numeric', 
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  const isAdmin = cashier?.role === 'admin';
+const POSHeader = ({ cashier, activeTab, onTabChange, onLogout }: POSHeaderProps) => {
+  const tabs: { id: POSTab; label: string }[] = [
+    { id: 'blagajna', label: 'Blagajna' },
+    { id: 'racuni', label: 'Računi' },
+    { id: 'zakljucek', label: 'Zaključek' },
+  ];
 
   return (
-    <header className="bg-card border-b border-border px-6 py-3">
-      <div className="flex items-center justify-between">
-        {/* Left - Logo and Shift End button */}
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">T</span>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">TrgoPOS</h1>
-            <p className="text-xs text-muted-foreground">Blagajniški sistem</p>
-          </div>
-          
-          {/* Shift End button */}
+    <header className="px-4 py-2 flex items-center justify-between" style={{ background: 'linear-gradient(180deg, #5bb8e8, #3a9fd8)' }}>
+      {/* Left - Cashier info */}
+      <div className="bg-white/90 rounded px-3 py-1.5 text-sm font-medium text-gray-800 min-w-[280px]">
+        Blagajna. št.: <strong>1</strong>, Blagajnik: <strong>{cashier?.name || 'ime in priimek'}</strong>
+      </div>
+
+      {/* Center - Tabs */}
+      <div className="flex items-center gap-1">
+        {tabs.map(tab => (
           <button
-            onClick={onShiftEnd}
-            className="ml-4 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-medium flex items-center gap-2 transition-colors"
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+              activeTab === tab.id
+                ? 'bg-gray-700 text-white shadow-md'
+                : 'bg-sky-200/60 text-sky-800 hover:bg-sky-200'
+            }`}
           >
-            <Wrench className="w-4 h-4" />
-            <span>Orodja</span>
+            {tab.label}
           </button>
-        </div>
+        ))}
+      </div>
 
-        {/* Center - Date and time */}
-        <div className="text-center">
-          <p className="font-mono text-2xl font-bold">{formatTime(currentTime)}</p>
-          <p className="text-sm text-muted-foreground capitalize">{formatDate(currentTime)}</p>
-        </div>
-
-        {/* Right - User info and actions */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 px-4 py-2 bg-muted rounded-lg">
-            <User className="w-5 h-5 text-muted-foreground" />
-            <div className="text-left">
-              <div className="flex items-center gap-2">
-                <p className="font-semibold text-sm">{cashier?.name || 'Blagajnik'}</p>
-                {isAdmin && (
-                  <span className="flex items-center gap-1 px-1.5 py-0.5 bg-violet-500/20 text-violet-600 rounded text-xs font-medium">
-                    <Shield className="w-3 h-3" />
-                    Admin
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">Koda: {cashier?.id || '-'}</p>
-            </div>
-          </div>
-          
-          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-            <Settings className="w-5 h-5 text-muted-foreground" />
-          </button>
-          
-          <button 
-            onClick={onLogout}
-            className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
-            title="Odjava"
-          >
-            <LogOut className="w-5 h-5 text-destructive" />
-          </button>
-        </div>
+      {/* Right - Actions */}
+      <div className="flex items-center gap-2">
+        <button className="p-2 bg-white/30 hover:bg-white/50 rounded-lg transition-colors">
+          <Settings className="w-5 h-5 text-white" />
+        </button>
+        <button 
+          onClick={onLogout}
+          className="p-2 bg-white/30 hover:bg-white/50 rounded-lg transition-colors"
+          title="Odjava"
+        >
+          <LogOut className="w-5 h-5 text-white" />
+        </button>
       </div>
     </header>
   );

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { User, Lock, LogIn, Monitor, Briefcase, Delete } from "lucide-react";
 import { toast } from "sonner";
 import { Cashier } from "@/types/pos";
+import { Power, RotateCcw } from "lucide-react";
 
 type AppMode = 'trgopos' | 'backoffice';
 
@@ -16,37 +16,46 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin }: LoginScreenProps)
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isShift, setIsShift] = useState(false);
+  const [activeField, setActiveField] = useState<'username' | 'password'>('username');
 
-  // BackOffice login state
-  const [boUsername, setBoUsername] = useState("");
-  const [boPassword, setBoPassword] = useState("");
-
-  // On-screen keyboard handlers for TrgoPOS
-  const handleAlphaKey = (key: string) => {
+  const handleKey = (key: string) => {
     const char = isShift ? key.toUpperCase() : key;
-    setUsername(prev => prev + char);
-  };
-
-  const handleNumKey = (key: string) => {
-    setPassword(prev => prev + key);
+    if (activeField === 'username') {
+      setUsername(prev => prev + char);
+    } else {
+      setPassword(prev => prev + char);
+    }
   };
 
   const handleBackspace = () => {
-    // Remove from password first, then username
-    if (password.length > 0) {
+    if (activeField === 'password' && password.length > 0) {
       setPassword(prev => prev.slice(0, -1));
-    } else {
+    } else if (activeField === 'username' && username.length > 0) {
+      setUsername(prev => prev.slice(0, -1));
+    } else if (activeField === 'password' && password.length === 0) {
+      setActiveField('username');
       setUsername(prev => prev.slice(0, -1));
     }
   };
 
-  const handleClear = () => {
-    setPassword("");
-    setUsername("");
+  const handleSpace = () => {
+    if (activeField === 'username') setUsername(prev => prev + ' ');
+    else setPassword(prev => prev + ' ');
+  };
+
+  const handleTab = () => {
+    setActiveField(activeField === 'username' ? 'password' : 'username');
+  };
+
+  const handleEnter = () => {
+    if (mode === 'trgopos') {
+      handleTrgoPOSLogin();
+    } else {
+      handleBackOfficeLogin();
+    }
   };
 
   const handleTrgoPOSLogin = () => {
-    // Find cashier by id (username) and check password
     const cashier = cashiers.find(c => c.id === username);
     if (cashier && password === cashier.password) {
       onLogin(cashier);
@@ -57,26 +66,16 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin }: LoginScreenProps)
     }
   };
 
-  const handleDrawerOpen = () => {
-    // Find cashier and verify drawer code
-    const cashier = cashiers.find(c => c.id === username);
-    if (cashier && password === cashier.drawerCode) {
-      toast.success('Blagajniški predal odprt');
-    } else {
-      toast.error('Napačna koda za predal');
-    }
-  };
-
   const handleBackOfficeLogin = () => {
-    if (boUsername === 'StandBuyAdmin' && boPassword === 'Admin12273') {
+    if (username === 'StandBuyAdmin' && password === 'Admin12273') {
       onBackOfficeLogin('admin');
       toast.success('Dobrodošli v BackOffice (Direktor)!');
-    } else if (boUsername === 'StandBuy.si' && boPassword === 'TR122732207') {
+    } else if (username === 'StandBuy.si' && password === 'TR122732207') {
       onBackOfficeLogin('shop');
       toast.success('Dobrodošli v BackOffice (Trgovina)!');
     } else {
       toast.error('Napačno uporabniško ime ali geslo');
-      setBoPassword("");
+      setPassword("");
     }
   };
 
@@ -84,52 +83,51 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin }: LoginScreenProps)
     setMode(newMode);
     setUsername("");
     setPassword("");
-    setBoUsername("");
-    setBoPassword("");
     setIsShift(false);
+    setActiveField('username');
   };
 
-  const alphaRows = [
-    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
-    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
-    ['z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>'],
-  ];
-
-  const numKeys = [
-    ['7', '8', '9'],
-    ['4', '5', '6'],
-    ['1', '2', '3'],
-    ['0'],
-  ];
+  const numberRow = ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='];
+  const row1 = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\\'];
+  const row2 = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', "'"];
+  const row3 = ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '?'];
+  const shiftNumberRow = ['~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+'];
 
   return (
-    <div className="h-screen flex flex-col items-center justify-between bg-gradient-to-b from-primary via-primary/80 to-background pb-4 pt-6">
-      {/* Top bar */}
-      <div className="w-full flex items-center justify-between px-6 mb-2">
-        <div className="flex items-center gap-2 bg-card/80 backdrop-blur rounded-full px-4 py-2 border border-border/50">
-          <Lock className="w-4 h-4 text-muted-foreground" />
-          <span className="font-mono text-sm tracking-wider text-muted-foreground">
-            {'●'.repeat(password.length || 7)}
-          </span>
+    <div className="h-screen flex flex-col relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 50%, #d4eaf7 70%, #4aa3df 85%, #2980b9 100%)' }}>
+      {/* Decorative blue triangles */}
+      <div className="absolute top-0 right-0 w-0 h-0" style={{ borderLeft: '400px solid transparent', borderTop: '300px solid #3498db', opacity: 0.3 }} />
+      <div className="absolute bottom-0 right-0 w-0 h-0" style={{ borderLeft: '600px solid transparent', borderBottom: '400px solid #2980b9', opacity: 0.4 }} />
+      <div className="absolute bottom-0 left-1/3 w-0 h-0" style={{ borderRight: '300px solid transparent', borderBottom: '200px solid #5dade2', opacity: 0.3 }} />
+
+      {/* Top bar with mode switch and system buttons */}
+      <div className="relative z-10 flex items-start justify-between px-4 pt-4">
+        {/* Left - System buttons */}
+        <div className="flex flex-col gap-2">
+          <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
+            <RotateCcw className="w-5 h-5" />
+            Restart
+          </button>
+          <button className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
+            <Power className="w-5 h-5" />
+            Turn off
+          </button>
         </div>
-        {/* Mode selector */}
-        <div className="flex items-center gap-1 bg-card/80 backdrop-blur rounded-full px-1 py-1 border border-border/50">
+
+        {/* Mode selector - top right */}
+        <div className="flex items-center gap-1 bg-white/80 backdrop-blur rounded-lg px-1 py-1 border border-gray-300">
           <button
             onClick={() => handleModeSwitch('trgopos')}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              mode === 'trgopos'
-                ? 'bg-primary text-primary-foreground shadow'
-                : 'text-muted-foreground hover:text-foreground'
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+              mode === 'trgopos' ? 'bg-sky-500 text-white shadow' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Login
+            TrgoPOS
           </button>
           <button
             onClick={() => handleModeSwitch('backoffice')}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              mode === 'backoffice'
-                ? 'bg-violet-600 text-white shadow'
-                : 'text-muted-foreground hover:text-foreground'
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+              mode === 'backoffice' ? 'bg-violet-600 text-white shadow' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             BackOffice
@@ -137,201 +135,140 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin }: LoginScreenProps)
         </div>
       </div>
 
-      {/* Logo & Welcome */}
-      <div className="text-center mb-4">
-        <h2 className="text-primary-foreground font-black text-2xl tracking-wide">
-          StandBuy<span className="text-yellow-400">✦</span>
+      {/* Logo & Title */}
+      <div className="relative z-10 text-center mt-2 mb-3">
+        <h2 className="text-5xl font-black tracking-wide">
+          <span className="text-sky-500">Stand</span><span className="text-sky-600">Buy</span>
+          <span className="text-orange-400 text-4xl ml-1">★</span>
         </h2>
-        <p className="text-primary-foreground/70 text-xs uppercase tracking-widest mt-1">
-          {mode === 'trgopos' ? 'TRGOPOS STANDBUY' : 'BACKOFFICE STANDBUY'}
+        <p className="text-gray-600 font-bold text-base mt-1 tracking-widest">
+          {mode === 'trgopos' ? 'TrgoPOS' : 'BackOffice'}
         </p>
-        <h1 className="text-3xl font-bold text-primary-foreground mt-2">Dobrodošli nazaj</h1>
       </div>
 
-      {/* Main card */}
-      <div className="w-full max-w-2xl bg-card rounded-t-3xl shadow-2xl flex-1 flex flex-col px-6 pt-8 pb-4 overflow-auto">
-        {mode === 'trgopos' ? (
-          <>
-            {/* Input fields */}
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center gap-3 bg-muted rounded-xl px-4 py-3 border border-border">
-                <User className="w-5 h-5 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={username}
-                  readOnly
-                  placeholder="Uporabniško ime"
-                  className="flex-1 bg-transparent text-foreground font-medium placeholder:text-muted-foreground focus:outline-none text-base"
-                />
-                <div className="w-0.5 h-6 bg-primary animate-pulse" />
-              </div>
-              <div className="flex items-center gap-3 bg-muted rounded-xl px-4 py-3 border border-border">
-                <Lock className="w-5 h-5 text-muted-foreground" />
-                <input
-                  type="password"
-                  value={password}
-                  readOnly
-                  placeholder="Geslo"
-                  className="flex-1 bg-transparent text-foreground font-medium placeholder:text-muted-foreground focus:outline-none text-base"
-                />
-              </div>
-            </div>
+      {/* Input fields */}
+      <div className="relative z-10 max-w-xl mx-auto w-full px-6 space-y-2 mb-3">
+        <input
+          type="text"
+          value={username}
+          readOnly
+          onClick={() => setActiveField('username')}
+          placeholder="Uporabniško ime"
+          className={`w-full h-12 px-4 bg-gray-100 text-gray-800 font-medium placeholder:text-gray-400 focus:outline-none text-base border-2 rounded ${
+            activeField === 'username' ? 'border-sky-400' : 'border-gray-200'
+          }`}
+        />
+        <input
+          type="password"
+          value={password}
+          readOnly
+          onClick={() => setActiveField('password')}
+          placeholder="Geslo"
+          className={`w-full h-12 px-4 bg-gray-100 text-gray-800 font-medium placeholder:text-gray-400 focus:outline-none text-base border-2 rounded ${
+            activeField === 'password' ? 'border-sky-400' : 'border-gray-200'
+          }`}
+        />
+      </div>
 
-            {/* Action buttons */}
-            <div className="flex gap-3 mb-5">
-              <button
-                onClick={handleTrgoPOSLogin}
-                disabled={!username || !password}
-                className="flex-1 h-12 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors shadow-md"
-              >
-                <LogIn className="w-5 h-5" />
-                Prijava
+      {/* On-screen keyboard */}
+      <div className="relative z-10 flex-1 flex flex-col justify-end pb-2 px-2">
+        <div className="bg-white/90 backdrop-blur border border-gray-300 rounded-lg p-2 space-y-1 max-w-4xl mx-auto w-full">
+          {/* Number row */}
+          <div className="flex gap-1">
+            {(isShift ? shiftNumberRow : numberRow).map((key, i) => (
+              <button key={i} onClick={() => handleKey(key)}
+                className="flex-1 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded text-sm font-semibold text-gray-700 transition-colors">
+                {key}
               </button>
-              <button
-                onClick={handleDrawerOpen}
-                disabled={!username || !password}
-                className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors shadow-md"
-              >
-                <Monitor className="w-5 h-5" />
-                Blagajniški predal
-              </button>
-            </div>
-
-            {/* On-screen keyboard */}
-            <div className="flex gap-2 flex-1">
-              {/* Alpha keyboard */}
-              <div className="flex-1 flex flex-col gap-1.5">
-                {alphaRows.map((row, ri) => (
-                  <div key={ri} className="flex gap-1 justify-center">
-                    {row.map(key => (
-                      <button
-                        key={key}
-                        onClick={() => handleAlphaKey(key)}
-                        className="h-11 min-w-[2.5rem] flex-1 bg-muted hover:bg-muted/70 rounded-lg font-semibold text-foreground transition-colors text-sm"
-                      >
-                        {isShift ? key.toUpperCase() : key}
-                      </button>
-                    ))}
-                    {ri === 0 && (
-                      <button
-                        onClick={handleBackspace}
-                        className="h-11 min-w-[2.5rem] flex-1 bg-muted hover:bg-muted/70 rounded-lg flex items-center justify-center text-foreground transition-colors"
-                      >
-                        <Delete className="w-4 h-4" />
-                      </button>
-                    )}
-                    {ri === 1 && (
-                      <button
-                        onClick={handleTrgoPOSLogin}
-                        disabled={!username || !password}
-                        className="h-11 px-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-xs disabled:opacity-40 transition-colors"
-                      >
-                        ENTER
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {/* Bottom row: SHIFT + SPACE + SHIFT */}
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setIsShift(!isShift)}
-                    className={`h-11 px-4 rounded-lg font-bold text-xs transition-colors ${
-                      isShift ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-muted/70'
-                    }`}
-                  >
-                    SHIFT
-                  </button>
-                  <button
-                    onClick={() => setUsername(prev => prev + ' ')}
-                    className="h-11 flex-1 bg-muted hover:bg-muted/70 rounded-lg font-semibold text-foreground text-xs transition-colors"
-                  >
-                    SPACE
-                  </button>
-                  <button
-                    onClick={() => setIsShift(!isShift)}
-                    className={`h-11 px-4 rounded-lg font-bold text-xs transition-colors ${
-                      isShift ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-muted/70'
-                    }`}
-                  >
-                    SHIFT
-                  </button>
-                </div>
-              </div>
-
-              {/* Numeric keypad */}
-              <div className="w-32 flex flex-col gap-1.5">
-                {numKeys.map((row, ri) => (
-                  <div key={ri} className="flex gap-1">
-                    {row.map(key => (
-                      <button
-                        key={key}
-                        onClick={() => handleNumKey(key)}
-                        className={`h-11 flex-1 rounded-lg font-bold text-white transition-colors text-lg ${
-                          key === '0' ? 'bg-primary hover:bg-primary/90' : 'bg-primary hover:bg-primary/90'
-                        }`}
-                      >
-                        {key}
-                      </button>
-                    ))}
-                    {ri === 3 && (
-                      <button
-                        onClick={handleClear}
-                        className="h-11 flex-1 bg-destructive hover:bg-destructive/90 rounded-lg font-bold text-white text-xs transition-colors"
-                      >
-                        CLEAR
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          /* BackOffice Login */
-          <div className="space-y-6 max-w-sm mx-auto w-full">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-2">
-                  <User className="w-4 h-4" />
-                  Uporabniško ime
-                </label>
-                <input
-                  type="text"
-                  value={boUsername}
-                  onChange={(e) => setBoUsername(e.target.value)}
-                  className="w-full h-12 px-4 bg-muted rounded-xl text-foreground font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 border border-border"
-                  placeholder="Vnesite uporabniško ime"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-2">
-                  <Lock className="w-4 h-4" />
-                  Geslo
-                </label>
-                <input
-                  type="password"
-                  value={boPassword}
-                  onChange={(e) => setBoPassword(e.target.value)}
-                  className="w-full h-12 px-4 bg-muted rounded-xl text-foreground font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 border border-border"
-                  placeholder="Vnesite geslo"
-                  onKeyDown={(e) => e.key === 'Enter' && handleBackOfficeLogin()}
-                />
-              </div>
-            </div>
-            <button
-              onClick={handleBackOfficeLogin}
-              disabled={!boUsername || !boPassword}
-              className="w-full h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
-            >
-              <LogIn className="w-5 h-5" />
-              Prijava v BackOffice
+            ))}
+            <button onClick={handleBackspace}
+              className="flex-[1.5] h-10 bg-gray-200 hover:bg-gray-300 border border-gray-300 rounded text-xs font-bold text-gray-700 transition-colors">
+              backspace
             </button>
           </div>
-        )}
+
+          {/* Row 1 - QWERTY */}
+          <div className="flex gap-1">
+            <button onClick={handleTab}
+              className="flex-[1.3] h-10 bg-gray-200 hover:bg-gray-300 border border-gray-300 rounded text-xs font-bold text-gray-700 transition-colors">
+              tab
+            </button>
+            {row1.map(key => (
+              <button key={key} onClick={() => handleKey(key)}
+                className="flex-1 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded text-sm font-semibold text-gray-700 transition-colors">
+                {isShift ? key.toUpperCase() : key}
+              </button>
+            ))}
+          </div>
+
+          {/* Row 2 - ASDF */}
+          <div className="flex gap-1">
+            <button onClick={() => {}}
+              className="flex-[1.6] h-10 bg-gray-200 hover:bg-gray-300 border border-gray-300 rounded text-xs font-bold text-gray-700 transition-colors flex items-center justify-center">
+              <span className="text-lg">🔍</span>
+            </button>
+            {row2.map(key => (
+              <button key={key} onClick={() => handleKey(key)}
+                className="flex-1 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded text-sm font-semibold text-gray-700 transition-colors">
+                {isShift ? key.toUpperCase() : key}
+              </button>
+            ))}
+            <button onClick={handleEnter}
+              className="flex-[1.8] h-10 bg-gray-200 hover:bg-gray-300 border border-gray-300 rounded text-xs font-bold text-gray-700 transition-colors">
+              enter
+            </button>
+          </div>
+
+          {/* Row 3 - ZXCV */}
+          <div className="flex gap-1">
+            <button onClick={() => setIsShift(!isShift)}
+              className={`flex-[1.8] h-10 border border-gray-300 rounded text-xs font-bold transition-colors ${
+                isShift ? 'bg-sky-400 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+              }`}>
+              shift
+            </button>
+            {row3.map(key => (
+              <button key={key} onClick={() => handleKey(key)}
+                className="flex-1 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded text-sm font-semibold text-gray-700 transition-colors">
+                {isShift ? key.toUpperCase() : key}
+              </button>
+            ))}
+            <button onClick={() => setIsShift(!isShift)}
+              className={`flex-[1.8] h-10 border border-gray-300 rounded text-xs font-bold transition-colors ${
+                isShift ? 'bg-sky-400 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+              }`}>
+              shift
+            </button>
+          </div>
+
+          {/* Row 4 - Bottom */}
+          <div className="flex gap-1">
+            <button className="flex-[1.3] h-10 bg-gray-200 hover:bg-gray-300 border border-gray-300 rounded text-xs font-bold text-gray-700 transition-colors">
+              ctrl
+            </button>
+            <button className="flex-1 h-10 bg-gray-200 hover:bg-gray-300 border border-gray-300 rounded text-xs font-bold text-gray-700 transition-colors">
+              alt
+            </button>
+            <button onClick={handleSpace}
+              className="flex-[6] h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded text-sm font-semibold text-gray-700 transition-colors">
+            </button>
+            <button className="flex-1 h-10 bg-gray-200 hover:bg-gray-300 border border-gray-300 rounded text-xs font-bold text-gray-700 transition-colors">
+              alt
+            </button>
+            <button className="flex-[1.3] h-10 bg-gray-200 hover:bg-gray-300 border border-gray-300 rounded text-xs font-bold text-gray-700 transition-colors">
+              ctrl
+            </button>
+            <button className="flex-1 h-10 bg-gray-200 hover:bg-gray-300 border border-gray-300 rounded text-xs font-bold text-gray-700 transition-colors flex items-center justify-center">
+              △
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
-      <p className="text-xs text-muted-foreground mt-2">Login Screen TrgoPOS StandBuy</p>
+      <p className="relative z-10 text-center text-xs text-gray-500 py-2">
+        TrgoPOS © 2026 StandBuy s. p., vse pavice pridržane
+      </p>
     </div>
   );
 };
