@@ -8,7 +8,7 @@ interface ManagerCodeDialogProps {
   title?: string;
 }
 
-const MANAGER_CODE = "58709";
+const MANAGER_CODE = "80175";
 
 const ManagerCodeDialog = ({ onSuccess, onClose, title = "Koda poslovodje" }: ManagerCodeDialogProps) => {
   const [code, setCode] = useState("");

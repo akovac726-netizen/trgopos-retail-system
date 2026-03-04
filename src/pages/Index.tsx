@@ -5,6 +5,7 @@ import { Product } from "@/types/inventory";
 import { supabase } from "@/integrations/supabase/client";
 import POSHeader, { POSTab } from "@/components/pos/POSHeader";
 import BlagajnaTab from "@/components/pos/BlagajnaTab";
+import GiftVoucherDialog from "@/components/pos/GiftVoucherDialog";
 import PaymentTab from "@/components/pos/PaymentTab";
 import CompletionScreen from "@/components/pos/CompletionScreen";
 import LoginScreen from "@/components/pos/LoginScreen";
@@ -39,7 +40,7 @@ const getProductsLookup = (products: Product[]): Record<string, { name: string; 
 const Index = () => {
   const [appMode, setAppMode] = useState<'login' | 'pos' | 'backoffice'>('login');
   const [posTab, setPosTab] = useState<POSTab>('blagajna');
-  const [screen, setScreen] = useState<'main' | 'payment' | 'complete'>('main');
+  const [screen, setScreen] = useState<'main' | 'payment' | 'complete' | 'giftvoucher'>('main');
   const [currentCashier, setCurrentCashier] = useState<Cashier | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
@@ -267,6 +268,19 @@ const Index = () => {
             onPriceCheck={() => setShowPriceCheckDialog(true)}
             onQuantity={() => { if (selectedItemIndex === null) { toast.warning('Izberite artikel'); return; } setShowQuantityDialog(true); }}
             onDiscount={handleDiscount} onReturn={() => setShowReturnDialog(true)} onStorno={handleStorno}
+            onGiftVoucher={() => setScreen('giftvoucher')}
+          />
+        )}
+
+        {posTab === 'blagajna' && screen === 'giftvoucher' && (
+          <GiftVoucherDialog
+            total={total}
+            cartItems={cartItems.map(i => ({ name: i.name }))}
+            onConfirm={(code, amount, type) => {
+              toast.success(`Bon ${code} uporabljen (${amount} EUR)`);
+              setScreen('main');
+            }}
+            onClose={() => setScreen('main')}
           />
         )}
 
