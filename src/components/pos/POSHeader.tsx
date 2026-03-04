@@ -27,15 +27,12 @@ const POSHeader = ({ cashier, activeTab, onTabChange, onLogout }: POSHeaderProps
       {/* Center - Tabs */}
       <div className="flex items-center gap-1">
         {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
+          <button key={tab.id} onClick={() => onTabChange(tab.id)}
             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
               activeTab === tab.id
                 ? 'bg-gray-700 text-white shadow-md'
                 : 'bg-sky-200/60 text-sky-800 hover:bg-sky-200'
-            }`}
-          >
+            }`}>
             {tab.label}
           </button>
         ))}
@@ -46,11 +43,7 @@ const POSHeader = ({ cashier, activeTab, onTabChange, onLogout }: POSHeaderProps
         <button className="p-2 bg-white/30 hover:bg-white/50 rounded-lg transition-colors">
           <Settings className="w-5 h-5 text-white" />
         </button>
-        <button 
-          onClick={onLogout}
-          className="p-2 bg-white/30 hover:bg-white/50 rounded-lg transition-colors"
-          title="Odjava"
-        >
+        <button onClick={onLogout} className="p-2 bg-white/30 hover:bg-white/50 rounded-lg transition-colors" title="Odjava">
           <LogOut className="w-5 h-5 text-white" />
         </button>
       </div>
