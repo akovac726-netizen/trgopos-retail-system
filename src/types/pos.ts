@@ -10,6 +10,7 @@ export interface CartItem {
   isReturn?: boolean;
   isWeighed?: boolean;
   weight?: number;
+  isStornoed?: boolean;
 }
 
 export interface PaymentMethod {

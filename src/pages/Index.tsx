@@ -23,11 +23,10 @@ import BackOfficeDashboard from "@/components/backoffice/BackOfficeDashboard";
 import PartnerInvoiceDialog from "@/components/pos/PartnerInvoiceDialog";
 
 const cashiers: Cashier[] = [
-  { id: '7001', name: 'Dženan Kedić', password: '7001', role: 'admin', drawerCode: '2082' },
-  { id: '7002', name: 'Eva Zakrajšek', password: '7002', role: 'cashier', drawerCode: '4268' },
-  { id: '8001', name: 'Študent 1', password: '8001', role: 'cashier', drawerCode: '0000' },
-  { id: '8002', name: 'Študent 2', password: '8002', role: 'cashier', drawerCode: '0000' },
-  { id: '8003', name: 'Študent 3', password: '8003', role: 'cashier', drawerCode: '0000' },
+  { id: '70001', name: 'Dženan Kedić', password: '70001', role: 'admin', drawerCode: '2082' },
+  { id: '70002', name: 'Eva Zakrajšek', password: '70002', role: 'cashier', drawerCode: '4268' },
+  { id: '80001', name: 'Študent 1', password: '80001', role: 'cashier', drawerCode: '2468' },
+  { id: '80002', name: 'Študent 2', password: '80002', role: 'cashier', drawerCode: '2468' },
 ];
 
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
@@ -39,6 +38,7 @@ const getProductsLookup = (products: Product[]): Record<string, { name: string; 
 
 const Index = () => {
   const [appMode, setAppMode] = useState<'login' | 'pos' | 'backoffice'>('login');
+  const [backofficeRole, setBackofficeRole] = useState<'admin' | 'shop'>('shop');
   const [posTab, setPosTab] = useState<POSTab>('blagajna');
   const [screen, setScreen] = useState<'main' | 'payment' | 'complete' | 'giftvoucher'>('main');
   const [currentCashier, setCurrentCashier] = useState<Cashier | null>(null);
@@ -54,6 +54,7 @@ const Index = () => {
 
   // Dialog states
   const [showManagerCodeDialog, setShowManagerCodeDialog] = useState(false);
+  const [showReturnManagerCode, setShowReturnManagerCode] = useState(false);
   const [showProductSearchDialog, setShowProductSearchDialog] = useState(false);
   const [showQuantityDialog, setShowQuantityDialog] = useState(false);
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
@@ -61,6 +62,7 @@ const Index = () => {
   const [showPriceCheckDialog, setShowPriceCheckDialog] = useState(false);
   const [showPartnerInvoiceDialog, setShowPartnerInvoiceDialog] = useState(false);
   const [pendingStornoIndex, setPendingStornoIndex] = useState<number | null>(null);
+  const [managerCodeTitle, setManagerCodeTitle] = useState("Koda poslovodje");
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -79,14 +81,16 @@ const Index = () => {
   const productsLookup = getProductsLookup(products);
   const isAdmin = currentCashier?.role === 'admin';
 
-  const subtotal = cartItems.reduce((sum, item) => item.isReturn ? sum - item.price * item.quantity : sum + item.price * item.quantity, 0);
-  const totalDiscount = cartItems.reduce((sum, item) => item.discount && item.originalPrice ? sum + (item.originalPrice - item.price) * item.quantity : sum, 0);
+  // Filter out stornoed items for total calculation but keep them visible
+  const activeCartItems = cartItems.filter(item => !item.isStornoed);
+  const subtotal = activeCartItems.reduce((sum, item) => item.isReturn ? sum - item.price * item.quantity : sum + item.price * item.quantity, 0);
+  const totalDiscount = activeCartItems.reduce((sum, item) => item.discount && item.originalPrice ? sum + (item.originalPrice - item.price) * item.quantity : sum, 0);
   const total = subtotal;
 
   const lastAddedItem = cartItems.length > 0 ? cartItems[cartItems.length - 1] : null;
 
   const handleLogin = (cashier: Cashier) => { setCurrentCashier(cashier); setAppMode('pos'); setScreen('main'); };
-  const handleBackOfficeLogin = (role?: 'admin' | 'shop') => { setAppMode('backoffice'); };
+  const handleBackOfficeLogin = (role: 'admin' | 'shop') => { setBackofficeRole(role); setAppMode('backoffice'); };
   const handleLogout = () => {
     setCurrentCashier(null); setCartItems([]); setSelectedItemIndex(null); setInputValue("");
     setAppMode('login'); setScreen('main'); setPosTab('blagajna');
@@ -100,7 +104,7 @@ const Index = () => {
     if (!inputValue) return;
     const product = productsLookup[inputValue];
     if (product) {
-      const existingIndex = cartItems.findIndex(item => item.ean === inputValue && !item.isReturn);
+      const existingIndex = cartItems.findIndex(item => item.ean === inputValue && !item.isReturn && !item.isStornoed);
       if (existingIndex >= 0) {
         const newItems = [...cartItems]; newItems[existingIndex].quantity += 1;
         setCartItems(newItems); setSelectedItemIndex(existingIndex);
@@ -119,35 +123,63 @@ const Index = () => {
   };
 
   const handleApplyDiscount = (discount: number, isPercentage: boolean) => {
-    if (selectedItemIndex !== null && cartItems[selectedItemIndex]) {
+    if (selectedItemIndex !== null && cartItems[selectedItemIndex] && !cartItems[selectedItemIndex].isStornoed) {
       const newItems = [...cartItems]; const item = newItems[selectedItemIndex];
       item.originalPrice = item.originalPrice || item.price;
       if (isPercentage) { item.discount = discount; item.price = item.originalPrice * (1 - discount / 100); }
       else { item.price = Math.max(0, item.originalPrice - discount); item.discount = ((item.originalPrice - item.price) / item.originalPrice) * 100; }
       setCartItems(newItems);
+      toast.success(`Popust ${discount}% dodan`);
     } else {
       setCartItems(cartItems.map(item => {
+        if (item.isStornoed) return item;
         const op = item.originalPrice || item.price;
         if (isPercentage) return { ...item, originalPrice: op, discount, price: op * (1 - discount / 100) };
         const np = Math.max(0, op - discount);
         return { ...item, originalPrice: op, discount: ((op - np) / op) * 100, price: np };
       }));
+      toast.success(`Popust ${discount}% dodan na vse artikle`);
     }
-    toast.success(`Popust ${discount}% dodan`);
   };
 
+  // Storno logic: last item = no code needed, others = admin code required
   const handleStorno = () => {
     if (selectedItemIndex === null) { toast.warning('Izberite artikel za storno'); return; }
-    setPendingStornoIndex(selectedItemIndex); setShowManagerCodeDialog(true);
+    if (cartItems[selectedItemIndex]?.isStornoed) { toast.warning('Artikel je že storniran'); return; }
+    
+    const activeItems = cartItems.filter(item => !item.isStornoed);
+    const lastActiveIndex = cartItems.length - 1 - [...cartItems].reverse().findIndex(item => !item.isStornoed);
+    
+    if (selectedItemIndex === lastActiveIndex) {
+      // Last scanned item - no admin code needed
+      handleStornoItem(selectedItemIndex);
+    } else {
+      // Not the last item - require admin code
+      setPendingStornoIndex(selectedItemIndex);
+      setManagerCodeTitle("Koda poslovodje za storno");
+      setShowManagerCodeDialog(true);
+    }
+  };
+
+  const handleStornoItem = (index: number) => {
+    const newItems = [...cartItems];
+    newItems[index] = { ...newItems[index], isStornoed: true };
+    setCartItems(newItems);
+    setSelectedItemIndex(null);
+    toast.success(`${newItems[index].name} storniran`);
   };
 
   const handleStornoConfirmed = () => {
     if (pendingStornoIndex !== null && pendingStornoIndex >= 0) {
-      const name = cartItems[pendingStornoIndex]?.name;
-      setCartItems(cartItems.filter((_, i) => i !== pendingStornoIndex)); setSelectedItemIndex(null);
-      toast.success(`${name} storniran`);
+      handleStornoItem(pendingStornoIndex);
     }
     setPendingStornoIndex(null);
+  };
+
+  // Return requires admin code
+  const handleReturnRequest = () => {
+    setManagerCodeTitle("ADMIN KODA za vračilo");
+    setShowReturnManagerCode(true);
   };
 
   const handleReturnConfirm = (ean: string, quantity: number, price: number) => {
@@ -156,7 +188,7 @@ const Index = () => {
   };
 
   const handleSelectProduct = (product: Product) => {
-    const existingIndex = cartItems.findIndex(item => item.ean === product.ean && !item.isReturn);
+    const existingIndex = cartItems.findIndex(item => item.ean === product.ean && !item.isReturn && !item.isStornoed);
     if (existingIndex >= 0) {
       const newItems = [...cartItems]; newItems[existingIndex].quantity += 1;
       setCartItems(newItems); setSelectedItemIndex(existingIndex);
@@ -168,14 +200,14 @@ const Index = () => {
   };
 
   const handleQuantityConfirm = (quantity: number) => {
-    if (selectedItemIndex !== null && cartItems[selectedItemIndex]) {
+    if (selectedItemIndex !== null && cartItems[selectedItemIndex] && !cartItems[selectedItemIndex].isStornoed) {
       const newItems = [...cartItems]; newItems[selectedItemIndex] = { ...newItems[selectedItemIndex], quantity };
       setCartItems(newItems); toast.success(`Količina spremenjena na ${quantity}`);
     }
   };
 
   const handleProceedToPayment = () => {
-    if (cartItems.length === 0) { toast.warning('Dodajte artikle pred plačilom'); return; }
+    if (activeCartItems.length === 0) { toast.warning('Dodajte artikle pred plačilom'); return; }
     setScreen('payment');
   };
 
@@ -185,6 +217,7 @@ const Index = () => {
 
   const deductStock = async (items: typeof cartItems) => {
     for (const item of items) {
+      if (item.isStornoed) continue;
       if (item.isReturn) {
         const { data } = await supabase.from('products').select('stock').eq('ean', item.ean as any).single();
         if (data) await supabase.from('products').update({ stock: (data as any).stock + item.quantity } as any).eq('ean', item.ean as any);
@@ -227,7 +260,7 @@ const Index = () => {
   const handlePrintReceipt = (t: Transaction) => toast.success(`Račun #${t.id} se tiska...`);
   const handlePrintInvoice = (t: Transaction) => toast.success(`Faktura #${t.id} se tiska...`);
   const handleCopyToNew = (t: Transaction) => {
-    setCartItems(t.items.map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) })));
+    setCartItems(t.items.filter(i => !i.isStornoed).map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) })));
     setPosTab('blagajna'); toast.success('Artikli kopirani v nov račun');
   };
   const handleVoidReceipt = (t: Transaction) => {
@@ -244,12 +277,12 @@ const Index = () => {
 
   // Login
   if (appMode === 'login') {
-    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={(role) => handleBackOfficeLogin(role)} />;
+    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={handleBackOfficeLogin} />;
   }
 
   // BackOffice
   if (appMode === 'backoffice') {
-    return <BackOfficeDashboard onLogout={handleLogout} closingReports={closingHistory} />;
+    return <BackOfficeDashboard onLogout={handleLogout} closingReports={closingHistory} role={backofficeRole} />;
   }
 
   return (
@@ -266,8 +299,8 @@ const Index = () => {
             onOpenDrawer={handleOpenDrawer}
             onProductSearch={() => setShowProductSearchDialog(true)}
             onPriceCheck={() => setShowPriceCheckDialog(true)}
-            onQuantity={() => { if (selectedItemIndex === null) { toast.warning('Izberite artikel'); return; } setShowQuantityDialog(true); }}
-            onDiscount={handleDiscount} onReturn={() => setShowReturnDialog(true)} onStorno={handleStorno}
+            onQuantity={() => { if (selectedItemIndex === null) { toast.warning('Izberite artikel'); return; } if (cartItems[selectedItemIndex]?.isStornoed) { toast.warning('Artikel je storniran'); return; } setShowQuantityDialog(true); }}
+            onDiscount={handleDiscount} onReturn={handleReturnRequest} onStorno={handleStorno}
             onGiftVoucher={() => setScreen('giftvoucher')}
           />
         )}
@@ -275,9 +308,9 @@ const Index = () => {
         {posTab === 'blagajna' && screen === 'giftvoucher' && (
           <GiftVoucherDialog
             total={total}
-            cartItems={cartItems.map(i => ({ name: i.name }))}
+            cartItems={cartItems.filter(i => !i.isStornoed).map(i => ({ name: i.name }))}
             onConfirm={(code, amount, type) => {
-              toast.success(`Bon ${code} uporabljen (${amount} EUR)`);
+              toast.success(`Bon ${code} ustvarjen (${amount} EUR)`);
               setScreen('main');
             }}
             onClose={() => setScreen('main')}
@@ -286,7 +319,7 @@ const Index = () => {
 
         {posTab === 'blagajna' && screen === 'payment' && (
           <PaymentTab
-            cartItems={cartItems} subtotal={subtotal} total={total} totalDiscount={totalDiscount}
+            cartItems={cartItems.filter(i => !i.isStornoed)} subtotal={subtotal} total={total} totalDiscount={totalDiscount}
             onCashPayment={handleCashComplete} onCardPayment={handleCardComplete}
             onInvoice={() => setShowPartnerInvoiceDialog(true)} onBack={() => setScreen('main')}
           />
@@ -312,7 +345,10 @@ const Index = () => {
         <DrawerCodeDialog drawerCode={currentCashier.drawerCode} onSuccess={() => { toast.success('Predal odprt'); setShowDrawerDialog(false); }} onClose={() => setShowDrawerDialog(false)} />
       )}
       {showManagerCodeDialog && (
-        <ManagerCodeDialog title="Koda poslovodje za storno" onSuccess={handleStornoConfirmed} onClose={() => { setShowManagerCodeDialog(false); setPendingStornoIndex(null); }} />
+        <ManagerCodeDialog title={managerCodeTitle} onSuccess={handleStornoConfirmed} onClose={() => { setShowManagerCodeDialog(false); setPendingStornoIndex(null); }} />
+      )}
+      {showReturnManagerCode && (
+        <ManagerCodeDialog title="ADMIN KODA za vračilo" onSuccess={() => { setShowReturnManagerCode(false); setShowReturnDialog(true); }} onClose={() => setShowReturnManagerCode(false)} />
       )}
       {showProductSearchDialog && (
         <ProductSearchDialog products={products} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
