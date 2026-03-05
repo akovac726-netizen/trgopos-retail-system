@@ -71,15 +71,18 @@ const BlagajnaTab = ({
             cartItems.map((item, idx) => (
               <div key={item.id} onClick={() => onSelectItem(idx)}
                 className={`px-3 py-2 border-b border-gray-200 cursor-pointer text-sm flex justify-between transition-colors ${
+                  item.isStornoed ? 'bg-red-50 line-through text-red-400' :
                   selectedItemIndex === idx ? 'bg-sky-100' : 'hover:bg-gray-50'
                 }`}>
                 <div className="flex-1">
-                  <span className="font-medium">{item.name}</span>
-                  {item.discount && <span className="ml-2 text-red-500 text-xs">-{item.discount.toFixed(0)}%</span>}
+                  {item.isStornoed && <span className="text-red-500 font-bold mr-1">–</span>}
+                  <span className={`font-medium ${item.isStornoed ? 'text-red-400' : ''}`}>{item.name}</span>
+                  {item.isStornoed && <span className="ml-2 text-red-500 text-xs font-bold">STORNO</span>}
+                  {!item.isStornoed && item.discount && <span className="ml-2 text-red-500 text-xs">-{item.discount.toFixed(0)}%</span>}
                 </div>
                 <div className="flex gap-4 text-right">
-                  <span>{item.quantity}x</span>
-                  <span className="font-medium w-20 text-right">{formatPrice(item.price * item.quantity)} €</span>
+                  <span>{item.isStornoed ? '-' : ''}{item.quantity}x</span>
+                  <span className={`font-medium w-20 text-right ${item.isStornoed ? 'text-red-400' : ''}`}>{item.isStornoed ? '-' : ''}{formatPrice(item.price * item.quantity)} €</span>
                 </div>
               </div>
             ))
