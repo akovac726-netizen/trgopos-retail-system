@@ -9,15 +9,16 @@ interface QuantityInputDialogProps {
 }
 
 const QuantityInputDialog = ({ currentQuantity, onConfirm, onClose }: QuantityInputDialogProps) => {
-  const [value, setValue] = useState(currentQuantity.toString());
+  // Start empty - user types the new quantity directly
+  const [value, setValue] = useState("");
 
   const handleKeyPress = (key: string) => {
     if (key === '.' && value.includes('.')) return;
-    setValue(prev => prev === '0' ? key : prev + key);
+    setValue(prev => prev + key);
   };
 
   const handleDelete = () => {
-    setValue(prev => prev.length > 1 ? prev.slice(0, -1) : '0');
+    setValue(prev => prev.slice(0, -1));
   };
 
   const handleConfirm = () => {
@@ -39,7 +40,7 @@ const QuantityInputDialog = ({ currentQuantity, onConfirm, onClose }: QuantityIn
         
         <div className="space-y-4">
           <div className="text-center text-4xl font-bold py-4 bg-muted rounded-lg">
-            {value}
+            {value || '_'}
           </div>
           
           <div className="grid grid-cols-3 gap-2">
@@ -64,7 +65,8 @@ const QuantityInputDialog = ({ currentQuantity, onConfirm, onClose }: QuantityIn
             </button>
             <button
               onClick={handleConfirm}
-              className="h-14 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium flex items-center justify-center gap-2 transition-colors"
+              disabled={!value || parseFloat(value) <= 0}
+              className="h-14 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-40"
             >
               <CornerDownLeft className="w-5 h-5" />
               <span>Potrdi</span>
