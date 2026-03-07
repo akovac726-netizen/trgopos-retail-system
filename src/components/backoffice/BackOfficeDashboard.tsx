@@ -36,10 +36,10 @@ interface BackOfficeDashboardProps {
   role: 'admin' | 'shop';
 }
 
-type Tab = 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'avtorizacija';
+type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'avtorizacija';
 
 const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], role }: BackOfficeDashboardProps) => {
-  const [activeTab, setActiveTab] = useState<Tab>('artikli');
+  const [activeTab, setActiveTab] = useState<Tab>('poslovanje');
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,6 +112,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     { id: '2', firstName: 'Eva', lastName: 'Zakrajšek', code: '70002', birthDate: '1995-05-10', birthPlace: '', position: 'Blagajnik', hireDate: '2024-03-01', username: '70002', password: '70002', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
     { id: '3', firstName: 'Študent', lastName: '1', code: '80001', birthDate: '2003-09-15', birthPlace: '', position: 'Študentsko delo', hireDate: '2025-01-10', username: '80001', password: '80001', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
     { id: '4', firstName: 'Študent', lastName: '2', code: '80002', birthDate: '2004-02-20', birthPlace: '', position: 'Študentsko delo', hireDate: '2025-02-15', username: '80002', password: '80002', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
+    { id: '5', firstName: 'PODPORA', lastName: 'STANDBUY', code: '00087', birthDate: '', birthPlace: '', position: 'Podpora', hireDate: '2024-01-01', username: '00087', password: '00087', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
   ]);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -126,12 +127,17 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [leaveApprover, setLeaveApprover] = useState("Admin (Direktor: Dženan Kedić)");
   const [leaveDesc, setLeaveDesc] = useState("");
 
-  // Opening state
+  // Poslovanje - Opening/Closing
   const [businessOpened, setBusinessOpened] = useState(false);
+  const [showOpenConfirm, setShowOpenConfirm] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+
+  // Zaključevanje
+  const [showZakljuciConfirm, setShowZakljuciConfirm] = useState(false);
 
   const closingReports = externalReports;
   const categories = ['Higiena', 'Osebna nega', 'Pijače', 'Žvečilni gumi', 'Pisarniški material', 'Kartice', 'Ostalo'];
-  const knownEmployees = ['Dženan Kedić', 'Eva Zakrajšek', 'Študent 1', 'Študent 2'];
+  const knownEmployees = ['Dženan Kedić', 'Eva Zakrajšek', 'Študent 1', 'Študent 2', 'PODPORA STANDBUY'];
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
 
   useEffect(() => {
@@ -238,10 +244,45 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     toast.success('Zahtevek ustvarjen');
   };
 
+  const handleOpenBusiness = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    await supabase.from('business_days').upsert({ date: today, status: 'open', opened_at: new Date().toISOString(), opened_by: role } as any);
+    setBusinessOpened(true);
+    setShowOpenConfirm(false);
+    toast.success('Poslovni dan odprt');
+  };
+
+  const handleCloseBusiness = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    await supabase.from('business_days').update({ status: 'closed', closed_at: new Date().toISOString(), closed_by: role } as any).eq('date', today as any);
+    setBusinessOpened(false);
+    setShowCloseConfirm(false);
+    toast.success('Poslovni dan zaprt');
+  };
+
+  const handleZakljuciPromet = async () => {
+    // Save closing report to DB
+    const reportData = {
+      type: 'Zaključek prometa',
+      cashier_name: role === 'admin' ? 'Direktor' : 'Trgovina',
+      cashier_id: role,
+      total: closingReports.reduce((s, r) => s + r.total, 0),
+      cash: closingReports.reduce((s, r) => s + r.cash, 0),
+      card: closingReports.reduce((s, r) => s + r.card, 0),
+      other: closingReports.reduce((s, r) => s + r.other, 0),
+      transaction_count: closingReports.reduce((s, r) => s + r.transactionCount, 0),
+      item_count: closingReports.reduce((s, r) => s + r.itemCount, 0),
+    };
+    await supabase.from('closing_reports').insert(reportData as any);
+    setShowZakljuciConfirm(false);
+    toast.success('Promet zaključen');
+  };
+
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.ean.includes(searchQuery));
   const filteredOrderProducts = products.filter(p => { const q = orderSearch.toLowerCase(); if (!q) return true; return orderSearchType === 'ean' ? p.ean.includes(q) : p.name.toLowerCase().includes(q); });
 
   const menuItems: { id: Tab; label: string }[] = [
+    { id: 'poslovanje', label: 'Poslovanje' },
     { id: 'artikli', label: 'Artikli' },
     { id: 'narocila', label: 'Naročila' },
     { id: 'dokumenti', label: 'Dokumenti' },
@@ -263,7 +304,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         <div className="absolute bottom-16 right-32 w-16 h-20 rounded-full bg-gradient-to-b from-white/10 to-white/5 blur-md" />
 
         <div className="w-[420px] rounded-2xl p-8 border border-gray-500/40" style={{ background: 'linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 100%)' }}>
-          {/* Clipboard icon */}
           <div className="flex justify-center mb-4">
             <div className="w-24 h-24 bg-gray-700 border-2 border-gray-400 rounded-lg flex items-center justify-center">
               <svg viewBox="0 0 64 64" className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" strokeWidth="2">
@@ -323,13 +363,11 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   if (showBackend && backendLoggedIn) {
     return (
       <div className="h-screen flex" style={{ background: 'radial-gradient(ellipse at center, #3a3a3a 0%, #1a1a1a 50%, #0d0d0d 100%)' }}>
-        {/* Water drops */}
         <div className="absolute top-8 left-[260px] w-6 h-8 rounded-full bg-gradient-to-b from-white/10 to-white/5 blur-sm" />
         <div className="absolute top-20 right-20 w-10 h-14 rounded-full bg-gradient-to-b from-white/8 to-white/3 blur-sm" />
         <div className="absolute bottom-16 right-32 w-16 h-20 rounded-full bg-gradient-to-b from-white/10 to-white/5 blur-md" />
         <div className="absolute bottom-32 left-[300px] w-4 h-5 rounded-full bg-gradient-to-b from-white/10 to-white/5 blur-sm" />
 
-        {/* Sidebar */}
         <div className="w-[230px] flex flex-col shrink-0 z-10">
           <div className="bg-purple-600 text-white font-bold text-center py-3 text-lg">TrgoBackEnd</div>
           <div className="bg-gray-300 flex-1 flex flex-col">
@@ -349,7 +387,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto relative z-10">
           {/* ZAPOSLENI */}
           {backendSubTab === 'zaposleni' && (
@@ -395,13 +432,11 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 </table>
               </div>
 
-              {/* Employee form modal */}
               {showEmployeeForm && editingEmployee && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                   <div className="bg-gray-200 rounded-xl p-6 w-[700px] max-h-[90vh] overflow-y-auto border border-gray-400">
                     <h3 className="font-bold text-lg mb-4">Zaposleni:</h3>
                     <div className="flex gap-8">
-                      {/* Left column */}
                       <div className="flex-1 space-y-1">
                         {[
                           { label: 'Ime:', key: 'firstName' },
@@ -415,7 +450,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           </div>
                         ))}
                       </div>
-                      {/* Right column */}
                       <div className="space-y-1">
                         <div className="flex border border-gray-400 bg-white">
                           <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Datum zaposlitve:</div>
@@ -495,13 +529,11 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               </div>
               <div className="px-6 py-6">
                 <div className="flex gap-6">
-                  {/* Left - labels */}
                   <div className="space-y-1 w-[280px]">
                     {['Zaposleni delavec:', 'Vrsta dopusta:', 'Začetni datum:', 'Končni datum:', 'Bo odobril:', 'Opis:'].map(label => (
                       <div key={label} className="border border-gray-500 bg-white px-4 py-2.5 text-sm font-medium">{label}</div>
                     ))}
                   </div>
-                  {/* Right - inputs */}
                   <div className="flex-1 space-y-1">
                     <select value={leaveEmployee} onChange={e => setLeaveEmployee(e.target.value)}
                       className="w-full border border-gray-400 bg-gray-200 px-4 py-2.5 text-sm focus:outline-none">
@@ -516,11 +548,11 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                       <option>Kompenzacija presežnih ur</option>
                     </select>
                     <input type="date" value={leaveStart} onChange={e => setLeaveStart(e.target.value)}
-                      className="w-full border border-gray-400 bg-gray-200 px-4 py-2.5 text-sm focus:outline-none" placeholder="Izbira: datum začetka dopusta" />
+                      className="w-full border border-gray-400 bg-gray-200 px-4 py-2.5 text-sm focus:outline-none" />
                     <input type="date" value={leaveEnd} onChange={e => setLeaveEnd(e.target.value)}
-                      className="w-full border border-gray-400 bg-gray-200 px-4 py-2.5 text-sm focus:outline-none" placeholder="Izbira: datum konca dopusta" />
+                      className="w-full border border-gray-400 bg-gray-200 px-4 py-2.5 text-sm focus:outline-none" />
                     <div className="w-full border border-gray-400 bg-gray-200 px-4 py-2.5 text-sm text-gray-600">
-                      Izbira: direktor, poslovodja
+                      Admin (Direktor: Dženan Kedić)
                     </div>
                     <textarea rows={4} value={leaveDesc} onChange={e => setLeaveDesc(e.target.value)}
                       className="w-full border border-gray-400 bg-gray-200 px-4 py-2.5 text-sm focus:outline-none resize-none" />
@@ -572,7 +604,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   </tbody>
                 </table>
 
-                {/* Legend */}
                 <div className="mt-8">
                   <table className="w-full border-collapse bg-blue-50 text-xs">
                     <tbody>
@@ -580,13 +611,16 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                         <td className="border border-gray-300 px-3 py-1.5 font-medium">LD – letni dopust</td>
                         <td className="border border-gray-300 px-3 py-1.5 font-medium">DO – dopust zaradi osebnih okoliščin</td>
                         <td className="border border-gray-300 px-3 py-1.5 font-medium">PD – porodnički dopust</td>
-                        <td className="border border-gray-300 px-3 py-1.5 font-medium">ID – izredni dopust</td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-300 px-3 py-1.5 font-medium">BO - bolniška</td>
-                        <td className="border border-gray-300 px-3 py-1.5 font-medium">ND – neplačan dopust</td>
+                        <td className="border border-gray-300 px-3 py-1.5 font-medium">ID – izredni dopust</td>
                         <td className="border border-gray-300 px-3 py-1.5 font-medium">SD – starševski dopust</td>
-                        <td className="border border-gray-300 px-3 py-1.5 font-medium">KPU – kompenzacija presežnih ur</td>
+                        <td className="border border-gray-300 px-3 py-1.5 font-medium">BO – bolniška odsotnost</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 px-3 py-1.5 font-medium">ND – neplačan dopust</td>
+                        <td className="border border-gray-300 px-3 py-1.5 font-medium">KU – kompenzacija ur</td>
+                        <td className="border border-gray-300 px-3 py-1.5 font-medium">DR – drug razlog</td>
                       </tr>
                     </tbody>
                   </table>
@@ -596,7 +630,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
           )}
         </div>
 
-        {/* StandBuy watermark */}
         <div className="absolute bottom-3 right-4 z-0">
           <span className="text-2xl font-black">
             <span className="text-teal-400">Stand</span><span className="text-teal-500">Buy</span>
@@ -618,14 +651,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       <div className="absolute top-1/3 right-10 w-20 h-28 rounded-full bg-gradient-to-b from-white/8 to-white/3 blur-md" />
       <div className="absolute bottom-20 left-1/2 w-8 h-10 rounded-full bg-gradient-to-b from-white/6 to-transparent blur-sm" />
 
-      {/* StandBuy center watermark */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-        <h1 className="text-[120px] font-black tracking-wide opacity-30">
-          <span className="text-teal-400">Stand</span><span className="text-teal-500">Buy</span>
-          <span className="text-orange-400 text-[100px] ml-2">★</span>
-        </h1>
-      </div>
-
       {/* Bottom right small logo */}
       <div className="absolute bottom-3 right-4 z-10">
         <span className="text-2xl font-black">
@@ -634,24 +659,10 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         </span>
       </div>
 
-      {/* OTVORITEV / ZAPIRANJE buttons top right */}
-      <div className="absolute top-6 right-6 z-20 flex gap-3">
-        <button onClick={() => { setBusinessOpened(true); toast.success('Poslovanje odprto'); }}
-          className="px-8 py-4 text-white font-bold text-lg rounded-lg transition-colors" style={{ background: '#5b9bbf' }}>
-          OTVORITEV
-        </button>
-        <button onClick={() => { setBusinessOpened(false); toast.success('Poslovanje zaprto'); }}
-          className="px-8 py-4 text-white font-bold text-lg rounded-lg transition-colors" style={{ background: '#5b9bbf' }}>
-          ZAPIRANJE
-        </button>
-      </div>
-
       {/* Sidebar */}
       <div className="w-[230px] flex flex-col shrink-0 z-10 relative">
-        {/* BackOffice header */}
         <div className="bg-gray-500 text-white font-bold text-center py-3 text-lg border-b border-gray-600">BackOffice</div>
         
-        {/* Menu items */}
         <div className="bg-gray-300 flex-1 flex flex-col">
           {menuItems.map(item => (
             <button key={item.id} onClick={() => setActiveTab(item.id)}
@@ -664,7 +675,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
           <div className="flex-1" />
 
-          {/* TrgoBackEnd button */}
           <div className="px-3 pb-2">
             <button onClick={() => setShowBackend(true)}
               className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-sm transition-colors">
@@ -672,7 +682,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
             </button>
           </div>
 
-          {/* IZHOD button */}
           <div className="px-3 pb-3">
             <button onClick={onLogout}
               className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-sm transition-colors">
@@ -684,6 +693,63 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
       {/* Main content area */}
       <div className="flex-1 overflow-y-auto z-10 relative">
+
+        {/* POSLOVANJE - matches Diapozitiv2-4 exactly */}
+        {activeTab === 'poslovanje' && (
+          <div className="relative h-full">
+            {/* Title bar */}
+            <div className="bg-gray-400/60 px-6 py-3 inline-block min-w-[500px]">
+              <h2 className="text-white font-bold text-xl">Poslovanje</h2>
+            </div>
+
+            {/* OTVORITEV and ZAPIRANJE buttons */}
+            <div className="flex gap-4 mt-6 ml-8">
+              <button onClick={() => setShowOpenConfirm(true)}
+                className={`px-12 py-5 font-bold text-xl rounded-xl transition-colors border-2 ${
+                  businessOpened 
+                    ? 'bg-gray-300 border-gray-400 text-gray-700' 
+                    : 'bg-green-600 hover:bg-green-700 border-green-700 text-white'
+                }`}
+                style={!businessOpened ? {} : {}}>
+                OTVORITEV
+              </button>
+              <button onClick={() => setShowCloseConfirm(true)}
+                className={`px-12 py-5 font-bold text-xl rounded-xl transition-colors border-2 ${
+                  !businessOpened
+                    ? 'bg-gray-300 border-gray-400 text-gray-700'
+                    : 'bg-red-600 hover:bg-red-700 border-red-700 text-white'
+                }`}>
+                ZAPIRANJE
+              </button>
+            </div>
+
+            {/* Confirmation dialog for OTVORITEV */}
+            {showOpenConfirm && (
+              <div className="mt-6 ml-8 bg-white border-4 border-gray-800 rounded-lg p-8 max-w-[500px]">
+                <p className="text-center text-lg mb-1">Ali ste prepričani, da želite</p>
+                <p className="text-center text-lg mb-6"><span className="text-green-600 font-bold">OTVORITI</span> poslovni dan?</p>
+                <div className="flex justify-center gap-6">
+                  <button onClick={handleOpenBusiness} className="text-xl font-bold hover:underline">Da</button>
+                  <span className="text-xl">/</span>
+                  <button onClick={() => setShowOpenConfirm(false)} className="text-xl font-bold hover:underline">Ne</button>
+                </div>
+              </div>
+            )}
+
+            {/* Confirmation dialog for ZAPIRANJE */}
+            {showCloseConfirm && (
+              <div className="mt-6 ml-8 bg-white border-4 border-gray-800 rounded-lg p-8 max-w-[500px]">
+                <p className="text-center text-lg mb-1">Ali ste prepričani, da želite</p>
+                <p className="text-center text-lg mb-6"><span className="text-red-600 font-bold">ZAPRETI</span> poslovni dan?</p>
+                <div className="flex justify-center gap-6">
+                  <button onClick={handleCloseBusiness} className="text-xl font-bold hover:underline">Da</button>
+                  <span className="text-xl">/</span>
+                  <button onClick={() => setShowCloseConfirm(false)} className="text-xl font-bold hover:underline">Ne</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ARTIKLI */}
         {activeTab === 'artikli' && (
@@ -1018,22 +1084,32 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
           </div>
         )}
 
-        {/* ZAKLJUČEVANJE */}
+        {/* ZAKLJUČEVANJE - matches Diapozitiv5-4 exactly */}
         {activeTab === 'zakljucevanje' && (
-          <div>
-            <div className="bg-gray-600/80 px-6 py-3"><h2 className="text-white font-bold text-xl">Zaključevanje</h2></div>
-            <div className="px-6 py-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-200 border border-gray-400 rounded-lg p-6 text-center">
-                  <h3 className="font-bold text-gray-800 mb-2">Izkupiček blagajnika</h3>
-                  <p className="text-2xl font-bold">{closingReports.reduce((s, r) => s + r.total, 0).toFixed(2)} €</p>
-                </div>
-                <div className="bg-gray-200 border border-gray-400 rounded-lg p-6 text-center">
-                  <h3 className="font-bold text-gray-800 mb-2">Zaključi blagajno</h3>
-                  <button onClick={() => toast.success('Blagajna zaključena')} className="px-6 py-2 bg-red-600 text-white font-bold rounded">Zaključi</button>
+          <div className="relative h-full">
+            <div className="bg-gray-400/60 px-6 py-3 inline-block min-w-[500px]">
+              <h2 className="text-white font-bold text-xl">Zaključevanje</h2>
+            </div>
+
+            {/* Zaključi promet button - top right like image */}
+            <div className="absolute top-4 right-6">
+              <button onClick={() => setShowZakljuciConfirm(true)}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors">
+                Zaključi promet
+              </button>
+            </div>
+
+            {/* Confirmation dialog */}
+            {showZakljuciConfirm && (
+              <div className="mt-6 ml-8 bg-white border-4 border-gray-800 rounded-lg p-8 max-w-[500px]">
+                <p className="text-center text-lg mb-6">Ali ste pripravljeni zaključiti?</p>
+                <div className="flex justify-center gap-6">
+                  <button onClick={handleZakljuciPromet} className="text-xl font-bold hover:underline">Da</button>
+                  <span className="text-xl">/</span>
+                  <button onClick={() => setShowZakljuciConfirm(false)} className="text-xl font-bold hover:underline">Ne</button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -1171,7 +1247,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               </table>
             </div>
 
-            {/* Partner form modal */}
             {showPartnerForm && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                 <div className="bg-gray-200 rounded-xl p-6 w-[550px] border border-gray-400">
@@ -1196,7 +1271,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                     ))}
                   </div>
 
-                  <h4 className="font-bold text-sm mb-2">DAČNI PODATKI:</h4>
+                  <h4 className="font-bold text-sm mb-2">DAVČNI PODATKI:</h4>
                   <div className="space-y-1 mb-4">
                     {[
                       { label: 'ID za DDV:', value: pVatId, setter: setPVatId },
@@ -1274,12 +1349,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   <span className="font-bold text-white">STATUS: </span>
                   {authCode && authCountdown > 0 ? (
                     <span className="text-green-400 font-bold">AKTIVNA</span>
-                  ) : (
-                    <span className="text-gray-400">NEAKTIVNA</span>
-                  )}
-                  <span className="text-gray-400"> / </span>
-                  {authCode && authCountdown > 0 ? (
-                    <span className="text-gray-400">NEAKTIVNA</span>
                   ) : (
                     <span className="text-red-400 font-bold">NEAKTIVNA</span>
                   )}

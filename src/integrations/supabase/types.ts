@@ -14,6 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_days: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          date: string
+          id: string
+          opened_at: string | null
+          opened_by: string | null
+          status: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          date: string
+          id?: string
+          opened_at?: string | null
+          opened_by?: string | null
+          status?: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          date?: string
+          id?: string
+          opened_at?: string | null
+          opened_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      closing_reports: {
+        Row: {
+          card: number
+          cash: number
+          cashier_id: string
+          cashier_name: string
+          created_at: string
+          id: string
+          item_count: number
+          other: number
+          total: number
+          transaction_count: number
+          type: string
+        }
+        Insert: {
+          card?: number
+          cash?: number
+          cashier_id: string
+          cashier_name: string
+          created_at?: string
+          id?: string
+          item_count?: number
+          other?: number
+          total?: number
+          transaction_count?: number
+          type: string
+        }
+        Update: {
+          card?: number
+          cash?: number
+          cashier_id?: string
+          cashier_name?: string
+          created_at?: string
+          id?: string
+          item_count?: number
+          other?: number
+          total?: number
+          transaction_count?: number
+          type?: string
+        }
+        Relationships: []
+      }
+      gift_vouchers: {
+        Row: {
+          amount: number
+          code: string
+          created_at: string
+          created_by: string
+          id: string
+          is_used: boolean
+          remaining_amount: number
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          amount?: number
+          code: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_used?: boolean
+          remaining_amount?: number
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          amount?: number
+          code?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_used?: boolean
+          remaining_amount?: number
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           address: string
@@ -92,12 +200,87 @@ export type Database = {
         }
         Relationships: []
       }
+      receipt_counters: {
+        Row: {
+          id: string
+          last_number: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          id?: string
+          last_number?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          id?: string
+          last_number?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount_paid: number
+          cashier_id: string
+          cashier_name: string
+          change_amount: number
+          created_at: string
+          discount: number
+          id: string
+          invoice_data: Json | null
+          items: Json
+          payment_method: string
+          receipt_number: string
+          subtotal: number
+          total: number
+          void_reason: string | null
+          voided: boolean
+        }
+        Insert: {
+          amount_paid?: number
+          cashier_id: string
+          cashier_name: string
+          change_amount?: number
+          created_at?: string
+          discount?: number
+          id?: string
+          invoice_data?: Json | null
+          items?: Json
+          payment_method?: string
+          receipt_number: string
+          subtotal?: number
+          total?: number
+          void_reason?: string | null
+          voided?: boolean
+        }
+        Update: {
+          amount_paid?: number
+          cashier_id?: string
+          cashier_name?: string
+          change_amount?: number
+          created_at?: string
+          discount?: number
+          id?: string
+          invoice_data?: Json | null
+          items?: Json
+          payment_method?: string
+          receipt_number?: string
+          subtotal?: number
+          total?: number
+          void_reason?: string | null
+          voided?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_next_receipt_number: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

@@ -27,6 +27,7 @@ const cashiers: Cashier[] = [
   { id: '70002', name: 'Eva Zakrajšek', password: '70002', role: 'cashier', drawerCode: '4268' },
   { id: '80001', name: 'Študent 1', password: '80001', role: 'cashier', drawerCode: '2468' },
   { id: '80002', name: 'Študent 2', password: '80002', role: 'cashier', drawerCode: '2468' },
+  { id: '00087', name: 'PODPORA STANDBUY', password: '00087', role: 'admin', drawerCode: '1359' },
 ];
 
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
@@ -51,6 +52,7 @@ const Index = () => {
   const [showDrawerDialog, setShowDrawerDialog] = useState(false);
   const [pendingInvoiceData, setPendingInvoiceData] = useState<InvoiceData | undefined>();
   const [closingHistory, setClosingHistory] = useState<ClosingReport[]>([]);
+  const [receiptCounter, setReceiptCounter] = useState(0);
 
   // Dialog states
   const [showManagerCodeDialog, setShowManagerCodeDialog] = useState(false);
@@ -74,14 +76,39 @@ const Index = () => {
       }
     };
     fetchProducts();
-    const channel = supabase.channel('pos-products').on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts()).subscribe();
+
+    // Load transactions from DB
+    const fetchTransactions = async () => {
+      const { data } = await supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(100);
+      if (data) {
+        setTransactions((data as any[]).map(t => ({
+          id: t.receipt_number,
+          items: t.items as CartItem[],
+          subtotal: Number(t.subtotal),
+          discount: Number(t.discount),
+          total: Number(t.total),
+          paymentMethod: t.payment_method,
+          amountPaid: Number(t.amount_paid),
+          change: Number(t.change_amount),
+          timestamp: new Date(t.created_at),
+          cashierId: t.cashier_id,
+          cashierName: t.cashier_name,
+          invoiceData: t.invoice_data as InvoiceData | undefined,
+        })));
+      }
+    };
+    fetchTransactions();
+
+    const channel = supabase.channel('pos-products')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => fetchTransactions())
+      .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
   const productsLookup = getProductsLookup(products);
   const isAdmin = currentCashier?.role === 'admin';
 
-  // Filter out stornoed items for total calculation but keep them visible
   const activeCartItems = cartItems.filter(item => !item.isStornoed);
   const subtotal = activeCartItems.reduce((sum, item) => item.isReturn ? sum - item.price * item.quantity : sum + item.price * item.quantity, 0);
   const totalDiscount = activeCartItems.reduce((sum, item) => item.discount && item.originalPrice ? sum + (item.originalPrice - item.price) * item.quantity : sum, 0);
@@ -126,35 +153,32 @@ const Index = () => {
     if (selectedItemIndex !== null && cartItems[selectedItemIndex] && !cartItems[selectedItemIndex].isStornoed) {
       const newItems = [...cartItems]; const item = newItems[selectedItemIndex];
       item.originalPrice = item.originalPrice || item.price;
-      if (isPercentage) { item.discount = discount; item.price = item.originalPrice * (1 - discount / 100); }
-      else { item.price = Math.max(0, item.originalPrice - discount); item.discount = ((item.originalPrice - item.price) / item.originalPrice) * 100; }
+      if (isPercentage) { item.discount = discount; item.price = parseFloat((item.originalPrice * (1 - discount / 100)).toFixed(2)); }
+      else { item.price = Math.max(0, parseFloat((item.originalPrice - discount).toFixed(2))); item.discount = parseFloat((((item.originalPrice - item.price) / item.originalPrice) * 100).toFixed(2)); }
       setCartItems(newItems);
-      toast.success(`Popust ${discount}% dodan`);
+      toast.success(`Popust ${discount}${isPercentage ? '%' : '€'} dodan`);
     } else {
       setCartItems(cartItems.map(item => {
         if (item.isStornoed) return item;
         const op = item.originalPrice || item.price;
-        if (isPercentage) return { ...item, originalPrice: op, discount, price: op * (1 - discount / 100) };
-        const np = Math.max(0, op - discount);
-        return { ...item, originalPrice: op, discount: ((op - np) / op) * 100, price: np };
+        if (isPercentage) return { ...item, originalPrice: op, discount, price: parseFloat((op * (1 - discount / 100)).toFixed(2)) };
+        const np = Math.max(0, parseFloat((op - discount).toFixed(2)));
+        return { ...item, originalPrice: op, discount: parseFloat((((op - np) / op) * 100).toFixed(2)), price: np };
       }));
-      toast.success(`Popust ${discount}% dodan na vse artikle`);
+      toast.success(`Popust ${discount}${isPercentage ? '%' : '€'} dodan na vse artikle`);
     }
   };
 
-  // Storno logic: last item = no code needed, others = admin code required
+  // Storno logic
   const handleStorno = () => {
     if (selectedItemIndex === null) { toast.warning('Izberite artikel za storno'); return; }
     if (cartItems[selectedItemIndex]?.isStornoed) { toast.warning('Artikel je že storniran'); return; }
     
-    const activeItems = cartItems.filter(item => !item.isStornoed);
     const lastActiveIndex = cartItems.length - 1 - [...cartItems].reverse().findIndex(item => !item.isStornoed);
     
     if (selectedItemIndex === lastActiveIndex) {
-      // Last scanned item - no admin code needed
       handleStornoItem(selectedItemIndex);
     } else {
-      // Not the last item - require admin code
       setPendingStornoIndex(selectedItemIndex);
       setManagerCodeTitle("Koda poslovodje za storno");
       setShowManagerCodeDialog(true);
@@ -199,6 +223,7 @@ const Index = () => {
     toast.success(`${product.name} dodan`);
   };
 
+  // Quantity: directly set the quantity, no auto-offer
   const handleQuantityConfirm = (quantity: number) => {
     if (selectedItemIndex !== null && cartItems[selectedItemIndex] && !cartItems[selectedItemIndex].isStornoed) {
       const newItems = [...cartItems]; newItems[selectedItemIndex] = { ...newItems[selectedItemIndex], quantity };
@@ -232,24 +257,96 @@ const Index = () => {
     }
   };
 
-  const createTransaction = (paymentMethod: string, amountPaid: number, change: number = 0): Transaction => ({
-    id: Date.now().toString().slice(-6), items: cartItems, subtotal, discount: totalDiscount, total,
-    paymentMethod, amountPaid, change, timestamp: new Date(),
-    cashierId: currentCashier?.id || '', cashierName: currentCashier?.name || '', invoiceData: pendingInvoiceData,
-  });
+  const getNextReceiptNumber = async (): Promise<string> => {
+    const { data, error } = await supabase.rpc('get_next_receipt_number' as any);
+    if (error || !data) {
+      // Fallback: use local counter
+      const next = receiptCounter + 1;
+      setReceiptCounter(next);
+      return String(next).padStart(6, '0');
+    }
+    return data as string;
+  };
+
+  const createTransaction = async (paymentMethod: string, amountPaid: number, change: number = 0): Promise<Transaction> => {
+    const receiptNumber = await getNextReceiptNumber();
+    
+    const transaction: Transaction = {
+      id: receiptNumber,
+      items: cartItems,
+      subtotal,
+      discount: totalDiscount,
+      total,
+      paymentMethod,
+      amountPaid,
+      change,
+      timestamp: new Date(),
+      cashierId: currentCashier?.id || '',
+      cashierName: currentCashier?.name || '',
+      invoiceData: pendingInvoiceData,
+    };
+
+    // Save to DB
+    await supabase.from('transactions').insert({
+      receipt_number: receiptNumber,
+      items: cartItems as any,
+      subtotal,
+      discount: totalDiscount,
+      total,
+      payment_method: paymentMethod,
+      amount_paid: amountPaid,
+      change_amount: change,
+      cashier_id: currentCashier?.id || '',
+      cashier_name: currentCashier?.name || '',
+      invoice_data: pendingInvoiceData as any,
+    } as any);
+
+    return transaction;
+  };
 
   const handleCashComplete = async (amountPaid: number) => {
-    const transaction = createTransaction('gotovina', amountPaid, amountPaid - total);
+    const transaction = await createTransaction('gotovina', amountPaid, amountPaid - total);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
     await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
     toast.success('Račun zaključen');
   };
 
   const handleCardComplete = async () => {
-    const transaction = createTransaction('kartica', total, 0);
+    const transaction = await createTransaction('kartica', total, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
     await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
     toast.success('Račun zaključen');
+  };
+
+  const handleBonPayment = async (code: string, amount: number) => {
+    // Check if bon exists and has balance
+    const { data: voucher } = await supabase.from('gift_vouchers').select('*').eq('code', code as any).single();
+    if (!voucher) {
+      toast.error('Bon ni najden');
+      return;
+    }
+    const v = voucher as any;
+    if (v.is_used || v.remaining_amount <= 0) {
+      toast.error('Bon je že porabljen');
+      return;
+    }
+    if (v.remaining_amount < total) {
+      toast.error(`Bon nima dovolj sredstev (${v.remaining_amount} €)`);
+      return;
+    }
+
+    // Deduct from voucher
+    await supabase.from('gift_vouchers').update({
+      remaining_amount: v.remaining_amount - total,
+      is_used: v.remaining_amount - total <= 0,
+      used_by: currentCashier?.id,
+      used_at: new Date().toISOString(),
+    } as any).eq('id', v.id as any);
+
+    const transaction = await createTransaction('darilni bon', total, 0);
+    setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
+    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    toast.success('Plačilo z bonom uspešno');
   };
 
   const handleNewTransaction = () => {
@@ -263,16 +360,62 @@ const Index = () => {
     setCartItems(t.items.filter(i => !i.isStornoed).map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) })));
     setPosTab('blagajna'); toast.success('Artikli kopirani v nov račun');
   };
-  const handleVoidReceipt = (t: Transaction) => {
+  const handleVoidReceipt = async (t: Transaction) => {
+    // Update in DB
+    await supabase.from('transactions').update({ voided: true } as any).eq('receipt_number', t.id as any);
     setTransactions(prev => prev.filter(tr => tr.id !== t.id));
     toast.success(`Račun #${t.id} storniran`);
   };
 
-  const handleEndShift = (report: ClosingReport) => { setClosingHistory(prev => [report, ...prev]); toast.success('Izmena zaključena'); handleLogout(); };
-  const handleEndDay = (report: ClosingReport) => { setClosingHistory(prev => [report, ...prev]); toast.success('Blagajna zaključena'); handleLogout(); };
+  const handleEndShift = async (report: ClosingReport) => {
+    // Save to DB
+    await supabase.from('closing_reports').insert({
+      type: report.type,
+      cashier_name: report.cashier,
+      cashier_id: report.cashierId,
+      total: report.total,
+      cash: report.cash,
+      card: report.card,
+      other: report.other,
+      transaction_count: report.transactionCount,
+      item_count: report.itemCount,
+    } as any);
+    setClosingHistory(prev => [report, ...prev]);
+    toast.success('Izmena zaključena');
+    handleLogout();
+  };
+
+  const handleEndDay = async (report: ClosingReport) => {
+    await supabase.from('closing_reports').insert({
+      type: report.type,
+      cashier_name: report.cashier,
+      cashier_id: report.cashierId,
+      total: report.total,
+      cash: report.cash,
+      card: report.card,
+      other: report.other,
+      transaction_count: report.transactionCount,
+      item_count: report.itemCount,
+    } as any);
+    setClosingHistory(prev => [report, ...prev]);
+    toast.success('Blagajna zaključena');
+    handleLogout();
+  };
 
   const handlePartnerInvoiceConfirm = (invoiceData: InvoiceData, paymentMethod: string) => {
     setPendingInvoiceData(invoiceData); setShowPartnerInvoiceDialog(false);
+  };
+
+  // Gift voucher creation
+  const handleCreateGiftVoucher = async (code: string, amount: number) => {
+    await supabase.from('gift_vouchers').insert({
+      code,
+      amount,
+      remaining_amount: amount,
+      created_by: currentCashier?.id || '',
+    } as any);
+    toast.success(`Darilni bon ${code} ustvarjen (${amount} EUR)`);
+    setScreen('main');
   };
 
   // Login
@@ -310,8 +453,7 @@ const Index = () => {
             total={total}
             cartItems={cartItems.filter(i => !i.isStornoed).map(i => ({ name: i.name }))}
             onConfirm={(code, amount, type) => {
-              toast.success(`Bon ${code} ustvarjen (${amount} EUR)`);
-              setScreen('main');
+              handleCreateGiftVoucher(code, amount);
             }}
             onClose={() => setScreen('main')}
           />
@@ -322,6 +464,7 @@ const Index = () => {
             cartItems={cartItems.filter(i => !i.isStornoed)} subtotal={subtotal} total={total} totalDiscount={totalDiscount}
             onCashPayment={handleCashComplete} onCardPayment={handleCardComplete}
             onInvoice={() => setShowPartnerInvoiceDialog(true)} onBack={() => setScreen('main')}
+            onBonPayment={handleBonPayment}
           />
         )}
 
