@@ -334,7 +334,32 @@ const Index = () => {
     setScreen('payment');
   };
 
-  const handleOpenDrawer = () => {
+  // Physical keyboard support
+  useEffect(() => {
+    if (!keyboardEnabled || appMode !== 'pos' || posTab !== 'blagajna' || screen !== 'main') return;
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (showSettingsDialog || showManagerCodeDialog || showReturnManagerCode || showProductSearchDialog || showQuantityDialog || showDiscountDialog || showReturnDialog || showPriceCheckDialog || showPartnerInvoiceDialog) return;
+
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        handleKeyPress(e.key);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleConfirm();
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleDelete();
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        handleProceedToPayment();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [keyboardEnabled, appMode, posTab, screen, inputValue, cartItems, selectedItemIndex, showSettingsDialog, showManagerCodeDialog, showReturnManagerCode, showProductSearchDialog, showQuantityDialog, showDiscountDialog, showReturnDialog, showPriceCheckDialog, showPartnerInvoiceDialog]);
+
     if (currentCashier) setShowDrawerDialog(true);
   };
 
