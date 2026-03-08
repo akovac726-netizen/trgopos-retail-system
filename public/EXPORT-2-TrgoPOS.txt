@@ -1,0 +1,79 @@
+================================================================
+ STANDBUY TrgoPOS – BLAGAJNIŠKI PROGRAM
+ Izvoz: 2026-03-08
+================================================================
+
+OPIS:
+TrgoPOS je blagajniški (POS) program s prijavo blagajnikov,
+skeniranjem artiklov, plačili (gotovina, kartica, bon),
+zaključevanjem blagajne in celotnim receipt/faktura sistemom.
+
+POVEZAVA NA BAZO:
+  VITE_SUPABASE_URL=https://rzcidhfpazukmfypdzqg.supabase.co
+  VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+================================================================
+DATOTEKE ZA NOV PROJEKT:
+================================================================
+
+GLAVNE:
+  src/pages/Index.tsx                    (1069 vrstic) – Glavni POS kontroler
+  src/types/pos.ts                       – Tipi (CartItem, Transaction, Cashier...)
+  src/types/inventory.ts                 – Inventory tipi
+
+KOMPONENTE (src/components/pos/):
+  LoginScreen.tsx                        – Prijava blagajnika + izbira blagajne
+  POSHeader.tsx                          – Zgornja vrstica z zavihki
+  BlagajnaTab.tsx                        – Glavni blagajniški zaslon
+  PaymentTab.tsx                         – Plačilni zavihek
+  PaymentScreen.tsx                      – Izbira plačilnega sredstva
+  CashPaymentScreen.tsx                  – Plačilo z gotovino
+  CardPaymentScreen.tsx                  – Plačilo s kartico
+  CompletionScreen.tsx                   – Zaključen račun / potrdilo
+  CartItemList.tsx                       – Seznam artiklov v košarici
+  ActionButtons.tsx                      – Akcijski gumbi (storno, popust, vračilo...)
+  InputDisplay.tsx                       – Prikaz EAN vnosa
+  NumericKeypad.tsx                      – Številčnica
+  TotalDisplay.tsx                       – Prikaz skupnega zneska
+  QuantityInputDialog.tsx                – Dialog za vnos količine
+  DiscountInputDialog.tsx                – Dialog za vnos popusta
+  ProductSearchDialog.tsx                – Iskanje artiklov
+  PriceCheckDialog.tsx                   – Preverjanje cene
+  ReturnDialog.tsx                       – Dialog za vračilo
+  InvoiceDialog.tsx                      – Vnos podatkov za fakturo
+  PartnerInvoiceDialog.tsx               – Partner faktura
+  PartialPaymentDialog.tsx               – Delno plačilo
+  DrawerCodeDialog.tsx                   – Koda za odprtje predala
+  ManagerCodeDialog.tsx                  – Koda poslovodje
+  ShiftEndDialog.tsx                     – Zaključek izmene
+  ToolsDialog.tsx                        – Orodja
+  ReceiptsDialog.tsx                     – Pregled računov
+  GiftVoucherDialog.tsx                  – Darilni boni
+  GiftCardRedeemFlow.tsx                 – Unovčenje darilne kartice
+  BakeryDialog.tsx                       – Pekarski artikli
+  WeighingDialog.tsx                     – Tehtanje
+  WeightCheckDialog.tsx                  – Kontrola teže
+  RacuniTab.tsx                          – Zavihek Računi
+  ZakljucekTab.tsx                       – Zavihek Zaključek
+  TransactionHistory.tsx                 – Zgodovina transakcij
+  SalesReports.tsx                       – Prodajna poročila
+
+SREDSTVA (src/assets/bakery/):
+  kajzarice.png, kruh-beli.png, kruh-crni.png, kruh-koruzni.png,
+  kruh-semeni.png, lepinje.png, male-lepinje.png,
+  zemlje-bele.png, zemlje-crne.png, zemlje-semeni.png
+
+POTREBNI PAKETI:
+  @supabase/supabase-js, sonner, lucide-react, react-router-dom,
+  date-fns, recharts
+
+================================================================
+OPOMBA:
+V tem izvozu NI BackOffice modulov (BackOfficeDashboard.tsx,
+BoniKarticeModule.tsx) – ti so v EXPORT-1-BackOffice.txt.
+POS Terminal (POSTerminalApp.tsx) je v EXPORT-3-POSTerminal.txt.
+
+Za celotni projekt kopiraj vse datoteke iz Code Editorja.
+Glavna Index.tsx vsebuje logiko za VSE tri module skupaj –
+če želiš samo POS, odstrani BackOffice in Terminal logiko.
+================================================================
