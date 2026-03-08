@@ -711,7 +711,14 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={setPosTab} onLogout={handleLogout}
+      <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={(tab) => {
+          if (isSelfCheckout && (tab === 'racuni' || tab === 'zakljucek')) {
+            setPendingTabChange(tab);
+            setShowTabAdminCode(true);
+          } else {
+            setPosTab(tab);
+          }
+        }} onLogout={handleLogout}
         isSelfCheckout={isSelfCheckout} selfCheckoutLabel={selfCheckoutLabel}
         onInfo={() => setShowInfoDialog(true)}
         onSettings={() => {
