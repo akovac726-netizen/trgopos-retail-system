@@ -13,15 +13,19 @@ interface PaymentTabProps {
   onInvoice: () => void;
   onBack: () => void;
   onBonPayment?: (code: string, amount: number) => void;
+  onGiftCardPayment?: (code: string) => void;
   keyboardEnabled?: boolean;
 }
 
-const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, keyboardEnabled }: PaymentTabProps) => {
-  const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon'>('select');
+const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, keyboardEnabled }: PaymentTabProps) => {
+  const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon' | 'giftcard'>('select');
   const [cardWaiting, setCardWaiting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [bonCode, setBonCode] = useState("");
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [giftCardPin, setGiftCardPin] = useState("");
+  const [giftCardPinStep, setGiftCardPinStep] = useState(false);
   const lastEnterRef = useRef<number>(0);
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -58,6 +62,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
         // On selection screen: 1=Gotovina, 2=Kartica, Escape=Nazaj
         if (e.key === '1') { e.preventDefault(); setStep('cash'); }
         else if (e.key === '2') { e.preventDefault(); setStep('card'); }
+        else if (e.key === '3') { e.preventDefault(); setGiftCardCode(''); setGiftCardPin(''); setGiftCardPinStep(false); setStep('giftcard'); }
         else if (e.key === 'Escape') { e.preventDefault(); onBack(); }
         return;
       }
@@ -75,6 +80,17 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
           e.preventDefault();
           const hasVoucherInCart = cartItems.some(i => i.name.toLowerCase().includes('bon') || i.name.toLowerCase().includes('darilni'));
           if (!hasVoucherInCart && bonCode.length >= 4 && onBonPayment) onBonPayment(bonCode, total);
+        }
+        else if (e.key === 'Escape') { e.preventDefault(); setStep('select'); }
+        return;
+      }
+
+      if (step === 'giftcard') {
+        if (e.key >= '0' && e.key <= '9') { e.preventDefault(); setGiftCardCode(prev => prev + e.key); }
+        else if (e.key === 'Backspace') { e.preventDefault(); setGiftCardCode(prev => prev.slice(0, -1)); }
+        else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (giftCardCode.length >= 8 && onGiftCardPayment) onGiftCardPayment(giftCardCode);
         }
         else if (e.key === 'Escape') { e.preventDefault(); setStep('select'); }
         return;
@@ -115,7 +131,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [keyboardEnabled, step, cardWaiting, inputValue, confirmed, bonCode, total, cartItems, onCashPayment, onCardPayment, onBack, onBonPayment]);
+  }, [keyboardEnabled, step, cardWaiting, inputValue, confirmed, bonCode, giftCardCode, total, cartItems, onCashPayment, onCardPayment, onBack, onBonPayment, onGiftCardPayment]);
 
   const numKeys = [
     ['7', '8', '9'],
@@ -164,7 +180,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
               className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
               Kartica
             </button>
-            <button
+            <button onClick={() => { setGiftCardCode(''); setGiftCardPin(''); setGiftCardPinStep(false); setStep('giftcard'); }}
               className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
               Darilna<br/>kartica
             </button>
@@ -291,6 +307,63 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
                 disabled={bonCode.length < 4 || hasVoucherInCart}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center disabled:opacity-40 transition-colors p-2">
                 Potrdi bon
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Gift card payment
+  if (step === 'giftcard') {
+    return (
+      <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: bg }}>
+        <div className="flex-[4] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-2">
+          <div className="font-bold text-lg">Plačilo z darilno kartico</div>
+          <div className="border-t border-dashed border-gray-400 pt-2" />
+          <div>Skupaj za plačilo: <strong>{formatPrice(total)} €</strong></div>
+          <p className="text-gray-500 text-xs mt-4">Vnesite 8-mestno kodo kartice ali skenirajte EAN.</p>
+        </div>
+
+        <div className="flex-[6] flex flex-col gap-3">
+          <div className="border-2 border-gray-600 bg-white rounded-lg p-4">
+            <h3 className="font-bold text-base mb-2">Koda darilne kartice:</h3>
+            <div className="border-2 border-gray-600 bg-gray-50 rounded-lg p-3 font-mono text-xl min-h-[2rem]">{giftCardCode}</div>
+          </div>
+
+          <div className="flex gap-3 flex-1">
+            <div className="flex flex-col gap-2 flex-1">
+              {numKeys.map((row, ri) => (
+                <div key={ri} className="flex gap-2 flex-1">
+                  {row.map(key => (
+                    <button key={key} onClick={() => setGiftCardCode(prev => prev + key)}
+                      className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
+                      {key}
+                    </button>
+                  ))}
+                </div>
+              ))}
+              <div className="flex gap-2 flex-1">
+                <button onClick={() => setGiftCardCode(prev => prev + '0')} className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">0</button>
+                <button className="flex-1 bg-gray-200 border border-gray-300 rounded-lg font-bold text-2xl text-gray-400 cursor-default">,</button>
+                <button onClick={() => setGiftCardCode(prev => prev.slice(0, -1))} className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
+                  <Delete className="w-7 h-7 text-white" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 w-36">
+              <button onClick={() => setStep('select')}
+                className="h-16 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
+                ← Nazaj
+              </button>
+              <button onClick={() => {
+                if (giftCardCode.length >= 8 && onGiftCardPayment) onGiftCardPayment(giftCardCode);
+              }}
+                disabled={giftCardCode.length < 8}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center disabled:opacity-40 transition-colors p-2">
+                Potrdi<br/>kartico
               </button>
             </div>
           </div>
