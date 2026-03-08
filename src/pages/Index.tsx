@@ -89,6 +89,9 @@ const Index = () => {
   const [pendingStornoIndex, setPendingStornoIndex] = useState<number | null>(null);
   const [managerCodeTitle, setManagerCodeTitle] = useState("Koda poslovodje");
   const [keyboardEnabled, setKeyboardEnabled] = useState(() => localStorage.getItem('trgopos_keyboard') === 'true');
+  const [pointsDiscount, setPointsDiscount] = useState(0);
+  const [pointsCardId, setPointsCardId] = useState<string | null>(null);
+  const [pointsUsed, setPointsUsed] = useState(0);
 
 
   // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
@@ -167,7 +170,7 @@ const Index = () => {
   const activeCartItems = cartItems.filter(item => !item.isStornoed);
   const subtotal = activeCartItems.reduce((sum, item) => item.isReturn ? sum - item.price * item.quantity : sum + item.price * item.quantity, 0);
   const totalDiscount = activeCartItems.reduce((sum, item) => item.discount && item.originalPrice ? sum + (item.originalPrice - item.price) * item.quantity : sum, 0);
-  const total = subtotal;
+  const total = subtotal - pointsDiscount;
 
   const lastAddedItem = cartItems.length > 0 ? cartItems[cartItems.length - 1] : null;
 
