@@ -205,6 +205,9 @@ const Index = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => fetchTransactions())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => fetchEmployees())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'self_checkout_config' }, () => checkSelfCheckout())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gift_vouchers' }, () => {})
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gift_cards' }, () => {})
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'promotions' }, () => fetchProducts())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
