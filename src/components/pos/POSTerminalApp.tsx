@@ -171,6 +171,59 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
     }, 3000);
   };
 
+  // Gift card PIN verification
+  const handleGiftPinKey = (key: string) => {
+    if (giftPinValue.length < 6) {
+      setGiftPinValue(prev => prev + key);
+      setGiftPinError(false);
+    }
+  };
+
+  const handleGiftPinDelete = () => {
+    setGiftPinValue(prev => prev.slice(0, -1));
+    setGiftPinError(false);
+  };
+
+  const handleGiftPinConfirm = async () => {
+    if (!currentRequest || giftPinValue.length < 1) return;
+    const metadata = (currentRequest as any).metadata;
+    if (!metadata?.card_id) return;
+
+    // Look up the card PIN from DB
+    const { data: card } = await supabase.from('gift_cards').select('pin').eq('id', metadata.card_id).single();
+    if (card && card.pin === giftPinValue) {
+      // PIN correct
+      await supabase.from('terminal_requests')
+        .update({ status: 'approved', responded_at: new Date().toISOString() } as any)
+        .eq('id', currentRequest.id);
+      setScreen('gift-pin-approved');
+      setTimeout(() => { setCurrentRequest(null); setScreen('idle'); }, 3000);
+    } else {
+      // PIN wrong
+      setGiftPinAttempts(prev => prev + 1);
+      if (giftPinAttempts >= 2) {
+        // 3 failed attempts - decline
+        await supabase.from('terminal_requests')
+          .update({ status: 'declined', responded_at: new Date().toISOString() } as any)
+          .eq('id', currentRequest.id);
+        setScreen('gift-pin-declined');
+        setTimeout(() => { setCurrentRequest(null); setScreen('idle'); }, 3000);
+      } else {
+        setGiftPinError(true);
+        setGiftPinValue("");
+      }
+    }
+  };
+
+  const handleGiftPinCancel = async () => {
+    if (!currentRequest) return;
+    await supabase.from('terminal_requests')
+      .update({ status: 'declined', responded_at: new Date().toISOString() } as any)
+      .eq('id', currentRequest.id);
+    setScreen('declined');
+    setTimeout(() => { setCurrentRequest(null); setScreen('idle'); }, 3000);
+  };
+
   const numKeys = [
     ['1', '2', '3'],
     ['4', '5', '6'],
