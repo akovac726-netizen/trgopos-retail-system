@@ -1,0 +1,117 @@
+================================================================
+STANDBUY BACKOFFICE - CELOTNA KODA ZA NOV PROJEKT
+================================================================
+Navodila: V novem Lovable projektu ustvarite spodnje datoteke.
+Povežite se na isto bazo z istim URL in ključem.
+================================================================
+
+====== .env ======
+VITE_SUPABASE_URL=https://rzcidhfpazukmfypdzqg.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y2lkaGZwYXp1a21meXBkenFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTQ0OTQsImV4cCI6MjA4NjkzMDQ5NH0.1L-EDw8z0fFJl9hD5kmlR_NCdiOnjH_6_caQLMonj_A
+
+====== src/integrations/supabase/client.ts ======
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+});
+
+====== src/pages/Index.tsx ======
+import { useState } from "react";
+import { toast } from "sonner";
+import BackOfficeDashboard from "@/components/backoffice/BackOfficeDashboard";
+
+const Index = () => {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [role, setRole] = useState<'admin' | 'shop'>('shop');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = () => {
+    if (username === 'StandBuyAdmin' && password === 'Admin12273') {
+      setRole('admin'); setLoggedIn(true);
+      toast.success('Dobrodošli v BackOffice (Direktor)!');
+    } else if (username === 'StandBuy.si' && password === 'TR122732207') {
+      setRole('shop'); setLoggedIn(true);
+      toast.success('Dobrodošli v BackOffice (Trgovina)!');
+    } else {
+      toast.error('Napačno uporabniško ime ali geslo');
+    }
+  };
+
+  if (loggedIn) {
+    return <BackOfficeDashboard onLogout={() => setLoggedIn(false)} role={role} />;
+  }
+
+  return (
+    <div className="h-screen flex items-center justify-center" style={{ background: 'radial-gradient(ellipse at center, #3a3a3a 0%, #1a1a1a 50%, #0d0d0d 100%)' }}>
+      <div className="w-[480px] bg-gradient-to-b from-gray-700/90 to-gray-800/95 border border-gray-500/50 rounded-2xl p-8 shadow-2xl">
+        <div className="flex justify-center mb-4">
+          <div className="w-28 h-28 bg-gray-800 border-2 border-gray-500 rounded-lg flex items-center justify-center">
+            <svg viewBox="0 0 64 64" className="w-20 h-20 text-gray-300" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="32" cy="20" r="8" />
+              <path d="M20 44c0-8 5-14 12-14s12 6 12 14" />
+              <circle cx="32" cy="32" r="28" />
+            </svg>
+          </div>
+        </div>
+        <h2 className="text-center text-white font-bold text-xl mb-6">TrgoPOS - BackOffice</h2>
+        <div className="space-y-3 mb-6">
+          <input type="text" value={username} onChange={e => setUsername(e.target.value)}
+            placeholder="Uporabniško ime:" className="w-full h-11 px-4 bg-gray-400/80 text-gray-900 font-medium placeholder:text-gray-600 focus:outline-none text-sm border rounded border-gray-500" />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+            placeholder="Geslo:" className="w-full h-11 px-4 bg-gray-400/80 text-gray-900 font-medium placeholder:text-gray-600 focus:outline-none text-sm border rounded border-gray-500" />
+        </div>
+        <div className="flex justify-center mb-6">
+          <button onClick={handleLogin} className="px-10 py-3 bg-sky-500 hover:bg-sky-600 text-white font-bold text-lg rounded-lg transition-colors shadow-lg">
+            PRIJAVA
+          </button>
+        </div>
+        <div className="text-center mb-6">
+          <h3 className="text-4xl font-black tracking-wide">
+            <span className="text-teal-400">Stand</span><span className="text-teal-500">Buy</span>
+            <span className="text-orange-400 text-3xl ml-1">★</span>
+          </h3>
+        </div>
+        <div className="flex justify-center gap-4">
+          <button onClick={() => { setUsername('StandBuyAdmin'); setPassword(''); }}
+            className="px-8 py-2 bg-transparent border-2 border-gray-400 text-gray-200 rounded-full font-medium text-sm hover:bg-gray-600/50 transition-colors">
+            Direktor
+          </button>
+          <button onClick={() => { setUsername('StandBuy.si'); setPassword(''); }}
+            className="px-8 py-2 bg-transparent border-2 border-gray-400 text-gray-200 rounded-full font-medium text-sm hover:bg-gray-600/50 transition-colors">
+            Poslovalnica
+          </button>
+        </div>
+      </div>
+      <p className="absolute bottom-3 left-0 right-0 text-center text-xs text-gray-500">
+        TrgoPOS © 2026 StandBuy s. p., vse pravice pridržane
+      </p>
+    </div>
+  );
+};
+
+export default Index;
+
+====== OPOMBA ======
+Datoteki BackOfficeDashboard.tsx (2222 vrstic) in BoniKarticeModule.tsx (583 vrstic)
+sta preveliki za to datoteko. Kopirajte ju neposredno iz tega projekta:
+- src/components/backoffice/BackOfficeDashboard.tsx
+- src/components/backoffice/BoniKarticeModule.tsx
+
+Potrebni paketi (npm install):
+- @supabase/supabase-js
+- sonner
+- lucide-react
+- react-router-dom
+
+================================================================
+KONEC IZVOZA
+================================================================
