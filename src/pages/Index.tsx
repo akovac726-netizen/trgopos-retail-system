@@ -685,11 +685,21 @@ const Index = () => {
     setPendingInvoiceData(invoiceData); setShowPartnerInvoiceDialog(false);
   };
 
-  const handleCreateGiftVoucher = async (code: string, amount: number) => {
-    await supabase.from('gift_vouchers').insert({
-      code, amount, remaining_amount: amount, created_by: currentCashier?.id || '',
+  const handleAddGiftVoucherToCart = (code: string, amount: number) => {
+    // Add voucher as a cart item that must be paid for
+    const voucherItem: CartItem = {
+      id: `bon-${Date.now()}`,
+      ean: `BON-${code}`,
+      name: `Darilni bon (${code})`,
+      price: amount,
+      quantity: 1,
+    };
+    setCartItems(prev => {
+      setSelectedItemIndex(prev.length);
+      return [...prev, voucherItem];
     });
-    toast.success(`Darilni bon ${code} ustvarjen (${amount} EUR)`);
+    setLastAddedItem(voucherItem);
+    toast.success(`Darilni bon ${code} (${amount},00 €) dodan v košarico – plačajte na blagajni`);
     setScreen('main');
   };
 
@@ -752,7 +762,7 @@ const Index = () => {
           <GiftVoucherDialog
             total={total}
             cartItems={cartItems.filter(i => !i.isStornoed).map(i => ({ name: i.name }))}
-            onConfirm={(code, amount, type) => { handleCreateGiftVoucher(code, amount); }}
+            onConfirm={(code, amount) => { handleAddGiftVoucherToCart(code, amount); }}
             onClose={() => setScreen('main')}
           />
         )}
