@@ -62,7 +62,7 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, onEndSh
     <div className="h-full flex items-center justify-center gap-8 p-6" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
       {/* Left - Active cashiers */}
       <div className="flex flex-col w-80">
-        <div className="border-2 border-gray-600 rounded-lg bg-amber-300 text-center py-3">
+        <div className="border-2 border-gray-600 rounded-t-lg bg-amber-300 text-center py-3">
           <h3 className="font-bold text-lg">Zgodovina aktivnih<br />blagajnikov</h3>
         </div>
         <div className="border-2 border-t-0 border-gray-600 bg-white rounded-b-lg p-4 min-h-[250px]">
@@ -80,7 +80,7 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, onEndSh
           <div className="space-y-1 text-sm">
             <p><strong>Številka blagajne:</strong> 1</p>
             <p><strong>Status blagajne:</strong> Aktivna</p>
-            <p><strong>Datum:</strong> {formatDate} <span className="ml-8"><strong>Ura:</strong> {formatTime}</span></p>
+            <p><strong>Datum:</strong> {formatDate} <span className="ml-4"><strong>Ura:</strong> {formatTime}</span></p>
           </div>
         </div>
 

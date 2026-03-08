@@ -1,6 +1,6 @@
 import { ChevronUp, ChevronDown, Delete } from "lucide-react";
 import { CartItem } from "@/types/pos";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 interface BlagajnaTabProps {
   cartItems: CartItem[];
@@ -54,7 +54,7 @@ const BlagajnaTab = ({
           </button>
           <div className="flex-1 px-3 py-2 text-sm font-medium">
             <div>Datum: {new Date().toLocaleDateString('sl-SI')}</div>
-            <div>Številka računa: {cartItems.length > 0 ? '001' : ''}</div>
+            <div>Številka računa:</div>
           </div>
           <button onClick={scrollUp} className="p-2 hover:bg-gray-100 border-l border-gray-400">
             <ChevronUp className="w-7 h-7 text-gray-800" />
@@ -96,13 +96,13 @@ const BlagajnaTab = ({
         </div>
       </div>
 
-      {/* CENTER - Article info + Action buttons */}
-      <div className="flex-[4] flex flex-col gap-3">
+      {/* RIGHT side */}
+      <div className="flex-[6] flex flex-col gap-2">
         {/* Last added item info */}
         <div className="border-2 border-gray-600 bg-white rounded p-3">
-          <h3 className="font-bold text-base mb-2">Zadnji dodani artikel:</h3>
+          <h3 className="font-bold text-lg mb-1">Zadnji dodani artikel:</h3>
           <div className="border-t border-gray-400 pt-2">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
               <div>EAN koda: <span className="font-medium">{lastAddedItem?.ean || ''}</span></div>
               <div>Količina: <span className="font-medium">{lastAddedItem?.quantity || ''}</span></div>
               <div>Prodajna cena: <span className="font-medium">{lastAddedItem ? formatPrice(lastAddedItem.price) : ''}</span></div>
@@ -111,80 +111,81 @@ const BlagajnaTab = ({
           </div>
         </div>
 
-        {/* ODPRI BL. PREDAL + DARILNI BONI */}
-        <div className="grid grid-cols-2 gap-2">
+        {/* ODPRI BL. PREDAL + DARILNI BONI + Zaključi račun */}
+        <div className="flex gap-2">
           <button onClick={onOpenDrawer}
-            className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors">
-            ODPRI BL. PREDAL
+            className="flex-1 h-16 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors">
+            ODPRI BL.<br/>PREDAL
           </button>
           <button onClick={onGiftVoucher}
-            className="h-14 bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-700 rounded-lg font-bold text-sm transition-colors">
-            DARILNI BONI
+            className="flex-1 h-16 bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-700 rounded-lg font-bold text-sm transition-colors">
+            DARILNI<br/>BONI
+          </button>
+          <button onClick={onProceedToPayment} disabled={cartItems.length === 0}
+            className="flex-1 h-16 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            Zaključi<br/>račun
           </button>
         </div>
 
-        {/* Action buttons grid */}
-        <div className="grid grid-cols-2 gap-2">
-          <button onClick={onProductSearch}
-            className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors">
-            EAN KODA
-          </button>
-          <button onClick={onPriceCheck}
-            className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors">
-            PREVERI CENO
-          </button>
-          <button onClick={onQuantity}
-            className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors">
-            KOLIČINA
-          </button>
-          <button onClick={onDiscount}
-            className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors">
-            POPUST
-          </button>
-          <button onClick={onReturn}
-            className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors">
-            VRAČILO
-          </button>
-          <button onClick={onStorno}
-            className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors">
-            STORNO
-          </button>
-        </div>
-      </div>
+        {/* Bottom section: left buttons + numpad + right buttons */}
+        <div className="flex gap-2 flex-1">
+          {/* Left action buttons */}
+          <div className="flex flex-col gap-2 w-28">
+            <button onClick={onProductSearch}
+              className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
+              EAN koda
+            </button>
+            <button onClick={onPriceCheck}
+              className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
+              Embalaža
+            </button>
+            <button onClick={onReturn}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center">
+              Vračilo
+            </button>
+          </div>
 
-      {/* RIGHT - Zaključi račun + Numpad */}
-      <div className="flex-[3] flex flex-col gap-3">
-        {/* Zaključi račun - big red */}
-        <button onClick={onProceedToPayment} disabled={cartItems.length === 0}
-          className="h-20 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-2xl disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-          Zaključi račun
-        </button>
-
-        {/* Numpad */}
-        <div className="flex-1 flex flex-col gap-2">
-          {numKeys.map((row, ri) => (
-            <div key={ri} className="flex gap-2 flex-1">
-              {row.map(key => (
-                <button key={key} onClick={() => onKeyPress(key)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-                  {key}
-                </button>
-              ))}
+          {/* Numpad */}
+          <div className="flex-1 flex flex-col gap-1.5 border-2 border-gray-400 rounded-lg p-2 bg-gray-100">
+            {numKeys.map((row, ri) => (
+              <div key={ri} className="flex gap-1.5 flex-1">
+                {row.map(key => (
+                  <button key={key} onClick={() => onKeyPress(key)}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
+                    {key}
+                  </button>
+                ))}
+              </div>
+            ))}
+            <div className="flex gap-1.5 flex-1">
+              <button onClick={() => onKeyPress('0')}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
+                0
+              </button>
+              <button onClick={() => onKeyPress('.')}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
+                ,
+              </button>
+              <button onClick={onDelete}
+                className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
+                <Delete className="w-7 h-7 text-white" />
+              </button>
             </div>
-          ))}
-          {/* Bottom row: 0, comma, backspace */}
-          <div className="flex gap-2 flex-1">
-            <button onClick={() => onKeyPress('0')}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-              0
+          </div>
+
+          {/* Right action buttons */}
+          <div className="flex flex-col gap-2 w-28">
+            <button onClick={onQuantity}
+              className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
+              Količina
             </button>
-            <button onClick={() => onKeyPress('.')}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-              ,
+            <button onClick={onDiscount}
+              className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
+              Popust
             </button>
-            <button onClick={onDelete}
-              className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
-              <Delete className="w-7 h-7 text-white" />
+            <button onClick={onStorno}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center">
+              Storno
             </button>
           </div>
         </div>

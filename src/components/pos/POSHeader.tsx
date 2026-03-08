@@ -1,4 +1,4 @@
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Info } from "lucide-react";
 import { Cashier } from "@/types/pos";
 
 export type POSTab = 'blagajna' | 'racuni' | 'zakljucek';
@@ -18,9 +18,9 @@ const POSHeader = ({ cashier, activeTab, onTabChange, onLogout }: POSHeaderProps
   ];
 
   return (
-    <header className="px-4 py-2 flex items-center justify-between" style={{ background: 'linear-gradient(180deg, #5bb8e8, #3a9fd8)' }}>
+    <header className="px-3 py-1.5 flex items-center justify-between" style={{ background: 'linear-gradient(180deg, #5bb8e8, #3a9fd8)' }}>
       {/* Left - Cashier info */}
-      <div className="bg-white/90 rounded px-3 py-1.5 text-sm font-medium text-gray-800 min-w-[280px]">
+      <div className="bg-white/90 rounded px-3 py-1.5 text-sm font-medium text-gray-800">
         Blagajna. št.: <strong>1</strong>, Blagajnik: <strong>{cashier?.name || 'ime in priimek'}</strong>
       </div>
 
@@ -28,7 +28,7 @@ const POSHeader = ({ cashier, activeTab, onTabChange, onLogout }: POSHeaderProps
       <div className="flex items-center gap-1">
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => onTabChange(tab.id)}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+            className={`px-5 py-1.5 rounded text-sm font-bold transition-all ${
               activeTab === tab.id
                 ? 'bg-gray-700 text-white shadow-md'
                 : 'bg-sky-200/60 text-sky-800 hover:bg-sky-200'
@@ -38,13 +38,16 @@ const POSHeader = ({ cashier, activeTab, onTabChange, onLogout }: POSHeaderProps
         ))}
       </div>
 
-      {/* Right - Actions */}
+      {/* Right - Actions: info, settings, logout */}
       <div className="flex items-center gap-2">
-        <button className="p-2 bg-white/30 hover:bg-white/50 rounded-lg transition-colors">
-          <Settings className="w-5 h-5 text-white" />
+        <button className="w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors border border-gray-400">
+          <Info className="w-5 h-5 text-gray-700" />
         </button>
-        <button onClick={onLogout} className="p-2 bg-white/30 hover:bg-white/50 rounded-lg transition-colors" title="Odjava">
-          <LogOut className="w-5 h-5 text-white" />
+        <button className="w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors border border-gray-400">
+          <Settings className="w-5 h-5 text-gray-700" />
+        </button>
+        <button onClick={onLogout} className="w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors border border-gray-400" title="Odjava">
+          <LogOut className="w-5 h-5 text-gray-700" />
         </button>
       </div>
     </header>

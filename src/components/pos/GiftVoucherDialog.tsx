@@ -53,23 +53,25 @@ const GiftVoucherDialog = ({ onConfirm, onClose, total, cartItems }: GiftVoucher
 
       {/* RIGHT - Darilni boni form */}
       <div className="flex-[6] flex flex-col gap-3">
-        {/* Darilni boni title and fields */}
-        <div className="border-2 border-gray-600 bg-white rounded-lg p-4">
-          <h3 className="font-bold text-xl mb-3">Darilni boni:</h3>
-          <div className="border-t border-gray-400 pt-3 space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Vnesi številko bona:</span>
-              <input type="text" value={bonCode} readOnly
-                className="flex-1 border-2 border-gray-400 rounded px-3 py-1 text-sm font-mono" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Vrednost bona:</span>
-              <div className="border-2 border-gray-400 rounded px-3 py-1 text-sm font-mono">
-                {bonValue} EUR
-              </div>
+        {/* Purple header */}
+        <div className="bg-purple-600 rounded-lg p-4">
+          <h3 className="font-bold text-xl text-white">Darilni boni:</h3>
+        </div>
+
+        {/* Fields */}
+        <div className="border-2 border-gray-600 bg-white rounded-lg p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium whitespace-nowrap">Vnesi številko bona:</span>
+            <input type="text" value={bonCode} readOnly
+              className="flex-1 border-2 border-gray-400 rounded px-3 py-1 text-sm font-mono" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Vrednost bona:</span>
+            <div className="border-2 border-gray-400 rounded px-3 py-1 text-sm font-mono">
+              {bonValue} EUR
             </div>
           </div>
-          <p className="text-xs text-red-500 mt-2 font-medium">
+          <p className="text-xs text-red-500 font-medium">
             * Bon NE MORE biti izdan nobenemu podjetju
           </p>
         </div>

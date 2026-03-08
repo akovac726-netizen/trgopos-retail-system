@@ -16,7 +16,6 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
   const [searchQuery, setSearchQuery] = useState("");
   const [showManagerCode, setShowManagerCode] = useState(false);
   const [pendingAction, setPendingAction] = useState<'copy' | 'void' | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
 
   const filteredTransactions = transactions.filter(t =>
     t.id.includes(searchQuery) || t.cashierName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -54,7 +53,7 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
       {/* Title */}
       <div className="mb-3">
         <h2 className="text-2xl font-bold text-gray-800">Računi:</h2>
-        <div className="h-0.5 bg-sky-400 my-1" />
+        <div className="h-0.5 bg-gray-400 my-1" />
         <p className="text-center text-sm text-gray-600">Dnevna evidenca izdanih blagajniških računov</p>
       </div>
 
@@ -109,14 +108,14 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
               </div>
             </div>
           ) : (
-            <span className="text-gray-400 text-center">(Funkcija: pregled računa)</span>
+            <span className="text-gray-400 text-center text-lg">(Funkcija: pregled<br/>računa)</span>
           )}
         </div>
       </div>
 
       {/* Action buttons - two rows */}
       <div className="grid grid-cols-3 gap-2 mb-2">
-        <button onClick={() => { if (selectedTransaction) { setShowPreview(true); } else toast.warning('Izberite račun'); }}
+        <button onClick={() => { if (selectedTransaction) { /* show preview */ } else toast.warning('Izberite račun'); }}
           className="h-12 bg-white border-2 border-gray-500 rounded-xl font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors">
           Pregled računa
         </button>
