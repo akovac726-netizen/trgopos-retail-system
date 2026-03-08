@@ -1158,7 +1158,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           <td className="border border-gray-300 px-3 py-2 text-sm">{s.start}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm">{s.end}</td>
                           <td className="border border-gray-300 px-3 py-2 text-center">
-                            <button onClick={() => setSchedules(prev => prev.filter(x => x.id !== s.id))} className="text-red-600"><X className="w-3 h-3" /></button>
+                            <button onClick={() => handleDeleteSchedule(s.id)} className="text-red-600"><X className="w-3 h-3" /></button>
                           </td>
                         </tr>
                       ))}
