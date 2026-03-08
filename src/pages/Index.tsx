@@ -103,6 +103,16 @@ const Index = () => {
   const [pendingTabChange, setPendingTabChange] = useState<POSTab | null>(null);
   const [showTabAdminCode, setShowTabAdminCode] = useState(false);
 
+  // After payment: create gift vouchers in DB for any bon items in the cart
+  const createGiftVouchersFromCart = async () => {
+    const bonItems = cartItems.filter(i => !i.isStornoed && i.ean.startsWith('BON-'));
+    for (const item of bonItems) {
+      const code = item.ean.replace('BON-', '');
+      await supabase.from('gift_vouchers').insert({
+        code, amount: item.price, remaining_amount: item.price, created_by: currentCashier?.id || '',
+      });
+    }
+  };
 
   // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
   const fetchTransactions = async (cashierId?: string) => {
@@ -426,7 +436,7 @@ const Index = () => {
   const deductStock = async (items: typeof cartItems) => {
     for (const item of items) {
       if (item.isStornoed) continue;
-      // embalaža now tracked in products table, no skip needed
+      if (item.ean.startsWith('BON-')) continue; // gift vouchers are not physical products
       if (item.isReturn) {
         const { data } = await supabase.from('products').select('stock').eq('ean', item.ean).single();
         if (data) await supabase.from('products').update({ stock: data.stock + item.quantity }).eq('ean', item.ean);
@@ -469,7 +479,7 @@ const Index = () => {
   const handleCashComplete = async (amountPaid: number) => {
     const transaction = await createTransaction('gotovina', amountPaid, amountPaid - total);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
     toast.success('Račun zaključen');
   };
 
@@ -501,7 +511,7 @@ const Index = () => {
         if (updated.status === 'approved') {
           const transaction = await createTransaction('kartica', total, 0);
           setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-          await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+          await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
           toast.success('Plačilo s kartico potrjeno');
         } else if (updated.status === 'declined') {
           toast.error('Plačilo s kartico zavrnjeno');
@@ -538,7 +548,7 @@ const Index = () => {
     }
     const transaction = await createTransaction('darilni bon', total, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
     toast.success(`Plačilo z ${vouchers.length} bonom/i uspešno`);
   };
 
@@ -558,7 +568,7 @@ const Index = () => {
     } as any).eq('id', card.id);
     const transaction = await createTransaction('darilna kartica', total, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
     toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${(card.balance - total).toFixed(2)} €)`);
   };
 
@@ -581,7 +591,7 @@ const Index = () => {
     await supabase.from('gift_cards').update({ balance: (card.balance || 0) - amount } as any).eq('id', cardId);
     const transaction = await createTransaction('darilna kartica', amount, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
     setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0);
     toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${((card.balance || 0) - amount).toFixed(2)} €)`);
   };
@@ -685,11 +695,21 @@ const Index = () => {
     setPendingInvoiceData(invoiceData); setShowPartnerInvoiceDialog(false);
   };
 
-  const handleCreateGiftVoucher = async (code: string, amount: number) => {
-    await supabase.from('gift_vouchers').insert({
-      code, amount, remaining_amount: amount, created_by: currentCashier?.id || '',
+  const handleAddGiftVoucherToCart = (code: string, amount: number) => {
+    // Add voucher as a cart item that must be paid for
+    const voucherItem: CartItem = {
+      id: `bon-${Date.now()}`,
+      ean: `BON-${code}`,
+      name: `Darilni bon (${code})`,
+      price: amount,
+      quantity: 1,
+    };
+    setCartItems(prev => {
+      setSelectedItemIndex(prev.length);
+      return [...prev, voucherItem];
     });
-    toast.success(`Darilni bon ${code} ustvarjen (${amount} EUR)`);
+    // lastAddedItem is derived from cartItems, no need to set it
+    toast.success(`Darilni bon ${code} (${amount},00 €) dodan v košarico – plačajte na blagajni`);
     setScreen('main');
   };
 
@@ -752,7 +772,7 @@ const Index = () => {
           <GiftVoucherDialog
             total={total}
             cartItems={cartItems.filter(i => !i.isStornoed).map(i => ({ name: i.name }))}
-            onConfirm={(code, amount, type) => { handleCreateGiftVoucher(code, amount); }}
+            onConfirm={(code, amount) => { handleAddGiftVoucherToCart(code, amount); }}
             onClose={() => setScreen('main')}
           />
         )}
