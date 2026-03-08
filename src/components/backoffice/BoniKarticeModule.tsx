@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Search, Printer, CreditCard, Gift, User, Trash2, X, Check } from "lucide-react";
+import { Plus, Search, Printer, CreditCard, Gift, User, Trash2, X, Check, PlusCircle } from "lucide-react";
 
 interface GiftCard {
   id: string;
