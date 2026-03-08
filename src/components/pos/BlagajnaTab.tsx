@@ -45,9 +45,9 @@ const BlagajnaTab = ({
   ];
 
   return (
-    <div className="h-full flex gap-3 p-3" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
+    <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
       {/* LEFT - Receipt list */}
-      <div className="flex-[4] flex flex-col">
+      <div className="flex-[4] flex flex-col min-h-0">
         {/* Header with scroll arrows */}
         <div className="flex items-center border-2 border-gray-600 bg-white rounded-t">
           <button onClick={scrollDown} className="p-2 hover:bg-gray-100 border-r border-gray-400">
@@ -98,7 +98,7 @@ const BlagajnaTab = ({
       </div>
 
       {/* RIGHT side */}
-      <div className="flex-[6] flex flex-col gap-2">
+      <div className="flex-[6] flex flex-col gap-2 min-h-0">
         {/* Last added item info */}
         <div className="border-2 border-gray-600 bg-white rounded p-3">
           <h3 className="font-bold text-lg mb-1">Zadnji dodani artikel:</h3>
@@ -133,7 +133,7 @@ const BlagajnaTab = ({
         </div>
 
         {/* Bottom section: left buttons + numpad + right buttons */}
-        <div className="flex gap-2 flex-1">
+        <div className="flex gap-2 flex-1 min-h-0">
           {/* Left action buttons */}
           <div className="flex flex-col gap-2 w-28">
             <button onClick={onProductSearch}

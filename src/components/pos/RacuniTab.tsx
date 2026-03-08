@@ -49,7 +49,7 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
   }
 
   return (
-    <div className="h-full flex flex-col p-4" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
+    <div className="h-full flex flex-col p-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
       {/* Title */}
       <div className="mb-3">
         <h2 className="text-2xl font-bold text-gray-800">Računi:</h2>
@@ -58,7 +58,7 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
       </div>
 
       {/* Main content - table + preview */}
-      <div className="flex-1 flex gap-4 mb-3">
+      <div className="flex-1 flex gap-4 mb-3 min-h-0">
         {/* Table */}
         <div className="flex-[6] border-2 border-gray-600 bg-white rounded overflow-hidden flex flex-col">
           <div className="grid grid-cols-5 gap-2 px-3 py-2 bg-white border-b-2 border-gray-600 text-sm font-bold text-gray-700">
