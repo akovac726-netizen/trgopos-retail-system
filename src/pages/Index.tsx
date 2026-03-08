@@ -50,6 +50,7 @@ const Index = () => {
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [cashiers, setCashiers] = useState<Cashier[]>(FALLBACK_CASHIERS);
   const [showDrawerDialog, setShowDrawerDialog] = useState(false);
   const [pendingInvoiceData, setPendingInvoiceData] = useState<InvoiceData | undefined>();
   const [closingHistory, setClosingHistory] = useState<ClosingReport[]>([]);
