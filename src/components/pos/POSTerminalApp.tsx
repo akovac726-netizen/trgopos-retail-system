@@ -317,7 +317,7 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
           <span className="text-sky-400">Stand</span><span className="text-sky-300">Buy</span>
           <span className="text-orange-400 text-lg ml-1">★</span>
         </h1>
-        <p className="text-white/40 text-[10px] font-medium tracking-[0.3em]">POS TERMINAL – Blagajna {selectedRegister}</p>
+        <p className="text-white/40 text-[10px] font-medium tracking-[0.3em]">POS TERMINAL – {selectedRegister > 100 ? `Samoplačniška A${selectedRegister - 100}` : `Blagajna ${selectedRegister}`}</p>
       </div>
 
       {/* Main content */}
