@@ -8,9 +8,11 @@ interface POSHeaderProps {
   activeTab: POSTab;
   onTabChange: (tab: POSTab) => void;
   onLogout: () => void;
+  onInfo: () => void;
+  onSettings: () => void;
 }
 
-const POSHeader = ({ cashier, activeTab, onTabChange, onLogout }: POSHeaderProps) => {
+const POSHeader = ({ cashier, activeTab, onTabChange, onLogout, onInfo, onSettings }: POSHeaderProps) => {
   const tabs: { id: POSTab; label: string }[] = [
     { id: 'blagajna', label: 'Blagajna' },
     { id: 'racuni', label: 'Računi' },
@@ -19,12 +21,10 @@ const POSHeader = ({ cashier, activeTab, onTabChange, onLogout }: POSHeaderProps
 
   return (
     <header className="px-3 py-1.5 flex items-center justify-between" style={{ background: 'linear-gradient(180deg, #5bb8e8, #3a9fd8)' }}>
-      {/* Left - Cashier info */}
       <div className="bg-white/90 rounded px-3 py-1.5 text-sm font-medium text-gray-800">
         Blagajna. št.: <strong>1</strong>, Blagajnik: <strong>{cashier?.name || 'ime in priimek'}</strong>
       </div>
 
-      {/* Center - Tabs */}
       <div className="flex items-center gap-1">
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => onTabChange(tab.id)}
@@ -38,12 +38,11 @@ const POSHeader = ({ cashier, activeTab, onTabChange, onLogout }: POSHeaderProps
         ))}
       </div>
 
-      {/* Right - Actions: info, settings, logout */}
       <div className="flex items-center gap-2">
-        <button className="w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors border border-gray-400">
+        <button onClick={onInfo} className="w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors border border-gray-400" title="Informacije">
           <Info className="w-5 h-5 text-gray-700" />
         </button>
-        <button className="w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors border border-gray-400">
+        <button onClick={onSettings} className="w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors border border-gray-400" title="Nastavitve">
           <Settings className="w-5 h-5 text-gray-700" />
         </button>
         <button onClick={onLogout} className="w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors border border-gray-400" title="Odjava">
