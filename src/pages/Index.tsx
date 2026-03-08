@@ -89,6 +89,9 @@ const Index = () => {
   const [pendingStornoIndex, setPendingStornoIndex] = useState<number | null>(null);
   const [managerCodeTitle, setManagerCodeTitle] = useState("Koda poslovodje");
   const [keyboardEnabled, setKeyboardEnabled] = useState(() => localStorage.getItem('trgopos_keyboard') === 'true');
+  const [pointsDiscount, setPointsDiscount] = useState(0);
+  const [pointsCardId, setPointsCardId] = useState<string | null>(null);
+  const [pointsUsed, setPointsUsed] = useState(0);
 
 
   // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
@@ -167,7 +170,7 @@ const Index = () => {
   const activeCartItems = cartItems.filter(item => !item.isStornoed);
   const subtotal = activeCartItems.reduce((sum, item) => item.isReturn ? sum - item.price * item.quantity : sum + item.price * item.quantity, 0);
   const totalDiscount = activeCartItems.reduce((sum, item) => item.discount && item.originalPrice ? sum + (item.originalPrice - item.price) * item.quantity : sum, 0);
-  const total = subtotal;
+  const total = subtotal - pointsDiscount;
 
   const lastAddedItem = cartItems.length > 0 ? cartItems[cartItems.length - 1] : null;
 
@@ -500,6 +503,30 @@ const Index = () => {
     toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${(card.balance - total).toFixed(2)} €)`);
   };
 
+  const handleGiftCardPointsRedeem = async (cardId: string, usedPoints: number, discountAmount: number) => {
+    // Deduct points from card in DB
+    const { data: card } = await supabase.from('gift_cards').select('points').eq('id', cardId).single();
+    if (card) {
+      await supabase.from('gift_cards').update({ points: Math.max(0, (card.points || 0) - usedPoints) } as any).eq('id', cardId);
+    }
+    // Apply discount to current total
+    setPointsDiscount(discountAmount);
+    setPointsCardId(cardId);
+    setPointsUsed(usedPoints);
+    toast.success(`${usedPoints} točk unovčenih (-${discountAmount.toFixed(2)} €). Izberite način plačila za preostanek.`);
+  };
+
+  const handleGiftCardBalancePayment = async (cardId: string, amount: number) => {
+    const { data: card } = await supabase.from('gift_cards').select('balance').eq('id', cardId).single();
+    if (!card || (card.balance || 0) < amount) { toast.error('Kartica nima dovolj sredstev'); return; }
+    await supabase.from('gift_cards').update({ balance: (card.balance || 0) - amount } as any).eq('id', cardId);
+    const transaction = await createTransaction('darilna kartica', amount, 0);
+    setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
+    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0);
+    toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${((card.balance || 0) - amount).toFixed(2)} €)`);
+  };
+
   const handleAddLoyaltyPoints = async (code: string) => {
     const { data: card } = await supabase.from('gift_cards').select('*').eq('code', code).eq('active', true).single() as any;
     if (!card) {
@@ -519,6 +546,7 @@ const Index = () => {
   const handleNewTransaction = () => {
     setCartItems([]); setSelectedItemIndex(null); setInputValue("");
     setLastTransaction(null); setPendingInvoiceData(undefined); setScreen('main');
+    setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0);
   };
 
   const handlePrintReceipt = (t: Transaction) => toast.success(`Račun #${t.id} se tiska...`);
@@ -654,10 +682,13 @@ const Index = () => {
         {posTab === 'blagajna' && screen === 'payment' && (
           <PaymentTab
             cartItems={cartItems.filter(i => !i.isStornoed)} subtotal={subtotal} total={total} totalDiscount={totalDiscount}
-            onCashPayment={handleCashComplete} onCardPayment={handleCardComplete}
-            onInvoice={() => setShowPartnerInvoiceDialog(true)} onBack={() => setScreen('main')}
+            onCashPayment={(amountPaid) => { handleCashComplete(amountPaid); setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0); }}
+            onCardPayment={() => { handleCardComplete(); setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0); }}
+            onInvoice={() => setShowPartnerInvoiceDialog(true)} onBack={() => { setScreen('main'); setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0); }}
             onBonPayment={handleBonPayment}
             onGiftCardPayment={handleGiftCardPayment}
+            onGiftCardPointsRedeem={handleGiftCardPointsRedeem}
+            onGiftCardBalancePayment={handleGiftCardBalancePayment}
             keyboardEnabled={keyboardEnabled}
           />
         )}
