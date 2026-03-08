@@ -311,6 +311,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const promoTypeLabel = (t: PromoType) => t === 'akcijska_cena' ? 'Akcijska cena' : t === 'popust_percent' ? '% Popust' : 'Količinska akcija';
 
 
+  const generateAuthCode = () => {
     const code = Math.floor(10000 + Math.random() * 90000).toString();
     setAuthCode(code);
     setAuthCodeExpiry(Date.now() + 4 * 60 * 60 * 1000);
