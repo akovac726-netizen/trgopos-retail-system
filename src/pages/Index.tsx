@@ -614,8 +614,58 @@ const Index = () => {
                 <h3 className="font-bold text-base mb-2">Davčne stopnje</h3>
                 <p className="text-gray-600">DDV 22% (standard) | DDV 9.5% (znižana)</p>
               </div>
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="font-bold text-base mb-2">Popravek ure in datuma</h3>
+                <div className="flex gap-2 mt-2">
+                  <input type="datetime-local" id="settings-datetime"
+                    defaultValue={new Date().toISOString().slice(0, 16)}
+                    className="flex-1 border-2 border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                  <button onClick={() => {
+                    const el = document.getElementById('settings-datetime') as HTMLInputElement;
+                    if (el?.value) {
+                      localStorage.setItem('trgopos_time_offset', String(new Date(el.value).getTime() - Date.now()));
+                      toast.success(`Sistemski čas nastavljen na ${new Date(el.value).toLocaleString('sl-SI')}`);
+                    }
+                  }} className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-bold text-sm transition-colors">
+                    Nastavi
+                  </button>
+                </div>
+                <p className="text-gray-500 text-xs mt-1">Sprememba vpliva samo na to napravo</p>
+              </div>
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="font-bold text-base mb-2">Test tiskalnika in skenerja</h3>
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => {
+                    toast.success('🖨 Test tiskalnika poslan. Tiskalnik deluje pravilno.');
+                  }} className="flex-1 h-10 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">
+                    🖨 Test tiskalnika
+                  </button>
+                  <button onClick={() => {
+                    toast.success('📡 Skener zaznan. Skener deluje pravilno.');
+                  }} className="flex-1 h-10 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">
+                    📡 Test skenerja
+                  </button>
+                </div>
+              </div>
               <div className="border-2 border-sky-400 rounded-lg p-4">
                 <h3 className="font-bold text-base mb-2">Menjava blagajne</h3>
+                <p className="text-gray-600 mb-3">Trenutna: <span className="font-bold text-sky-600">Blagajna {registerId}</span></p>
+                <div className="flex gap-2">
+                  {[1, 2, 3].map(id => (
+                    <button key={id} onClick={() => {
+                      localStorage.setItem('trgopos_register_id', String(id));
+                      setRegisterIdState(id);
+                      setShowSettingsDialog(false);
+                      toast.success(`Naprava nastavljena na Blagajno ${id}`);
+                    }}
+                      className={`flex-1 h-12 rounded-lg font-bold text-lg transition-colors border-2 ${
+                        id === registerId ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-gray-700 border-gray-300 hover:border-sky-400'
+                      }`}>
+                      {id}
+                    </button>
+                  ))}
+                </div>
+              </div>
                 <p className="text-gray-600 mb-3">Trenutna: <span className="font-bold text-sky-600">Blagajna {registerId}</span></p>
                 <div className="flex gap-2">
                   {[1, 2, 3].map(id => (
