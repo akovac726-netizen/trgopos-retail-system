@@ -916,17 +916,26 @@ const Index = () => {
               </div>
               <div className="border-2 border-sky-400 rounded-lg p-4">
                 <h3 className="font-bold text-base mb-2">Menjava blagajne</h3>
-                <p className="text-gray-600 mb-3">Trenutna: <span className="font-bold text-sky-600">Blagajna {registerId}</span></p>
+                <p className="text-gray-600 mb-3">Trenutna: <span className={`font-bold ${isSelfCheckout ? 'text-orange-600' : 'text-sky-600'}`}>
+                  {isSelfCheckout ? `🛒 Samoplačniška ${selfCheckoutLabel} (ID: ${registerId})` : `Blagajna ${registerId}`}
+                </span></p>
+                {isSelfCheckout && (
+                  <p className="text-orange-500 text-xs mb-2 font-medium">⚠️ Za menjavo na navadno blagajno najprej izklopite samoplačniški način</p>
+                )}
                 <div className="flex gap-2">
                   {[1, 2, 3].map(id => (
                     <button key={id} onClick={() => {
+                      if (isSelfCheckout) {
+                        toast.error('Najprej izklopite samoplačniški način');
+                        return;
+                      }
                       localStorage.setItem('trgopos_register_id', String(id));
                       setRegisterIdState(id);
                       setShowSettingsDialog(false);
                       toast.success(`Naprava nastavljena na Blagajno ${id}`);
                     }}
                       className={`flex-1 h-12 rounded-lg font-bold text-lg transition-colors border-2 ${
-                        id === registerId ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-gray-700 border-gray-300 hover:border-sky-400'
+                        id === registerId ? 'bg-sky-500 text-white border-sky-600' : isSelfCheckout ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:border-sky-400'
                       }`}>
                       {id}
                     </button>
