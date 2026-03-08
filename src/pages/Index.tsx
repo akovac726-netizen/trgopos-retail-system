@@ -189,11 +189,14 @@ const Index = () => {
       }
     }
     setCurrentCashier(cashier); setAppMode('pos'); setScreen('main');
+    // Re-fetch transactions for this cashier's permissions
+    fetchTransactions(cashier.id);
   };
   const handleBackOfficeLogin = (role: 'admin' | 'shop') => { setBackofficeRole(role); setAppMode('backoffice'); };
   const handleLogout = () => {
     setCurrentCashier(null); setCartItems([]); setSelectedItemIndex(null); setInputValue("");
     setAppMode('login'); setScreen('main'); setPosTab('blagajna');
+    setTransactions([]); // Clear transactions on logout
     toast.success('Uspešna odjava');
   };
 
