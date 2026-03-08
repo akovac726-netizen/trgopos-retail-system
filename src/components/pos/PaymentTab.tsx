@@ -17,6 +17,7 @@ interface PaymentTabProps {
   onGiftCardPayment?: (code: string) => void;
   onGiftCardPointsRedeem?: (cardId: string, pointsUsed: number, discountAmount: number) => void;
   onGiftCardBalancePayment?: (cardId: string, amount: number) => void;
+  onGiftCardPartialBalance?: (cardId: string, cardAmount: number, remainingTotal: number) => void;
   keyboardEnabled?: boolean;
 }
 
