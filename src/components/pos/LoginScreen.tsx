@@ -177,7 +177,10 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
             <span className="text-sky-500">Stand</span><span className="text-sky-600">Buy</span>
             <span className="text-orange-400 text-4xl ml-1">★</span>
           </h2>
-          <p className="text-center text-gray-700 font-bold text-sm mt-1 tracking-[0.3em]">TrgoPOS</p>
+          <p className="text-center text-gray-700 font-bold text-sm mt-1 tracking-[0.3em]">TrgoPOS – Blagajna {registerId}</p>
+          {registerLocked && (
+            <p className="text-center text-red-600 font-bold text-sm mt-2">⚠ Blagajna {registerId} je zaključena za danes</p>
+          )}
         </div>
 
         {/* Input fields */}
