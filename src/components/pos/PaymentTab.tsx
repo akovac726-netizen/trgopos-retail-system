@@ -21,7 +21,7 @@ interface PaymentTabProps {
   keyboardEnabled?: boolean;
 }
 
-const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, onGiftCardPointsRedeem, onGiftCardBalancePayment, keyboardEnabled }: PaymentTabProps) => {
+const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, onGiftCardPointsRedeem, onGiftCardBalancePayment, onGiftCardPartialBalance, keyboardEnabled }: PaymentTabProps) => {
   const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon' | 'giftcard'>('select');
   const [cardWaiting, setCardWaiting] = useState(false);
   const [inputValue, setInputValue] = useState("");
