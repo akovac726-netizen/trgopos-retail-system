@@ -107,13 +107,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [backendSubTab, setBackendSubTab] = useState<'zaposleni' | 'zahtevki' | 'pregled'>('zaposleni');
 
   // Employees
-  const [employees, setEmployees] = useState<Employee[]>([
-    { id: '1', firstName: 'Dženan', lastName: 'Kedić', code: '70001', birthDate: '1990-01-01', birthPlace: '', position: 'Vodja', hireDate: '2024-01-15', username: '70001', password: '70001', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-    { id: '2', firstName: 'Eva', lastName: 'Zakrajšek', code: '70002', birthDate: '1995-05-10', birthPlace: '', position: 'Blagajnik', hireDate: '2024-03-01', username: '70002', password: '70002', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-    { id: '3', firstName: 'Študent', lastName: '1', code: '80001', birthDate: '2003-09-15', birthPlace: '', position: 'Študentsko delo', hireDate: '2025-01-10', username: '80001', password: '80001', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-    { id: '4', firstName: 'Študent', lastName: '2', code: '80002', birthDate: '2004-02-20', birthPlace: '', position: 'Študentsko delo', hireDate: '2025-02-15', username: '80002', password: '80002', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-    { id: '5', firstName: 'PODPORA', lastName: 'STANDBUY', code: '00087', birthDate: '', birthPlace: '', position: 'Podpora', hireDate: '2024-01-01', username: '00087', password: '00087', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-  ]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
@@ -137,15 +131,19 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
   const closingReports = externalReports;
   const categories = ['Higiena', 'Osebna nega', 'Pijače', 'Žvečilni gumi', 'Pisarniški material', 'Kartice', 'Ostalo'];
-  const knownEmployees = ['Dženan Kedić', 'Eva Zakrajšek', 'Študent 1', 'Študent 2', 'PODPORA STANDBUY'];
+  const knownEmployees = employees.map(e => `${e.firstName} ${e.lastName}`);
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
 
   useEffect(() => {
-    fetchProducts(); fetchPartners();
+    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules();
     const channel = supabase
       .channel('bo-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchProducts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'partners' }, fetchPartners)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, fetchEmployees)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_requests' }, fetchLeaveRequests)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules' }, fetchSchedules)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -168,6 +166,46 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const fetchPartners = async () => {
     const { data } = await supabase.from('partners').select('*').order('name');
     if (data) setPartners((data as unknown as Partner[]) || []);
+  };
+  const fetchEmployees = async () => {
+    const { data } = await supabase.from('employees').select('*').order('first_name' as any);
+    if (data) {
+      setEmployees((data as any[]).map((e: any) => ({
+        id: e.id, firstName: e.first_name, lastName: e.last_name, code: e.code,
+        birthDate: e.birth_date, birthPlace: e.birth_place, position: e.position,
+        hireDate: e.hire_date, username: e.username, password: e.password,
+        address: e.address, postalCode: e.postal_code, city: e.city, country: e.country,
+        phone: e.phone, email: e.email, emso: e.emso, taxNumber: e.tax_number, iban: e.iban,
+      })));
+    }
+  };
+  const fetchLeaveRequests = async () => {
+    const { data } = await supabase.from('leave_requests').select('*').order('created_at' as any);
+    if (data) {
+      setLeaveRequests((data as any[]).map((lr: any) => ({
+        id: lr.id, employeeName: lr.employee_name, type: lr.type,
+        startDate: lr.start_date, endDate: lr.end_date, approver: lr.approver,
+        description: lr.description, status: lr.status,
+      })));
+    }
+  };
+  const fetchOrders = async () => {
+    const { data } = await supabase.from('orders').select('*').order('created_at' as any);
+    if (data) {
+      setSavedOrders((data as any[]).map((o: any) => ({
+        id: o.id, supplier: o.supplier, date: o.date, items: o.items as OrderItem[],
+        status: o.status, fromProfile: o.from_profile, toProfile: o.to_profile,
+        markedOrdered: o.marked_ordered, markedShipped: o.marked_shipped, receivedConfirmed: o.received_confirmed,
+      })));
+    }
+  };
+  const fetchSchedules = async () => {
+    const { data } = await supabase.from('schedules').select('*').order('created_at' as any);
+    if (data) {
+      setSchedules((data as any[]).map((s: any) => ({
+        id: s.id, employee: s.employee, day: s.day, start: s.start_time, end: s.end_time,
+      })));
+    }
   };
 
   const generateAuthCode = () => {
@@ -216,10 +254,16 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     else setOrderItems(prev => [...prev, { productId: p.id, ean: p.ean, name: p.name, quantity: 1 }]);
     toast.success(`${p.name} dodan`);
   };
-  const handleSaveOrder = () => {
+  const handleSaveOrder = async () => {
     if (!orderSupplier || orderItems.length === 0) { toast.error('Vnesite dobavitelja in artikle'); return; }
-    const o: SavedOrder = { id: Date.now().toString(), supplier: orderSupplier, date: orderDate, items: [...orderItems], status: 'Poslano', fromProfile: role === 'shop' ? 'Trgovina' : 'Direktor', toProfile: role === 'shop' ? 'Direktor' : 'Trgovina' };
-    setSavedOrders(prev => [o, ...prev]); setOrderItems([]); setOrderSupplier(""); setOrderNote(""); setOrderSubTab('list');
+    const orderData = {
+      supplier: orderSupplier, date: orderDate, items: JSON.stringify(orderItems),
+      status: 'Poslano', from_profile: role === 'shop' ? 'Trgovina' : 'Direktor',
+      to_profile: role === 'shop' ? 'Direktor' : 'Trgovina', note: orderNote,
+    };
+    const { error } = await supabase.from('orders').insert(orderData as any);
+    if (error) { toast.error('Napaka pri shranjevanju'); return; }
+    setOrderItems([]); setOrderSupplier(""); setOrderNote(""); setOrderSubTab('list');
     toast.success('Naročilnica poslana');
   };
 
@@ -229,19 +273,65 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     } else toast.error('Napačni podatki');
   };
 
-  const handleSaveEmployee = () => {
+  const handleSaveEmployee = async () => {
     if (!editingEmployee || !editingEmployee.firstName || !editingEmployee.lastName) { toast.error('Ime in priimek sta obvezna'); return; }
-    const exists = employees.find(e => e.id === editingEmployee.id);
-    if (exists) { setEmployees(prev => prev.map(e => e.id === editingEmployee.id ? editingEmployee : e)); toast.success('Posodobljeno'); }
-    else { setEmployees(prev => [...prev, editingEmployee]); toast.success('Dodano'); }
+    const dbData = {
+      first_name: editingEmployee.firstName, last_name: editingEmployee.lastName, code: editingEmployee.code,
+      birth_date: editingEmployee.birthDate, birth_place: editingEmployee.birthPlace, position: editingEmployee.position,
+      hire_date: editingEmployee.hireDate, username: editingEmployee.username, password: editingEmployee.password,
+      address: editingEmployee.address, postal_code: editingEmployee.postalCode, city: editingEmployee.city,
+      country: editingEmployee.country, phone: editingEmployee.phone, email: editingEmployee.email,
+      emso: editingEmployee.emso, tax_number: editingEmployee.taxNumber, iban: editingEmployee.iban,
+    };
+    const existsInDb = employees.find(e => e.id === editingEmployee.id);
+    if (existsInDb) {
+      const { error } = await supabase.from('employees').update(dbData as any).eq('id', editingEmployee.id as any);
+      if (error) { toast.error('Napaka'); return; }
+      toast.success('Posodobljeno');
+    } else {
+      const { error } = await supabase.from('employees').insert(dbData as any);
+      if (error) { toast.error('Napaka'); return; }
+      toast.success('Dodano');
+    }
     setEditingEmployee(null); setShowEmployeeForm(false);
   };
 
-  const handleCreateLeave = () => {
+  const handleDeleteEmployee = async (emp: Employee) => {
+    if (!confirm(`Izbrišete ${emp.firstName} ${emp.lastName}?`)) return;
+    await supabase.from('employees').delete().eq('id', emp.id as any);
+    toast.success('Izbrisano');
+  };
+
+  const handleCreateLeave = async () => {
     if (!leaveEmployee || !leaveStart || !leaveEnd) { toast.error('Izpolnite vsa polja'); return; }
-    setLeaveRequests(prev => [...prev, { id: Date.now().toString(), employeeName: leaveEmployee, type: leaveType, startDate: leaveStart, endDate: leaveEnd, approver: leaveApprover, description: leaveDesc, status: 'pending' }]);
+    const leaveData = {
+      employee_name: leaveEmployee, type: leaveType, start_date: leaveStart,
+      end_date: leaveEnd, approver: leaveApprover, description: leaveDesc, status: 'pending',
+    };
+    const { error } = await supabase.from('leave_requests').insert(leaveData as any);
+    if (error) { toast.error('Napaka'); return; }
     setShowLeaveForm(false); setLeaveEmployee(""); setLeaveStart(""); setLeaveEnd(""); setLeaveDesc("");
     toast.success('Zahtevek ustvarjen');
+  };
+
+  const handleDeleteLeave = async (lr: LeaveRequest) => {
+    if (!confirm('Izbrišete zahtevek?')) return;
+    await supabase.from('leave_requests').delete().eq('id', lr.id as any);
+    toast.success('Izbrisano');
+  };
+
+  const handleAddSchedule = async () => {
+    if (!newEmployee) { toast.error('Izberite zaposlenega'); return; }
+    const { error } = await supabase.from('schedules').insert({
+      employee: newEmployee, day: newDay, start_time: newStart, end_time: newEnd,
+    } as any);
+    if (error) { toast.error('Napaka'); return; }
+    toast.success('Dodano');
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    await supabase.from('schedules').delete().eq('id', id as any);
+    toast.success('Izbrisano');
   };
 
   const handleOpenBusiness = async () => {
@@ -1048,11 +1138,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                       <label className="text-xs font-medium block mb-1">Do</label>
                       <input type="time" value={newEnd} onChange={e => setNewEnd(e.target.value)} className="h-8 px-2 bg-white border border-gray-400 rounded text-sm" />
                     </div>
-                    <button onClick={() => {
-                      if (!newEmployee) { toast.error('Izberite zaposlenega'); return; }
-                      setSchedules(prev => [...prev, { id: Date.now().toString(), employee: newEmployee, day: newDay, start: newStart, end: newEnd }]);
-                      toast.success('Dodano');
-                    }} className="h-8 px-4 bg-green-600 text-white font-bold rounded text-sm">Dodaj</button>
+                    <button onClick={handleAddSchedule} className="h-8 px-4 bg-green-600 text-white font-bold rounded text-sm">Dodaj</button>
                   </div>
                   <table className="w-full border-collapse bg-white">
                     <thead><tr className="bg-gray-200">
@@ -1072,7 +1158,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           <td className="border border-gray-300 px-3 py-2 text-sm">{s.start}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm">{s.end}</td>
                           <td className="border border-gray-300 px-3 py-2 text-center">
-                            <button onClick={() => setSchedules(prev => prev.filter(x => x.id !== s.id))} className="text-red-600"><X className="w-3 h-3" /></button>
+                            <button onClick={() => handleDeleteSchedule(s.id)} className="text-red-600"><X className="w-3 h-3" /></button>
                           </td>
                         </tr>
                       ))}

@@ -86,6 +86,78 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          address: string
+          birth_date: string
+          birth_place: string
+          city: string
+          code: string
+          country: string
+          created_at: string
+          email: string
+          emso: string
+          first_name: string
+          hire_date: string
+          iban: string
+          id: string
+          last_name: string
+          password: string
+          phone: string
+          position: string
+          postal_code: string
+          tax_number: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          address?: string
+          birth_date?: string
+          birth_place?: string
+          city?: string
+          code?: string
+          country?: string
+          created_at?: string
+          email?: string
+          emso?: string
+          first_name: string
+          hire_date?: string
+          iban?: string
+          id?: string
+          last_name: string
+          password?: string
+          phone?: string
+          position?: string
+          postal_code?: string
+          tax_number?: string
+          updated_at?: string
+          username?: string
+        }
+        Update: {
+          address?: string
+          birth_date?: string
+          birth_place?: string
+          city?: string
+          code?: string
+          country?: string
+          created_at?: string
+          email?: string
+          emso?: string
+          first_name?: string
+          hire_date?: string
+          iban?: string
+          id?: string
+          last_name?: string
+          password?: string
+          phone?: string
+          position?: string
+          postal_code?: string
+          tax_number?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       gift_vouchers: {
         Row: {
           amount: number
@@ -119,6 +191,93 @@ export type Database = {
           remaining_amount?: number
           used_at?: string | null
           used_by?: string | null
+        }
+        Relationships: []
+      }
+      leave_requests: {
+        Row: {
+          approver: string
+          created_at: string
+          description: string
+          employee_name: string
+          end_date: string
+          id: string
+          period: string
+          start_date: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          approver?: string
+          created_at?: string
+          description?: string
+          employee_name: string
+          end_date: string
+          id?: string
+          period?: string
+          start_date: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          approver?: string
+          created_at?: string
+          description?: string
+          employee_name?: string
+          end_date?: string
+          id?: string
+          period?: string
+          start_date?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          date: string
+          from_profile: string
+          id: string
+          items: Json
+          marked_ordered: boolean
+          marked_shipped: boolean
+          note: string
+          received_confirmed: boolean
+          status: string
+          supplier: string
+          to_profile: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          from_profile?: string
+          id?: string
+          items?: Json
+          marked_ordered?: boolean
+          marked_shipped?: boolean
+          note?: string
+          received_confirmed?: boolean
+          status?: string
+          supplier: string
+          to_profile?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          from_profile?: string
+          id?: string
+          items?: Json
+          marked_ordered?: boolean
+          marked_shipped?: boolean
+          note?: string
+          received_confirmed?: boolean
+          status?: string
+          supplier?: string
+          to_profile?: string
         }
         Relationships: []
       }
@@ -218,6 +377,33 @@ export type Database = {
           last_number?: number
           updated_at?: string
           year?: number
+        }
+        Relationships: []
+      }
+      schedules: {
+        Row: {
+          created_at: string
+          day: string
+          employee: string
+          end_time: string
+          id: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          employee: string
+          end_time?: string
+          id?: string
+          start_time?: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          employee?: string
+          end_time?: string
+          id?: string
+          start_time?: string
         }
         Relationships: []
       }
