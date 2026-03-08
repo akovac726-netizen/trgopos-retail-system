@@ -62,6 +62,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
         // On selection screen: 1=Gotovina, 2=Kartica, Escape=Nazaj
         if (e.key === '1') { e.preventDefault(); setStep('cash'); }
         else if (e.key === '2') { e.preventDefault(); setStep('card'); }
+        else if (e.key === '3') { e.preventDefault(); setGiftCardCode(''); setGiftCardPin(''); setGiftCardPinStep(false); setStep('giftcard'); }
         else if (e.key === 'Escape') { e.preventDefault(); onBack(); }
         return;
       }
@@ -79,6 +80,17 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
           e.preventDefault();
           const hasVoucherInCart = cartItems.some(i => i.name.toLowerCase().includes('bon') || i.name.toLowerCase().includes('darilni'));
           if (!hasVoucherInCart && bonCode.length >= 4 && onBonPayment) onBonPayment(bonCode, total);
+        }
+        else if (e.key === 'Escape') { e.preventDefault(); setStep('select'); }
+        return;
+      }
+
+      if (step === 'giftcard') {
+        if (e.key >= '0' && e.key <= '9') { e.preventDefault(); setGiftCardCode(prev => prev + e.key); }
+        else if (e.key === 'Backspace') { e.preventDefault(); setGiftCardCode(prev => prev.slice(0, -1)); }
+        else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (giftCardCode.length >= 8 && onGiftCardPayment) onGiftCardPayment(giftCardCode);
         }
         else if (e.key === 'Escape') { e.preventDefault(); setStep('select'); }
         return;
@@ -119,7 +131,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [keyboardEnabled, step, cardWaiting, inputValue, confirmed, bonCode, total, cartItems, onCashPayment, onCardPayment, onBack, onBonPayment]);
+  }, [keyboardEnabled, step, cardWaiting, inputValue, confirmed, bonCode, giftCardCode, total, cartItems, onCashPayment, onCardPayment, onBack, onBonPayment, onGiftCardPayment]);
 
   const numKeys = [
     ['7', '8', '9'],
