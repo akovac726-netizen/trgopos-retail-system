@@ -7,6 +7,7 @@ interface GiftCardRedeemFlowProps {
   total: number;
   onApplyDiscount: (pointsUsed: number, discountAmount: number, cardId: string) => void;
   onPayWithBalance: (cardId: string, amount: number) => void;
+  onPartialBalancePayment: (cardId: string, cardAmount: number, remainingTotal: number) => void;
   onCancel: () => void;
 }
 
