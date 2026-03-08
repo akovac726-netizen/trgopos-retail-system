@@ -164,12 +164,27 @@ const Index = () => {
     };
     fetchEmployees();
 
-    // Check self-checkout config for this register
+    // Check self-checkout config — look up by base register OR by self-checkout register ID
     const checkSelfCheckout = async () => {
-      if (registerId > 0) {
-        const { data } = await supabase.from('self_checkout_config').select('*').eq('register_id', registerId).eq('enabled', true).maybeSingle();
-        setIsSelfCheckout(!!data);
-        setSelfCheckoutLabel((data as any)?.label || '');
+      if (registerId <= 0) return;
+      // Check if current registerId is already a self-checkout ID
+      const isSCId = SELF_CHECKOUT_IDS.includes(registerId);
+      const baseId = isSCId ? registerId : registerId; // for base registers, check by register_id
+      const { data } = await supabase.from('self_checkout_config').select('*').eq('register_id', baseId).eq('enabled', true).maybeSingle();
+      if (data) {
+        const label = (data as any)?.label || registerIdToLabel(registerId);
+        setIsSelfCheckout(true);
+        setSelfCheckoutLabel(label);
+        // Ensure registerId matches the self-checkout ID
+        const scId = labelToRegisterId(label);
+        if (registerId !== scId) {
+          setRegisterIdState(scId);
+          localStorage.setItem('trgopos_register_id', String(scId));
+        }
+      } else {
+        setIsSelfCheckout(false);
+        setSelfCheckoutLabel('');
+      }
       }
     };
     checkSelfCheckout();
