@@ -180,6 +180,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       .on('postgres_changes', { event: '*', schema: 'public', table: 'closing_reports' }, fetchClosingReportsFromDB)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, fetchClosingReportsFromDB)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'promotions' }, fetchPromotions)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'register_closings' }, fetchFinanceClosings)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
