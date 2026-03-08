@@ -503,6 +503,30 @@ const Index = () => {
     toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${(card.balance - total).toFixed(2)} €)`);
   };
 
+  const handleGiftCardPointsRedeem = async (cardId: string, usedPoints: number, discountAmount: number) => {
+    // Deduct points from card in DB
+    const { data: card } = await supabase.from('gift_cards').select('points').eq('id', cardId).single();
+    if (card) {
+      await supabase.from('gift_cards').update({ points: Math.max(0, (card.points || 0) - usedPoints) } as any).eq('id', cardId);
+    }
+    // Apply discount to current total
+    setPointsDiscount(discountAmount);
+    setPointsCardId(cardId);
+    setPointsUsed(usedPoints);
+    toast.success(`${usedPoints} točk unovčenih (-${discountAmount.toFixed(2)} €). Izberite način plačila za preostanek.`);
+  };
+
+  const handleGiftCardBalancePayment = async (cardId: string, amount: number) => {
+    const { data: card } = await supabase.from('gift_cards').select('balance').eq('id', cardId).single();
+    if (!card || (card.balance || 0) < amount) { toast.error('Kartica nima dovolj sredstev'); return; }
+    await supabase.from('gift_cards').update({ balance: (card.balance || 0) - amount } as any).eq('id', cardId);
+    const transaction = await createTransaction('darilna kartica', amount, 0);
+    setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
+    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0);
+    toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${((card.balance || 0) - amount).toFixed(2)} €)`);
+  };
+
   const handleAddLoyaltyPoints = async (code: string) => {
     const { data: card } = await supabase.from('gift_cards').select('*').eq('code', code).eq('active', true).single() as any;
     if (!card) {
