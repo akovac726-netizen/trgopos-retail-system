@@ -252,6 +252,10 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const fetchClosingReportsFromDB = async () => {
     // Realtime trigger - forces component awareness of closing_reports/transactions changes
   };
+  const fetchFinanceClosings = async () => {
+    const { data } = await supabase.from('register_closings').select('*').order('closed_at', { ascending: false }).limit(100);
+    if (data) setFinanceClosings(data as any[]);
+  };
 
   const fetchPromotions = async () => {
     const { data } = await supabase.from('promotions').select('*').order('start_date' as any);
