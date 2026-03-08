@@ -22,13 +22,9 @@ import PriceCheckDialog from "@/components/pos/PriceCheckDialog";
 import BackOfficeDashboard from "@/components/backoffice/BackOfficeDashboard";
 import PartnerInvoiceDialog from "@/components/pos/PartnerInvoiceDialog";
 
-const cashiers: Cashier[] = [
-  { id: '70001', name: 'Dženan Kedić', password: '70001', role: 'admin', drawerCode: '2082' },
-  { id: '70002', name: 'Eva Zakrajšek', password: '70002', role: 'cashier', drawerCode: '4268' },
-  { id: '80001', name: 'Študent 1', password: '80001', role: 'cashier', drawerCode: '2468' },
-  { id: '80002', name: 'Študent 2', password: '80002', role: 'cashier', drawerCode: '2468' },
+// Fallback cashier for PODPORA STANDBUY (always available even if DB is empty)
+const FALLBACK_CASHIERS: Cashier[] = [
   { id: '00087', name: 'PODPORA STANDBUY', password: '00087', role: 'admin', drawerCode: '1359' },
-  { id: '03157', name: 'Melisa Kedić', password: '03157', role: 'cashier', drawerCode: '2015' },
 ];
 
 const EMBALAZA_PRICE = 0.50;
