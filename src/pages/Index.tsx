@@ -480,6 +480,42 @@ const Index = () => {
     toast.success('Plačilo z bonom uspešno');
   };
 
+  const handleGiftCardPayment = async (code: string) => {
+    // Try 8-digit code or EAN
+    let query = supabase.from('gift_cards').select('*').eq('active', true);
+    const { data: cardByCode } = await query.eq('code', code).single();
+    let card = cardByCode as any;
+    if (!card) {
+      const { data: cardByEan } = await supabase.from('gift_cards').select('*').eq('ean', code).eq('active', true).single();
+      card = cardByEan as any;
+    }
+    if (!card) { toast.error('Darilna kartica ni najdena ali ni aktivna'); return; }
+    if (card.balance < total) { toast.error(`Kartica nima dovolj sredstev (stanje: ${Number(card.balance).toFixed(2)} €)`); return; }
+    await supabase.from('gift_cards').update({
+      balance: card.balance - total,
+    } as any).eq('id', card.id);
+    const transaction = await createTransaction('darilna kartica', total, 0);
+    setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
+    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${(card.balance - total).toFixed(2)} €)`);
+  };
+
+  const handleAddLoyaltyPoints = async (code: string) => {
+    const { data: card } = await supabase.from('gift_cards').select('*').eq('code', code).eq('active', true).single() as any;
+    if (!card) {
+      const { data: cardByEan } = await supabase.from('gift_cards').select('*').eq('ean', code).eq('active', true).single() as any;
+      if (!cardByEan) { toast.error('Kartica ni najdena'); return; }
+      // 1 point per euro spent
+      const points = Math.floor(lastTransaction?.total || 0);
+      await supabase.from('gift_cards').update({ points: (cardByEan.points || 0) + points } as any).eq('id', cardByEan.id);
+      toast.success(`+${points} točk dodanih na kartico ${code} (skupaj: ${(cardByEan.points || 0) + points})`);
+      return;
+    }
+    const points = Math.floor(lastTransaction?.total || 0);
+    await supabase.from('gift_cards').update({ points: (card.points || 0) + points } as any).eq('id', card.id);
+    toast.success(`+${points} točk dodanih na kartico ${code} (skupaj: ${(card.points || 0) + points})`);
+  };
+
   const handleNewTransaction = () => {
     setCartItems([]); setSelectedItemIndex(null); setInputValue("");
     setLastTransaction(null); setPendingInvoiceData(undefined); setScreen('main');
