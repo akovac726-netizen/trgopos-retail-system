@@ -12,9 +12,10 @@ interface LoginScreenProps {
   registerId: number;
   registerLocked: boolean;
   onSelectRegister: (id: number) => void;
+  onOpenTerminal?: () => void;
 }
 
-const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registerLocked, onSelectRegister }: LoginScreenProps) => {
+const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registerLocked, onSelectRegister, onOpenTerminal }: LoginScreenProps) => {
   const [mode, setMode] = useState<AppMode>('trgopos');
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
