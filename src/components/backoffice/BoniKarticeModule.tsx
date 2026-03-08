@@ -218,7 +218,7 @@ const BoniKarticeModule = () => {
       <h2>🎁 DARILNA KARTICA</h2>
       <div class="code">${card.code}</div>
       <div class="ean">EAN: ${card.ean}</div>
-      <div class="balance">Stanje: ${Number(card.balance).toFixed(2)} € | Točke: ${card.points}</div>
+      <div class="balance">Točke: ${card.points} (${(card.points * POINT_VALUE).toFixed(2)} €)</div>
       <hr/>
       <p style="font-size:11px">StandBuy s.p. • TrgoPOS</p>
       </body></html>
