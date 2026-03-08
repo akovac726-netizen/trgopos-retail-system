@@ -8,6 +8,8 @@ interface TerminalRequest {
   amount: number;
   status: string;
   created_at: string;
+  type?: string;
+  metadata?: any;
 }
 
 interface POSTerminalAppProps {
