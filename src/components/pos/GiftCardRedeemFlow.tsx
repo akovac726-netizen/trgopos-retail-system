@@ -16,12 +16,14 @@ type Step = 'enter_code' | 'loading' | 'enter_pin' | 'show_points' | 'confirm';
 const POINT_VALUE = 0.01; // 1 point = 0.01 €
 const MIN_PURCHASE_FOR_POINTS = 5; // min 5€ purchase to use points
 
-const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onCancel }: GiftCardRedeemFlowProps) => {
+const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartialBalancePayment, onCancel }: GiftCardRedeemFlowProps) => {
   const [step, setStep] = useState<Step>('enter_code');
   const [code, setCode] = useState("");
   const [pin, setPin] = useState("");
   const [card, setCard] = useState<any>(null);
   const [pointsToUse, setPointsToUse] = useState(0);
+  const [manualPointsInput, setManualPointsInput] = useState("");
+  const [useManualInput, setUseManualInput] = useState(false);
   const [error, setError] = useState("");
 
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
