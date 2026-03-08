@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Delete, ArrowLeft } from "lucide-react";
+import { Delete } from "lucide-react";
 import { CartItem } from "@/types/pos";
 
 interface PaymentTabProps {
@@ -40,6 +40,11 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
     }
   };
 
+  const handleBanknote = (value: number) => {
+    setInputValue(String(value));
+    setConfirmed(false);
+  };
+
   const handleConfirm = () => {
     if (amountPaid > 0) {
       setConfirmed(true);
@@ -52,7 +57,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
     ['1', '2', '3'],
   ];
 
-  // Payment method selection
+  // Payment method selection - matches Diapozitiv4-5
   if (step === 'select') {
     return (
       <div className="h-full flex gap-3 p-3" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
@@ -81,7 +86,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
         </div>
 
         {/* RIGHT - Payment method buttons */}
-        <div className="flex-[6] flex flex-col gap-3">
+        <div className="flex-[6] flex flex-col gap-4">
           <div className="grid grid-cols-3 gap-3">
             <button onClick={() => setStep('cash')}
               className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
@@ -92,7 +97,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
               Kartica
             </button>
             <button className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
-              Darilna kartica
+              Darilna<br/>kartica
             </button>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -101,7 +106,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
               Darilni bon
             </button>
             <button className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
-              Dobropis podjetja
+              Dobropis<br/>podjetja
             </button>
           </div>
 
@@ -114,34 +119,35 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
 
           <button onClick={onBack}
             className="h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xl flex items-center justify-center gap-2 transition-colors w-48 mx-auto">
-            <ArrowLeft className="w-6 h-6" />
-            Nazaj
+            ← Nazaj
           </button>
         </div>
       </div>
     );
   }
 
-  // Card terminal
+  // Card terminal - matches Diapozitiv5-5 (blue background)
   if (step === 'card') {
     return (
       <div className="h-full flex gap-3 p-3 relative" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
         <div className="absolute inset-0 bg-black/30 z-10" />
         <div className="absolute inset-0 z-20 flex items-center justify-center">
-          <div className="bg-gray-200 border-2 border-gray-500 rounded-xl p-8 text-center min-w-[400px]">
-            <h2 className="text-2xl font-bold tracking-widest mb-6">POS TERMINAL – NAKUP</h2>
+          <div className="bg-sky-200 border-2 border-gray-500 rounded-xl p-8 text-center min-w-[420px]">
+            <h2 className="text-2xl font-bold tracking-[0.3em] mb-6">POS TERMINAL – NAKUP</h2>
             <div className="border-2 border-gray-600 bg-white rounded-lg p-8 mb-6">
               <p className="font-bold text-lg mb-4">ZNESEK (EUR)</p>
               <p className="text-5xl font-bold">{formatPrice(total)} €</p>
             </div>
-            <button onClick={() => { onCardPayment(); }}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-10 py-3 rounded-lg transition-colors mr-4">
-              POTRDI
-            </button>
-            <button onClick={() => setStep('select')}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-10 py-3 rounded-lg transition-colors">
-              PREKLIČI
-            </button>
+            <div className="flex justify-center gap-4">
+              <button onClick={() => setStep('select')}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors">
+                ← NAZAJ
+              </button>
+              <button onClick={() => { onCardPayment(); }}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors">
+                PREKLIČI
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -150,7 +156,6 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
 
   // Bon payment
   if (step === 'bon') {
-    // Check if any item in cart is a gift voucher (bon can't buy another bon)
     const hasVoucherInCart = cartItems.some(i => i.name.toLowerCase().includes('bon') || i.name.toLowerCase().includes('darilni'));
 
     return (
@@ -195,7 +200,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
                 </button>
                 <button onClick={handleDelete}
                   className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
-                  <Delete className="w-7 h-7 text-white" />
+                    <Delete className="w-7 h-7 text-white" />
                 </button>
               </div>
             </div>
@@ -206,7 +211,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
                 ← Nazaj
               </button>
               <button onClick={() => {
-                if (hasVoucherInCart) { return; }
+                if (hasVoucherInCart) return;
                 if (bonCode.length >= 4 && onBonPayment) {
                   onBonPayment(bonCode, total);
                 }
@@ -222,11 +227,11 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
     );
   }
 
-  // Cash payment - matches Diapozitiv6-4.JPG exactly
+  // Cash payment - matches Diapozitiv6-5 with BANKOVCI
   return (
     <div className="h-full flex gap-3 p-3" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
       {/* LEFT - Receipt summary */}
-      <div className="flex-[4] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-2">
+      <div className="flex-[3] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-2">
         <div className="flex justify-between">
           <span className="font-bold text-lg">Račun:</span>
           <span className="font-bold">št. rač. / datum</span>
@@ -240,11 +245,11 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
         <div>Ostalo za plačilo: {confirmed ? formatPrice(Math.max(0, total - amountPaid)) : formatPrice(total)}</div>
       </div>
 
-      {/* RIGHT - Payment info + numpad + actions */}
-      <div className="flex-[6] flex flex-col gap-3">
+      {/* RIGHT */}
+      <div className="flex-[7] flex flex-col gap-3">
         {/* Za plačilo panel */}
         <div className="border-2 border-gray-600 bg-white rounded-lg p-4">
-          <h3 className="font-bold text-xl mb-2">Za plačilo:</h3>
+          <h3 className="font-bold text-xl mb-1">Za plačilo:</h3>
           <div className="border-t border-dashed border-gray-400 pt-2 space-y-1 text-sm">
             <div>Plačano: {confirmed ? formatPrice(amountPaid) + ' €' : ''}</div>
             <div>Vračilo: {confirmed && change > 0 ? formatPrice(change) + ' €' : ''}</div>
@@ -252,7 +257,30 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
         </div>
 
         <div className="flex gap-3 flex-1">
-          {/* Numpad with input */}
+          {/* BANKOVCI */}
+          <div className="flex flex-col gap-2 w-44">
+            <div className="border-2 border-gray-600 bg-white rounded-lg p-2">
+              <h4 className="font-bold text-center text-sm tracking-[0.2em] mb-2">BANKOVCI</h4>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[200, 100, 50, 20, 10, 5].map(v => (
+                  <button key={v} onClick={() => handleBanknote(v)}
+                    className="h-10 bg-green-600 hover:bg-green-700 text-white rounded font-bold text-lg transition-colors">
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-1.5 mt-1.5 justify-center">
+                {[2, 1].map(v => (
+                  <button key={v} onClick={() => handleBanknote(v)}
+                    className="w-14 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-lg transition-colors">
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Input + Numpad */}
           <div className="flex flex-col gap-2 flex-1">
             {/* Input display */}
             <div className="border-2 border-gray-600 bg-white rounded-lg p-3">
@@ -260,9 +288,9 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
             </div>
 
             {/* Numpad */}
-            <div className="flex flex-col gap-2 flex-1">
+            <div className="flex flex-col gap-1.5 flex-1">
               {numKeys.map((row, ri) => (
-                <div key={ri} className="flex gap-2 flex-1">
+                <div key={ri} className="flex gap-1.5 flex-1">
                   {row.map(key => (
                     <button key={key} onClick={() => handleKeyPress(key)}
                       className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
@@ -271,7 +299,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
                   ))}
                 </div>
               ))}
-              <div className="flex gap-2 flex-1">
+              <div className="flex gap-1.5 flex-1">
                 <button onClick={() => handleKeyPress('0')}
                   className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
                   0
@@ -288,15 +316,15 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
             </div>
           </div>
 
-          {/* Right action buttons - matches image exactly */}
+          {/* Right action buttons */}
           <div className="flex flex-col gap-3 w-36">
             <button onClick={() => setStep('select')}
-              className="h-16 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
+              className="h-14 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
               ← Nazaj
             </button>
             <button onClick={handleConfirm}
               disabled={amountPaid <= 0}
-              className="h-16 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-lg flex items-center justify-center disabled:opacity-40 transition-colors">
+              className="h-14 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-lg flex items-center justify-center disabled:opacity-40 transition-colors">
               Potrdi
             </button>
             <button onClick={() => { if (confirmed && amountPaid >= total) onCashPayment(amountPaid); }}
