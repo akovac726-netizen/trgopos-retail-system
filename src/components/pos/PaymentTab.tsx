@@ -392,6 +392,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
       <GiftCardRedeemFlow
         total={total}
         registerId={registerId || 1}
+        isSelfCheckout={isSelfCheckout}
         onApplyDiscount={(pointsUsed, discountAmount, cardId) => {
           if (onGiftCardPointsRedeem) onGiftCardPointsRedeem(cardId, pointsUsed, discountAmount);
           setStep('select');

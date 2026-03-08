@@ -92,6 +92,7 @@ const Index = () => {
   const [pointsDiscount, setPointsDiscount] = useState(0);
   const [pointsCardId, setPointsCardId] = useState<string | null>(null);
   const [pointsUsed, setPointsUsed] = useState(0);
+  const [isSelfCheckout, setIsSelfCheckout] = useState(false);
 
 
   // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
