@@ -220,7 +220,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     // Realtime trigger - forces component awareness of closing_reports/transactions changes
   };
 
-
+  const generateAuthCode = () => {
     const code = Math.floor(10000 + Math.random() * 90000).toString();
     setAuthCode(code);
     setAuthCodeExpiry(Date.now() + 4 * 60 * 60 * 1000);
