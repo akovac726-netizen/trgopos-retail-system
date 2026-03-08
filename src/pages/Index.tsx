@@ -334,7 +334,7 @@ const Index = () => {
     setScreen('payment');
   };
 
-  // Physical keyboard support
+  // Physical keyboard support - main POS screen
   useEffect(() => {
     if (!keyboardEnabled || appMode !== 'pos' || posTab !== 'blagajna' || screen !== 'main') return;
     const handler = (e: KeyboardEvent) => {
@@ -354,6 +354,20 @@ const Index = () => {
       } else if (e.key === 'F2') {
         e.preventDefault();
         handleProceedToPayment();
+      } else if (e.key === '*') {
+        e.preventDefault();
+        if (selectedItemIndex === null) { toast.warning('Izberite artikel'); return; }
+        if (cartItems[selectedItemIndex]?.isStornoed) { toast.warning('Artikel je storniran'); return; }
+        setShowQuantityDialog(true);
+      } else if (e.key === '-') {
+        e.preventDefault();
+        handleStorno();
+      } else if (e.key === '/') {
+        e.preventDefault();
+        handleDiscount();
+      } else if (e.key === '+') {
+        e.preventDefault();
+        setShowProductSearchDialog(true);
       }
     };
     window.addEventListener('keydown', handler);
@@ -607,6 +621,7 @@ const Index = () => {
             onCashPayment={handleCashComplete} onCardPayment={handleCardComplete}
             onInvoice={() => setShowPartnerInvoiceDialog(true)} onBack={() => setScreen('main')}
             onBonPayment={handleBonPayment}
+            keyboardEnabled={keyboardEnabled}
           />
         )}
 
