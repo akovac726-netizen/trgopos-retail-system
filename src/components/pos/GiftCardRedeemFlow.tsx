@@ -214,8 +214,8 @@ const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalan
     );
   }
 
-  // STEP 2: Enter PIN
-  if (step === 'enter_pin') {
+  // STEP 2: Waiting for PIN on terminal
+  if (step === 'waiting_pin') {
     return (
       <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: bg }}>
         <div className="flex-[4] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-3">
@@ -226,7 +226,7 @@ const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalan
           <div className="border-t border-dashed border-gray-400 pt-2" />
           <div>Kartica: <strong>{card?.code}</strong></div>
           <div className="bg-amber-50 border border-amber-300 rounded p-3 text-amber-800 text-sm mt-4">
-            🔒 Stranka naj vnese svojo PIN kodo za potrditev dostopa do točk.
+            🔒 Stranka vnese PIN kodo na POS terminalu.
           </div>
           {error && (
             <div className="bg-red-100 border border-red-400 rounded p-3 text-red-700 font-bold text-sm mt-2">
@@ -235,31 +235,16 @@ const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalan
           )}
         </div>
 
-        <div className="flex-[6] flex flex-col gap-3">
-          <div className="border-2 border-gray-600 bg-white rounded-lg p-4">
-            <h3 className="font-bold text-base mb-2">PIN koda:</h3>
-            <div className="border-2 border-gray-600 bg-gray-50 rounded-lg p-3 font-mono text-3xl min-h-[2.5rem] tracking-[0.5em] text-center">
-              {'●'.repeat(pin.length)}
-            </div>
+        <div className="flex-[6] flex flex-col items-center justify-center gap-6">
+          <div className="bg-white border-2 border-gray-600 rounded-xl p-8 text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-amber-500 mx-auto mb-4" />
+            <h3 className="font-bold text-xl mb-2">Čakam na vnos PIN kode...</h3>
+            <p className="text-gray-600 text-sm">Stranka naj vnese PIN kodo na POS terminalu (Blagajna {registerId})</p>
           </div>
-
-          <div className="flex gap-3 flex-1">
-            {renderNumpad(
-              k => setPin(prev => prev.length < 6 ? prev + k : prev),
-              () => setPin(prev => prev.slice(0, -1))
-            )}
-            <div className="flex flex-col gap-3 w-36">
-              <button onClick={() => { setStep('enter_code'); setPin(''); setError(''); }}
-                className="h-16 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
-                ← Nazaj
-              </button>
-              <button onClick={handleVerifyPin}
-                disabled={pin.length < 1}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center disabled:opacity-40 transition-colors p-2">
-                Potrdi PIN
-              </button>
-            </div>
-          </div>
+          <button onClick={handleCancelPinRequest}
+            className="h-14 w-48 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
+            ← Prekliči
+          </button>
         </div>
       </div>
     );
