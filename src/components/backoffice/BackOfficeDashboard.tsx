@@ -131,7 +131,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
   const closingReports = externalReports;
   const categories = ['Higiena', 'Osebna nega', 'Pijače', 'Žvečilni gumi', 'Pisarniški material', 'Kartice', 'Ostalo'];
-  const knownEmployees = ['Dženan Kedić', 'Eva Zakrajšek', 'Študent 1', 'Študent 2', 'PODPORA STANDBUY'];
+  const knownEmployees = employees.map(e => `${e.firstName} ${e.lastName}`);
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
 
   useEffect(() => {
