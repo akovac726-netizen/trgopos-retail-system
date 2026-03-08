@@ -14,7 +14,7 @@ interface GiftCardRedeemFlowProps {
 
 type Step = 'enter_code' | 'loading' | 'waiting_pin' | 'pin_approved' | 'pin_declined' | 'show_points' | 'confirm';
 
-const POINT_VALUE = 0.01; // 1 point = 0.01 €
+const POINT_VALUE = 0.15; // 1 point = 0.15 €
 const MIN_PURCHASE_FOR_POINTS = 5; // min 5€ purchase to use points
 
 const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalance, onPartialBalancePayment, onCancel }: GiftCardRedeemFlowProps) => {
