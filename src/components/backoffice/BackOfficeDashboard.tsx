@@ -1386,18 +1386,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         )}
 
         {/* DOKUMENTI */}
-        {activeTab === 'dokumenti' && (
-          <div>
-            <div className="bg-gray-600/80 px-6 py-3"><h2 className="text-white font-bold text-xl">Dokumenti</h2></div>
-            <div className="px-6 py-4 grid grid-cols-2 gap-4">
-              {['Fakture', 'Dobropisi', 'Prevzemni listi', 'Naročilnice'].map(doc => (
-                <div key={doc} className="bg-gray-200 border border-gray-400 rounded-lg p-6 cursor-pointer hover:bg-gray-300 transition-colors">
-                  <h3 className="font-bold text-gray-800">{doc}</h3>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {activeTab === 'dokumenti' && <DokumentiModule role={role} />}
 
         {/* NALEPKE / CENOVKE */}
         {activeTab === 'nalepke' && (
