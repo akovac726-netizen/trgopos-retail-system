@@ -167,7 +167,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
 
   useEffect(() => {
-    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB(); fetchPromotions();
+    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB(); fetchPromotions(); fetchFinanceClosings();
     const channel = supabase
       .channel('bo-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchProducts)
