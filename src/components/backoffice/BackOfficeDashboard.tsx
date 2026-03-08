@@ -37,6 +37,14 @@ interface BackOfficeDashboardProps {
 }
 
 type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'avtorizacija';
+type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti';
+type PromoType = 'akcijska_cena' | 'popust_percent' | 'kolicinska';
+interface Promotion {
+  id: string; type: PromoType; product_ean: string; product_name: string;
+  start_date: string; end_date: string; promo_price: number | null;
+  discount_percent: number | null; qty_required: number | null; qty_free: number | null;
+  active: boolean;
+}
 
 const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], role }: BackOfficeDashboardProps) => {
   const [activeTab, setActiveTab] = useState<Tab>('poslovanje');
@@ -129,13 +137,30 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   // Zaključevanje
   const [showZakljuciConfirm, setShowZakljuciConfirm] = useState(false);
 
+  // Artikli sub-tabs
+  const [artikliSubTab, setArtikliSubTab] = useState<ArtikliSubTab>('sifrant');
+
+  // Promotions
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [showPromoForm, setShowPromoForm] = useState(false);
+  const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);
+  const [promoType, setPromoType] = useState<PromoType>('akcijska_cena');
+  const [promoEan, setPromoEan] = useState("");
+  const [promoProductName, setPromoProductName] = useState("");
+  const [promoStartDate, setPromoStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [promoEndDate, setPromoEndDate] = useState("");
+  const [promoPrice, setPromoPrice] = useState("");
+  const [promoDiscountPercent, setPromoDiscountPercent] = useState("");
+  const [promoQtyRequired, setPromoQtyRequired] = useState("");
+  const [promoQtyFree, setPromoQtyFree] = useState("");
+
   const closingReports = externalReports;
   const categories = ['Higiena', 'Osebna nega', 'Pijače', 'Žvečilni gumi', 'Pisarniški material', 'Kartice', 'Ostalo'];
   const knownEmployees = employees.map(e => `${e.firstName} ${e.lastName}`);
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
 
   useEffect(() => {
-    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB();
+    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB(); fetchPromotions();
     const channel = supabase
       .channel('bo-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchProducts)
@@ -147,6 +172,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       .on('postgres_changes', { event: '*', schema: 'public', table: 'business_days' }, fetchBusinessDay)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'closing_reports' }, fetchClosingReportsFromDB)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, fetchClosingReportsFromDB)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'promotions' }, fetchPromotions)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -219,6 +245,71 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const fetchClosingReportsFromDB = async () => {
     // Realtime trigger - forces component awareness of closing_reports/transactions changes
   };
+
+  const fetchPromotions = async () => {
+    const { data } = await supabase.from('promotions').select('*').order('start_date' as any);
+    if (data) setPromotions((data as any[]).map((p: any) => ({
+      id: p.id, type: p.type, product_ean: p.product_ean, product_name: p.product_name,
+      start_date: p.start_date, end_date: p.end_date, promo_price: p.promo_price,
+      discount_percent: p.discount_percent, qty_required: p.qty_required, qty_free: p.qty_free,
+      active: p.active,
+    })));
+  };
+
+  const resetPromoForm = () => {
+    setShowPromoForm(false); setEditingPromo(null); setPromoType('akcijska_cena');
+    setPromoEan(""); setPromoProductName(""); setPromoStartDate(new Date().toISOString().split('T')[0]);
+    setPromoEndDate(""); setPromoPrice(""); setPromoDiscountPercent(""); setPromoQtyRequired(""); setPromoQtyFree("");
+  };
+
+  const handlePromoEanLookup = (ean: string) => {
+    setPromoEan(ean);
+    const found = products.find(p => p.ean === ean);
+    if (found) setPromoProductName(found.name);
+    else setPromoProductName("");
+  };
+
+  const handleSavePromo = async () => {
+    if (!promoEan || !promoStartDate || !promoEndDate) { toast.error('Izpolnite vsa obvezna polja'); return; }
+    const productName = promoProductName || products.find(p => p.ean === promoEan)?.name || promoEan;
+    const d: any = {
+      type: promoType, product_ean: promoEan, product_name: productName,
+      start_date: promoStartDate, end_date: promoEndDate, active: true,
+      promo_price: promoType === 'akcijska_cena' ? parseFloat(promoPrice) || null : null,
+      discount_percent: promoType === 'popust_percent' ? parseFloat(promoDiscountPercent) || null : null,
+      qty_required: promoType === 'kolicinska' ? parseInt(promoQtyRequired) || null : null,
+      qty_free: promoType === 'kolicinska' ? parseInt(promoQtyFree) || null : null,
+    };
+    if (editingPromo) {
+      const { error } = await supabase.from('promotions').update(d).eq('id', editingPromo.id as any);
+      if (error) toast.error('Napaka'); else { toast.success('Akcija posodobljena'); resetPromoForm(); }
+    } else {
+      const { error } = await supabase.from('promotions').insert(d);
+      if (error) toast.error('Napaka'); else { toast.success('Akcija ustvarjena'); resetPromoForm(); }
+    }
+  };
+
+  const handleEditPromo = (p: Promotion) => {
+    setEditingPromo(p); setPromoType(p.type); setPromoEan(p.product_ean);
+    setPromoProductName(p.product_name); setPromoStartDate(p.start_date); setPromoEndDate(p.end_date);
+    setPromoPrice(p.promo_price?.toString() || ""); setPromoDiscountPercent(p.discount_percent?.toString() || "");
+    setPromoQtyRequired(p.qty_required?.toString() || ""); setPromoQtyFree(p.qty_free?.toString() || "");
+    setShowPromoForm(true);
+  };
+
+  const handleDeletePromo = async (p: Promotion) => {
+    if (!confirm(`Izbrišete akcijo za ${p.product_name}?`)) return;
+    await supabase.from('promotions').delete().eq('id', p.id as any);
+    toast.success('Akcija izbrisana');
+  };
+
+  const handleTogglePromo = async (p: Promotion) => {
+    await supabase.from('promotions').update({ active: !p.active } as any).eq('id', p.id as any);
+    toast.success(p.active ? 'Akcija deaktivirana' : 'Akcija aktivirana');
+  };
+
+  const promoTypeLabel = (t: PromoType) => t === 'akcijska_cena' ? 'Akcijska cena' : t === 'popust_percent' ? '% Popust' : 'Količinska akcija';
+
 
   const generateAuthCode = () => {
     const code = Math.floor(10000 + Math.random() * 90000).toString();
@@ -865,81 +956,295 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         {/* ARTIKLI */}
         {activeTab === 'artikli' && (
           <div>
-            <div className="bg-gray-600/80 px-6 py-3 flex items-center justify-between">
+            <div className="bg-gray-400/60 px-6 py-3 inline-block min-w-[500px]">
               <h2 className="text-white font-bold text-xl">Artikli</h2>
-              <button onClick={() => { resetProductForm(); setShowAddForm(true); }}
-                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded text-sm">+ Dodaj</button>
             </div>
-            <div className="px-6 py-3">
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Išči po imenu ali EAN..."
-                  className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
-              </div>
 
-              {showAddForm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                  <div className="bg-gray-200 rounded-xl p-6 w-[500px] border border-gray-400">
-                    <div className="flex justify-end gap-2 mb-4">
-                      <button onClick={handleSaveProduct} className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded text-sm">{editingProduct ? 'Posodobi' : 'Dodaj'}</button>
-                      <button onClick={resetProductForm} className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-sm">Prekliči</button>
-                    </div>
-                    <div className="space-y-1">
-                      {[
-                        { label: 'EAN koda:', value: formEan, setter: setFormEan },
-                        { label: 'Ime artikla:', value: formName, setter: setFormName },
-                        { label: 'Cena (€):', value: formPrice, setter: setFormPrice },
-                        { label: 'Zaloga:', value: formStock, setter: setFormStock },
-                        { label: 'Min. zaloga:', value: formMinStock, setter: setFormMinStock },
-                      ].map(f => (
-                        <div key={f.label} className="flex border border-gray-400 bg-white">
-                          <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">{f.label}</div>
-                          <input value={f.value} onChange={e => f.setter(e.target.value)} className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+            {/* Sub-tabs matching reference images */}
+            <div className="flex gap-1 px-6 mt-3">
+              {([
+                { id: 'sifrant' as ArtikliSubTab, label: 'Šifrant artiklov' },
+                { id: 'cene' as ArtikliSubTab, label: 'Cene artiklov' },
+                { id: 'akcije' as ArtikliSubTab, label: 'Akcijske ponudbe' },
+                { id: 'popusti' as ArtikliSubTab, label: 'Popusti / Znižanja' },
+              ]).map(st => (
+                <button key={st.id} onClick={() => setArtikliSubTab(st.id)}
+                  className={`px-5 py-2 text-sm font-medium border border-gray-400 transition-colors ${
+                    artikliSubTab === st.id ? 'bg-green-400 text-gray-900 font-bold' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  }`}>
+                  {st.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Add button - top right */}
+            {artikliSubTab === 'sifrant' && (
+              <div className="flex justify-end px-6 mt-3">
+                <button onClick={() => { resetProductForm(); setShowAddForm(true); }}
+                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Dodaj</button>
+              </div>
+            )}
+            {artikliSubTab === 'akcije' && (
+              <div className="flex justify-end px-6 mt-3">
+                <button onClick={() => { resetPromoForm(); setShowPromoForm(true); }}
+                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Nova akcija</button>
+              </div>
+            )}
+
+            <div className="px-6 py-3">
+              {/* ŠIFRANT ARTIKLOV */}
+              {artikliSubTab === 'sifrant' && (
+                <>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Išči po imenu ali EAN..."
+                      className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
+                  </div>
+
+                  {showAddForm && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-gray-200 rounded-xl p-6 w-[500px] border border-gray-400">
+                        <div className="flex justify-end gap-2 mb-4">
+                          <button onClick={handleSaveProduct} className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded text-sm">{editingProduct ? 'Posodobi' : 'Dodaj'}</button>
+                          <button onClick={resetProductForm} className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-sm">Prekliči</button>
                         </div>
-                      ))}
-                      <div className="flex border border-gray-400 bg-white">
-                        <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Kategorija:</div>
-                        <select value={formCategory} onChange={e => setFormCategory(e.target.value)} className="flex-1 px-3 py-1.5 text-sm focus:outline-none">
-                          {categories.map(c => <option key={c}>{c}</option>)}
-                        </select>
+                        <div className="space-y-1">
+                          {[
+                            { label: 'EAN koda:', value: formEan, setter: setFormEan },
+                            { label: 'Ime artikla:', value: formName, setter: setFormName },
+                            { label: 'Cena (€):', value: formPrice, setter: setFormPrice },
+                            { label: 'Zaloga:', value: formStock, setter: setFormStock },
+                            { label: 'Min. zaloga:', value: formMinStock, setter: setFormMinStock },
+                          ].map(f => (
+                            <div key={f.label} className="flex border border-gray-400 bg-white">
+                              <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">{f.label}</div>
+                              <input value={f.value} onChange={e => f.setter(e.target.value)} className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+                            </div>
+                          ))}
+                          <div className="flex border border-gray-400 bg-white">
+                            <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Kategorija:</div>
+                            <select value={formCategory} onChange={e => setFormCategory(e.target.value)} className="flex-1 px-3 py-1.5 text-sm focus:outline-none">
+                              {categories.map(c => <option key={c}>{c}</option>)}
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  )}
+
+                  <table className="w-full border-collapse bg-white">
+                    <thead>
+                      <tr className="bg-gray-200">
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold w-10">Št.</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Ime</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kategorija</th>
+                        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
+                        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Zaloga</th>
+                        <th className="border border-gray-400 px-3 py-2 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        <tr><td colSpan={7} className="text-center py-4 text-gray-500">Nalagam...</td></tr>
+                      ) : filteredProducts.length === 0 ? (
+                        <tr><td colSpan={7} className="text-center py-4 text-gray-500">Ni artiklov</td></tr>
+                      ) : filteredProducts.map((p, i) => (
+                        <tr key={p.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="border border-gray-300 px-3 py-2 text-sm">{i + 1}.</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{p.ean}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm font-medium">{p.name}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm">{p.category}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.stock}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-center">
+                            <button onClick={() => handleEditStart(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
 
-              <table className="w-full border-collapse bg-white">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold w-10">Št.</th>
-                    <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
-                    <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Ime</th>
-                    <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kategorija</th>
-                    <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
-                    <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Zaloga</th>
-                    <th className="border border-gray-400 px-3 py-2 w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan={7} className="text-center py-4 text-gray-500">Nalagam...</td></tr>
-                  ) : filteredProducts.length === 0 ? (
-                    <tr><td colSpan={7} className="text-center py-4 text-gray-500">Ni artiklov</td></tr>
-                  ) : filteredProducts.map((p, i) => (
-                    <tr key={p.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{i + 1}.</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{p.ean}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm font-medium">{p.name}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{p.category}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.stock}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-center">
-                        <button onClick={() => handleEditStart(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* CENE ARTIKLOV */}
+              {artikliSubTab === 'cene' && (
+                <>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Išči po imenu ali EAN..."
+                      className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
+                  </div>
+                  <table className="w-full border-collapse bg-white">
+                    <thead>
+                      <tr className="bg-gray-200">
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Ime</th>
+                        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena (€)</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kategorija</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProducts.map((p, i) => (
+                        <tr key={p.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{p.ean}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm font-medium">{p.name}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{p.price.toFixed(2)} €</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm">{p.category}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+              {/* AKCIJSKE PONUDBE */}
+              {artikliSubTab === 'akcije' && (
+                <>
+                  {/* Promo form dialog */}
+                  {showPromoForm && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-gray-200 rounded-xl p-6 w-[520px] border border-gray-400">
+                        <h3 className="font-bold text-lg mb-4">{editingPromo ? 'Uredi akcijo' : 'Nova akcija'}</h3>
+
+                        {/* Type selector */}
+                        <div className="mb-4">
+                          <label className="text-sm font-medium text-gray-700 mb-1 block">Tip akcije:</label>
+                          <div className="flex gap-2">
+                            {([
+                              { id: 'akcijska_cena' as PromoType, label: 'Akcijska cena' },
+                              { id: 'popust_percent' as PromoType, label: '% Popust' },
+                              { id: 'kolicinska' as PromoType, label: 'Količinska akcija' },
+                            ]).map(t => (
+                              <button key={t.id} onClick={() => setPromoType(t.id)}
+                                className={`flex-1 py-2 text-sm font-bold rounded border-2 transition-colors ${
+                                  promoType === t.id ? 'bg-green-500 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300 hover:border-green-400'
+                                }`}>
+                                {t.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex border border-gray-400 bg-white">
+                            <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Artikel (EAN):</div>
+                            <input value={promoEan} onChange={e => handlePromoEanLookup(e.target.value)}
+                              className="flex-1 px-3 py-1.5 text-sm focus:outline-none" placeholder="Vnesite EAN kodo" />
+                          </div>
+                          {promoProductName && (
+                            <div className="bg-green-50 border border-green-300 px-3 py-1.5 text-sm text-green-800 rounded">
+                              ✓ {promoProductName}
+                            </div>
+                          )}
+                          <div className="flex border border-gray-400 bg-white">
+                            <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Datum od:</div>
+                            <input type="date" value={promoStartDate} onChange={e => setPromoStartDate(e.target.value)}
+                              className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+                          </div>
+                          <div className="flex border border-gray-400 bg-white">
+                            <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Datum do:</div>
+                            <input type="date" value={promoEndDate} onChange={e => setPromoEndDate(e.target.value)}
+                              className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+                          </div>
+
+                          {/* Conditional fields based on promo type */}
+                          {promoType === 'akcijska_cena' && (
+                            <div className="flex border border-gray-400 bg-white">
+                              <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Akcijska cena (€):</div>
+                              <input value={promoPrice} onChange={e => setPromoPrice(e.target.value)}
+                                className="flex-1 px-3 py-1.5 text-sm focus:outline-none" placeholder="npr. 1.49" />
+                            </div>
+                          )}
+                          {promoType === 'popust_percent' && (
+                            <div className="flex border border-gray-400 bg-white">
+                              <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Popust (%):</div>
+                              <input value={promoDiscountPercent} onChange={e => setPromoDiscountPercent(e.target.value)}
+                                className="flex-1 px-3 py-1.5 text-sm focus:outline-none" placeholder="npr. 20" />
+                            </div>
+                          )}
+                          {promoType === 'kolicinska' && (
+                            <>
+                              <div className="flex border border-gray-400 bg-white">
+                                <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Kupi (kosov):</div>
+                                <input value={promoQtyRequired} onChange={e => setPromoQtyRequired(e.target.value)}
+                                  className="flex-1 px-3 py-1.5 text-sm focus:outline-none" placeholder="npr. 3" />
+                              </div>
+                              <div className="flex border border-gray-400 bg-white">
+                                <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Dobiš gratis:</div>
+                                <input value={promoQtyFree} onChange={e => setPromoQtyFree(e.target.value)}
+                                  className="flex-1 px-3 py-1.5 text-sm focus:outline-none" placeholder="npr. 1" />
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="flex justify-end gap-2 mt-4">
+                          <button onClick={handleSavePromo} className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded text-sm">
+                            {editingPromo ? 'Posodobi' : 'Ustvari'}
+                          </button>
+                          <button onClick={resetPromoForm} className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-sm">Prekliči</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Promotions table */}
+                  <table className="w-full border-collapse bg-white">
+                    <thead>
+                      <tr className="bg-gray-200">
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Tip</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Artikel</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Od</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Do</th>
+                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Pogoji</th>
+                        <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Status</th>
+                        <th className="border border-gray-400 px-3 py-2 w-24"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {promotions.length === 0 ? (
+                        <tr><td colSpan={8} className="text-center py-4 text-gray-500">Ni akcij</td></tr>
+                      ) : promotions.map((p, i) => {
+                        const isExpired = new Date(p.end_date) < new Date();
+                        const conditions = p.type === 'akcijska_cena' ? `${p.promo_price?.toFixed(2)} €`
+                          : p.type === 'popust_percent' ? `${p.discount_percent}%`
+                          : `Kupi ${p.qty_required}, dobiš ${p.qty_free} gratis`;
+                        return (
+                          <tr key={p.id} className={`${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} ${isExpired ? 'opacity-50' : ''}`}>
+                            <td className="border border-gray-300 px-3 py-2 text-sm">{promoTypeLabel(p.type)}</td>
+                            <td className="border border-gray-300 px-3 py-2 text-sm font-medium">{p.product_name}</td>
+                            <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{p.product_ean}</td>
+                            <td className="border border-gray-300 px-3 py-2 text-sm">{p.start_date}</td>
+                            <td className="border border-gray-300 px-3 py-2 text-sm">{p.end_date}</td>
+                            <td className="border border-gray-300 px-3 py-2 text-sm font-bold">{conditions}</td>
+                            <td className="border border-gray-300 px-3 py-2 text-center">
+                              <button onClick={() => handleTogglePromo(p)}
+                                className={`px-2 py-0.5 rounded text-xs font-bold ${p.active && !isExpired ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                {isExpired ? 'Potekla' : p.active ? 'Aktivna' : 'Neaktivna'}
+                              </button>
+                            </td>
+                            <td className="border border-gray-300 px-3 py-2 text-center">
+                              <div className="flex gap-1 justify-center">
+                                <button onClick={() => handleEditPromo(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
+                                <button onClick={() => handleDeletePromo(p)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+              {/* POPUSTI / ZNIŽANJA - placeholder */}
+              {artikliSubTab === 'popusti' && (
+                <div className="text-gray-400 text-center py-12 text-lg">
+                  Modul Popusti / Znižanja – v pripravi
+                </div>
+              )}
             </div>
           </div>
         )}
