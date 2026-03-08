@@ -123,7 +123,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
     );
   }
 
-  // Card terminal - matches Diapozitiv5-6 (blue overlay)
+  // Card terminal - matches Diapozitiv5-7 (blue overlay with POTRDI + PREKLIČI)
   if (step === 'card') {
     return (
       <div className="h-full flex gap-3 p-3 relative" style={{ background: bg }}>
@@ -136,11 +136,11 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
               <p className="text-5xl font-bold">{formatPrice(total)} €</p>
             </div>
             <div className="flex justify-center gap-4">
-              <button onClick={() => setStep('select')}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors">
-                ← NAZAJ
-              </button>
               <button onClick={() => { onCardPayment(); }}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors">
+                POTRDI
+              </button>
+              <button onClick={() => setStep('select')}
                 className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors">
                 PREKLIČI
               </button>
