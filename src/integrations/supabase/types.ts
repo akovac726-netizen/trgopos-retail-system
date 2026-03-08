@@ -468,6 +468,7 @@ export type Database = {
           items: Json
           payment_method: string
           receipt_number: string
+          register_id: number
           subtotal: number
           total: number
           void_reason: string | null
@@ -485,6 +486,7 @@ export type Database = {
           items?: Json
           payment_method?: string
           receipt_number: string
+          register_id?: number
           subtotal?: number
           total?: number
           void_reason?: string | null
@@ -502,6 +504,7 @@ export type Database = {
           items?: Json
           payment_method?: string
           receipt_number?: string
+          register_id?: number
           subtotal?: number
           total?: number
           void_reason?: string | null
