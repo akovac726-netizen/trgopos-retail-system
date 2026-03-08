@@ -193,7 +193,7 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
 
   const handleGiftPinConfirm = async () => {
     if (!currentRequest || giftPinValue.length < 1) return;
-    const metadata = (currentRequest as any).metadata;
+    const metadata = currentRequest?.metadata;
     if (!metadata?.card_id) return;
 
     // Look up the card PIN from DB
@@ -453,7 +453,7 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
               <CreditCard className="w-8 h-8 text-amber-400 mx-auto mb-2" />
               <p className="text-white/50 text-xs mb-1">DARILNA KARTICA</p>
               <p className="text-white text-lg font-bold">Potrditev PIN kode</p>
-              <p className="text-white/40 text-xs mt-1">Kartica: {(currentRequest as any).metadata?.card_code || '—'}</p>
+              <p className="text-white/40 text-xs mt-1">Kartica: {currentRequest?.metadata?.card_code || '—'}</p>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
