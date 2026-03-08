@@ -102,9 +102,27 @@ const Index = () => {
     };
     fetchTransactions();
 
-    const channel = supabase.channel('pos-products')
+    const fetchEmployees = async () => {
+      const { data } = await supabase.from('employees').select('*');
+      if (data && data.length > 0) {
+        const dbCashiers: Cashier[] = data.map((e: any) => ({
+          id: e.username || e.code || e.id,
+          name: `${e.first_name} ${e.last_name}`,
+          password: e.password || e.username || e.code,
+          role: (e.position?.toLowerCase().includes('admin') || e.position?.toLowerCase().includes('direktor') || e.position?.toLowerCase().includes('vodja')) ? 'admin' as const : 'cashier' as const,
+          drawerCode: e.code || '',
+        }));
+        // Always include PODPORA STANDBUY fallback
+        const hasSupport = dbCashiers.some(c => c.id === '00087');
+        setCashiers(hasSupport ? dbCashiers : [...FALLBACK_CASHIERS, ...dbCashiers]);
+      }
+    };
+    fetchEmployees();
+
+    const channel = supabase.channel('pos-data')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => fetchTransactions())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => fetchEmployees())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
