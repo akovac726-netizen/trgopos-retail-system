@@ -729,6 +729,7 @@ const Index = () => {
             onGiftCardBalancePayment={handleGiftCardBalancePayment}
             onGiftCardPartialBalance={handleGiftCardPartialBalance}
             keyboardEnabled={keyboardEnabled}
+            isSelfCheckout={isSelfCheckout}
           />
         )}
 
