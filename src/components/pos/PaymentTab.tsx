@@ -168,7 +168,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
               className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
               Kartica
             </button>
-            <button
+            <button onClick={() => { setGiftCardCode(''); setGiftCardPin(''); setGiftCardPinStep(false); setStep('giftcard'); }}
               className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
               Darilna<br/>kartica
             </button>
