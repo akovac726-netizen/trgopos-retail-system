@@ -360,6 +360,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [keyboardEnabled, appMode, posTab, screen, inputValue, cartItems, selectedItemIndex, showSettingsDialog, showManagerCodeDialog, showReturnManagerCode, showProductSearchDialog, showQuantityDialog, showDiscountDialog, showReturnDialog, showPriceCheckDialog, showPartnerInvoiceDialog]);
 
+  const handleOpenDrawer = () => {
     if (currentCashier) setShowDrawerDialog(true);
   };
 
