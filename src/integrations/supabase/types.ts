@@ -65,6 +65,39 @@ export type Database = {
         }
         Relationships: []
       }
+      card_holders: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          pin: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string
+          pin?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string
+          pin?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       closing_reports: {
         Row: {
           card: number
@@ -178,6 +211,56 @@ export type Database = {
           username?: string
         }
         Relationships: []
+      }
+      gift_cards: {
+        Row: {
+          active: boolean
+          balance: number
+          code: string
+          created_at: string
+          created_by: string
+          ean: string
+          holder_id: string | null
+          id: string
+          pin: string
+          points: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          balance?: number
+          code: string
+          created_at?: string
+          created_by?: string
+          ean?: string
+          holder_id?: string | null
+          id?: string
+          pin?: string
+          points?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          balance?: number
+          code?: string
+          created_at?: string
+          created_by?: string
+          ean?: string
+          holder_id?: string | null
+          id?: string
+          pin?: string
+          points?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_cards_holder_id_fkey"
+            columns: ["holder_id"]
+            isOneToOne: false
+            referencedRelation: "card_holders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gift_vouchers: {
         Row: {

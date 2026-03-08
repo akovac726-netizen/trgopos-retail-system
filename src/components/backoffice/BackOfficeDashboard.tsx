@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Pencil, Plus, Search, X, Check, Trash2, Clock, Printer, Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BoniKarticeModule from "./BoniKarticeModule";
 
 interface DBProduct {
   id: string; ean: string; name: string; price: number; stock: number; min_stock: number; category: string;
@@ -36,7 +37,7 @@ interface BackOfficeDashboardProps {
   role: 'admin' | 'shop';
 }
 
-type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'avtorizacija';
+type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice' | 'avtorizacija';
 type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti';
 type PromoType = 'akcijska_cena' | 'popust_percent' | 'kolicinska';
 interface Promotion {
@@ -497,6 +498,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     { id: 'inventura', label: 'Inventura' },
     { id: 'financna', label: 'Finančna poročila' },
     { id: 'partnerji', label: 'Partnerji' },
+    { id: 'bonikartice', label: 'Boni in kartice' },
     { id: 'avtorizacija', label: 'Avtorizacija' },
   ];
 
@@ -1824,6 +1826,9 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
             )}
           </div>
         )}
+
+        {/* BONI IN KARTICE */}
+        {activeTab === 'bonikartice' && <BoniKarticeModule />}
 
         {/* AVTORIZACIJA */}
         {activeTab === 'avtorizacija' && (
