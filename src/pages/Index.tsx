@@ -67,6 +67,8 @@ const Index = () => {
   const [pendingInvoiceData, setPendingInvoiceData] = useState<InvoiceData | undefined>();
   const [closingHistory, setClosingHistory] = useState<ClosingReport[]>([]);
   const [receiptCounter, setReceiptCounter] = useState(0);
+  const [registerId, setRegisterIdState] = useState<number>(getRegisterId());
+  const [registerLocked, setRegisterLocked] = useState(false);
 
   // Dialog states
   const [showManagerCodeDialog, setShowManagerCodeDialog] = useState(false);
