@@ -977,14 +977,14 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               ))}
             </div>
 
-            {/* Add button - top right */}
-            {artikliSubTab === 'sifrant' && (
+            {/* Add button - top right - ADMIN ONLY */}
+            {artikliSubTab === 'sifrant' && role === 'admin' && (
               <div className="flex justify-end px-6 mt-3">
                 <button onClick={() => { resetProductForm(); setShowAddForm(true); }}
                   className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Dodaj</button>
               </div>
             )}
-            {artikliSubTab === 'akcije' && (
+            {artikliSubTab === 'akcije' && role === 'admin' && (
               <div className="flex justify-end px-6 mt-3">
                 <button onClick={() => { resetPromoForm(); setShowPromoForm(true); }}
                   className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Nova akcija</button>
