@@ -163,6 +163,7 @@ const Index = () => {
       if (registerId > 0) {
         const { data } = await supabase.from('self_checkout_config').select('*').eq('register_id', registerId).eq('enabled', true).maybeSingle();
         setIsSelfCheckout(!!data);
+        setSelfCheckoutLabel((data as any)?.label || '');
       }
     };
     checkSelfCheckout();
