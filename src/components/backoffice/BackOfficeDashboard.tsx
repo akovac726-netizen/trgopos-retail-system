@@ -524,9 +524,9 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
               {showEmployeeForm && editingEmployee && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                  <div className="bg-gray-200 rounded-xl p-6 w-[700px] max-h-[90vh] overflow-y-auto border border-gray-400">
-                    <h3 className="font-bold text-lg mb-4">Zaposleni:</h3>
-                    <div className="flex gap-8">
+                  <div className="bg-gray-200 rounded-2xl p-6 w-[780px] max-h-[90vh] overflow-y-auto border border-gray-400">
+                    <h3 className="font-bold text-base mb-3 italic">Zaposleni:</h3>
+                    <div className="flex gap-6">
                       <div className="flex-1 space-y-1">
                         {[
                           { label: 'Ime:', key: 'firstName' },
@@ -534,7 +534,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           { label: 'Delovno mesto:', key: 'position' },
                         ].map(f => (
                           <div key={f.key} className="flex border border-gray-400 bg-white">
-                            <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium shrink-0">{f.label}</div>
+                            <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium shrink-0">{f.label}</div>
                             <input value={(editingEmployee as any)[f.key]} onChange={e => setEditingEmployee({ ...editingEmployee, [f.key]: e.target.value })}
                               className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
                           </div>
@@ -543,30 +543,37 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                       <div className="space-y-1">
                         <div className="flex border border-gray-400 bg-white">
                           <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Datum zaposlitve:</div>
-                          <input type="date" value={editingEmployee.hireDate} onChange={e => setEditingEmployee({ ...editingEmployee, hireDate: e.target.value })} className="px-3 py-1.5 text-sm focus:outline-none w-40" />
+                          <input type="date" value={editingEmployee.hireDate} onChange={e => setEditingEmployee({ ...editingEmployee, hireDate: e.target.value })} className="px-3 py-1.5 text-sm focus:outline-none w-36" />
+                          <button className="px-2 text-gray-500 hover:text-gray-800"><Pencil className="w-4 h-4" /></button>
                         </div>
+                        <div className="h-1" />
                         <div className="flex border border-gray-400 bg-white">
                           <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Datum rojstva:</div>
-                          <input type="date" value={editingEmployee.birthDate} onChange={e => setEditingEmployee({ ...editingEmployee, birthDate: e.target.value })} className="px-3 py-1.5 text-sm focus:outline-none w-40" />
+                          <input type="date" value={editingEmployee.birthDate} onChange={e => setEditingEmployee({ ...editingEmployee, birthDate: e.target.value })} className="px-3 py-1.5 text-sm focus:outline-none w-36" />
+                          <button className="px-2 text-gray-500 hover:text-gray-800"><Pencil className="w-4 h-4" /></button>
                         </div>
                         <div className="flex border border-gray-400 bg-white">
                           <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Kraj rojstva:</div>
-                          <input value={editingEmployee.birthPlace} onChange={e => setEditingEmployee({ ...editingEmployee, birthPlace: e.target.value })} className="px-3 py-1.5 text-sm focus:outline-none w-40" />
+                          <input value={editingEmployee.birthPlace} onChange={e => setEditingEmployee({ ...editingEmployee, birthPlace: e.target.value })} className="px-3 py-1.5 text-sm focus:outline-none w-36" />
+                          <button className="px-2 text-gray-500 hover:text-gray-800"><Pencil className="w-4 h-4" /></button>
                         </div>
                       </div>
                     </div>
 
-                    <h4 className="font-bold text-sm mt-4 mb-1">POS - podatki:</h4>
-                    <div className="flex gap-8">
+                    <h4 className="font-bold text-sm mt-4 mb-1 italic">POS - podatki:</h4>
+                    <div className="flex gap-6">
                       <div className="flex-1 space-y-1">
-                        <div className="flex border border-gray-400 bg-white">
-                          <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Uporabniško ime:</div>
-                          <input value={editingEmployee.username} onChange={e => setEditingEmployee({ ...editingEmployee, username: e.target.value })} className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
-                        </div>
-                        <div className="flex border border-gray-400 bg-white">
-                          <div className="w-36 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Geslo:</div>
-                          <input value={editingEmployee.password} onChange={e => setEditingEmployee({ ...editingEmployee, password: e.target.value })} className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
-                        </div>
+                        {[
+                          { label: 'Uporabniško ime:', key: 'username' },
+                          { label: 'Geslo:', key: 'password' },
+                          { label: 'PIN blagajne:', key: 'code' },
+                        ].map(f => (
+                          <div key={f.key} className="flex border border-gray-400 bg-white">
+                            <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium shrink-0">{f.label}</div>
+                            <input value={(editingEmployee as any)[f.key]} onChange={e => setEditingEmployee({ ...editingEmployee, [f.key]: e.target.value })}
+                              className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+                          </div>
+                        ))}
                       </div>
                       <div className="space-y-1">
                         {[
@@ -579,31 +586,33 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           <div key={f.key} className="flex border border-gray-400 bg-white">
                             <div className="w-28 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">{f.label}</div>
                             <input value={(editingEmployee as any)[f.key]} onChange={e => setEditingEmployee({ ...editingEmployee, [f.key]: e.target.value })}
-                              className="px-3 py-1.5 text-sm focus:outline-none w-40" />
+                              className="px-3 py-1.5 text-sm focus:outline-none w-36" />
+                            <button className="px-2 text-gray-500 hover:text-gray-800"><Pencil className="w-4 h-4" /></button>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <h4 className="font-bold text-sm mt-4 mb-1">Stalno bivališče:</h4>
-                    <div className="space-y-1">
+                    <h4 className="font-bold text-sm mt-4 mb-1 italic">Stalno bivališče:</h4>
+                    <div className="space-y-1 max-w-md">
                       {[
                         { label: 'Naslov:', key: 'address' },
                         { label: 'Poštna št.:', key: 'postalCode' },
                         { label: 'Pošta:', key: 'city' },
                         { label: 'Država:', key: 'country' },
                       ].map(f => (
-                        <div key={f.key} className="flex border border-gray-400 bg-white max-w-md">
+                        <div key={f.key} className="flex border border-gray-400 bg-white">
                           <div className="w-28 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">{f.label}</div>
                           <input value={(editingEmployee as any)[f.key]} onChange={e => setEditingEmployee({ ...editingEmployee, [f.key]: e.target.value })}
                             className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+                          <button className="px-2 text-gray-500 hover:text-gray-800"><Pencil className="w-4 h-4" /></button>
                         </div>
                       ))}
                     </div>
 
                     <div className="flex justify-end gap-3 mt-6">
-                      <button onClick={handleSaveEmployee} className="px-8 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded text-sm">Dodaj</button>
-                      <button onClick={() => { setShowEmployeeForm(false); setEditingEmployee(null); }} className="px-8 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-sm">Prekliči</button>
+                      <button onClick={handleSaveEmployee} className="px-8 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded text-sm transition-colors">Dodaj</button>
+                      <button onClick={() => { setShowEmployeeForm(false); setEditingEmployee(null); }} className="px-8 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-sm transition-colors">Prekliči</button>
                     </div>
                   </div>
                 </div>
