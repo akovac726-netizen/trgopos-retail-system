@@ -568,7 +568,7 @@ const Index = () => {
     } as any).eq('id', card.id);
     const transaction = await createTransaction('darilna kartica', total, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
     toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${(card.balance - total).toFixed(2)} €)`);
   };
 
@@ -591,7 +591,7 @@ const Index = () => {
     await supabase.from('gift_cards').update({ balance: (card.balance || 0) - amount } as any).eq('id', cardId);
     const transaction = await createTransaction('darilna kartica', amount, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
     setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0);
     toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${((card.balance || 0) - amount).toFixed(2)} €)`);
   };
