@@ -92,10 +92,10 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
         </div>
 
         <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
-          <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
+          <button onClick={() => window.location.reload()} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
             <RotateCcw className="w-4 h-4" /> Restart
           </button>
-          <button className="flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
+          <button onClick={() => window.close()} className="flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
             <Power className="w-4 h-4" /> Turn off
           </button>
         </div>
@@ -158,10 +158,10 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
       {/* Top bar - Restart/Turnoff + mode switch */}
       <div className="relative z-10 flex items-start justify-between px-4 pt-3">
         <div className="flex flex-col gap-2">
-          <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-bold text-sm transition-colors shadow-md">
+          <button onClick={() => window.location.reload()} className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-bold text-sm transition-colors shadow-md">
             <RotateCcw className="w-5 h-5" /> Restart
           </button>
-          <button className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-bold text-sm transition-colors shadow-md">
+          <button onClick={() => window.close()} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-bold text-sm transition-colors shadow-md">
             <Power className="w-5 h-5" /> Turn off
           </button>
         </div>

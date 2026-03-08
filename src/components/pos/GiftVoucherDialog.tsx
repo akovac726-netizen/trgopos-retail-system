@@ -8,11 +8,10 @@ interface GiftVoucherDialogProps {
   cartItems: { name: string }[];
 }
 
-const VOUCHER_VALUES = [5, 10, 15, 20, 25, 30, 50, 100];
+const VOUCHER_VALUE = 10;
 
 const GiftVoucherDialog = ({ onConfirm, onClose, total, cartItems }: GiftVoucherDialogProps) => {
   const [bonCode, setBonCode] = useState("");
-  const [selectedValue, setSelectedValue] = useState<number>(10);
 
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -61,31 +60,18 @@ const GiftVoucherDialog = ({ onConfirm, onClose, total, cartItems }: GiftVoucher
           <p className="text-purple-200 text-sm mt-1">Bon se doda kot artikel – plačajte ga na blagajni</p>
         </div>
 
-        {/* Code input */}
+        {/* Fields */}
         <div className="border-2 border-gray-600 bg-white rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium whitespace-nowrap">Vnesi številko bona:</span>
             <input type="text" value={bonCode} readOnly
               className="flex-1 border-2 border-gray-400 rounded px-3 py-1 text-sm font-mono" />
           </div>
-          {/* Value selector */}
-          <div>
-            <span className="text-sm font-medium">Izberi vrednost bona:</span>
-            <div className="grid grid-cols-4 gap-2 mt-2">
-              {VOUCHER_VALUES.map(val => (
-                <button key={val} onClick={() => setSelectedValue(val)}
-                  className={`py-2 rounded-lg font-bold text-sm border-2 transition-colors ${
-                    selectedValue === val
-                      ? 'bg-purple-600 text-white border-purple-700'
-                      : 'bg-white text-gray-700 border-gray-400 hover:bg-gray-100'
-                  }`}>
-                  {val},00 €
-                </button>
-              ))}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Vrednost bona:</span>
+            <div className="border-2 border-gray-400 rounded px-3 py-1 text-sm font-mono font-bold">
+              {VOUCHER_VALUE},00 EUR
             </div>
-          </div>
-          <div className="bg-purple-50 border border-purple-300 rounded p-2 text-sm">
-            <strong>Bon: {bonCode || '—'}</strong> · Vrednost: <strong>{formatPrice(selectedValue)} €</strong>
           </div>
           <p className="text-xs text-red-500 font-medium">
             * Bon NE MORE biti izdan nobenemu podjetju (brez fakture)
@@ -124,7 +110,7 @@ const GiftVoucherDialog = ({ onConfirm, onClose, total, cartItems }: GiftVoucher
           <div className="flex flex-col gap-3 w-36">
             <button onClick={() => {
               if (bonCode.length >= 4) {
-                onConfirm(bonCode, selectedValue);
+                onConfirm(bonCode, VOUCHER_VALUE);
               }
             }}
               disabled={bonCode.length < 4}
