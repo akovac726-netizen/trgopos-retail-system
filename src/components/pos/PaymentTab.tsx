@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Delete } from "lucide-react";
+import { Delete, Loader2 } from "lucide-react";
 import { CartItem } from "@/types/pos";
 
 interface PaymentTabProps {
@@ -17,6 +17,7 @@ interface PaymentTabProps {
 
 const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment }: PaymentTabProps) => {
   const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon'>('select');
+  const [cardWaiting, setCardWaiting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [bonCode, setBonCode] = useState("");
@@ -135,16 +136,27 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
               <p className="font-bold text-lg mb-4">ZNESEK (EUR)</p>
               <p className="text-5xl font-bold">{formatPrice(total)} €</p>
             </div>
-            <div className="flex justify-center gap-4">
-              <button onClick={() => { onCardPayment(); }}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors">
-                POTRDI
-              </button>
-              <button onClick={() => setStep('select')}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors">
-                PREKLIČI
-              </button>
-            </div>
+            {cardWaiting ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-700" />
+                <p className="font-bold text-gray-700">Čakam na potrditev terminala...</p>
+                <button onClick={() => { setCardWaiting(false); setStep('select'); }}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors mt-2">
+                  PREKLIČI
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-center gap-4">
+                <button onClick={() => { setCardWaiting(true); onCardPayment(); }}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors">
+                  POTRDI
+                </button>
+                <button onClick={() => setStep('select')}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold text-xl px-8 py-3 rounded-lg transition-colors">
+                  PREKLIČI
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
