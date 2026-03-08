@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Search, Printer, CreditCard, Gift, User, Trash2, X, Check } from "lucide-react";
+import { Plus, Search, Printer, CreditCard, Gift, User, Trash2, X, Check, PlusCircle } from "lucide-react";
 
 interface GiftCard {
   id: string;
@@ -68,9 +68,13 @@ const BoniKarticeModule = () => {
 
   // Card creation
   const [showNewCard, setShowNewCard] = useState(false);
-  const [newCardBalance, setNewCardBalance] = useState('0');
+  const [newCardPoints, setNewCardPoints] = useState('0');
   const [newCardPin, setNewCardPin] = useState('');
   const [newCardHolder, setNewCardHolder] = useState('');
+
+  // Manual points addition
+  const [addPointsCardId, setAddPointsCardId] = useState<string | null>(null);
+  const [addPointsValue, setAddPointsValue] = useState('');
 
   // Voucher creation
   const [showNewVoucher, setShowNewVoucher] = useState(false);
@@ -105,23 +109,40 @@ const BoniKarticeModule = () => {
     if (data) setHolders(data as any[]);
   };
 
+  const POINT_VALUE = 0.01;
+
   const handleCreateCard = async () => {
     const code = generate8Digit();
     const ean = generateEAN(code);
+    const points = parseInt(newCardPoints) || 0;
     const { error } = await supabase.from('gift_cards').insert({
       code,
       ean,
-      balance: parseFloat(newCardBalance) || 0,
+      balance: 0,
+      points,
       pin: newCardPin,
       holder_id: newCardHolder || null,
       created_by: 'BackOffice',
     } as any);
     if (error) { toast.error('Napaka pri ustvarjanju kartice'); return; }
-    toast.success(`Darilna kartica ${code} ustvarjena`);
+    toast.success(`Darilna kartica ${code} ustvarjena (${points} točk)`);
     setShowNewCard(false);
-    setNewCardBalance('0');
+    setNewCardPoints('0');
     setNewCardPin('');
     setNewCardHolder('');
+    fetchCards();
+  };
+
+  const handleAddPoints = async (cardId: string) => {
+    const pts = parseInt(addPointsValue);
+    if (!pts || pts <= 0) { toast.error('Vnesite veljavno število točk'); return; }
+    const card = cards.find(c => c.id === cardId);
+    if (!card) return;
+    const { error } = await supabase.from('gift_cards').update({ points: card.points + pts } as any).eq('id', cardId);
+    if (error) { toast.error('Napaka pri dodajanju točk'); return; }
+    toast.success(`Dodanih ${pts} točk na kartico ${card.code}`);
+    setAddPointsCardId(null);
+    setAddPointsValue('');
     fetchCards();
   };
 
@@ -197,7 +218,7 @@ const BoniKarticeModule = () => {
       <h2>🎁 DARILNA KARTICA</h2>
       <div class="code">${card.code}</div>
       <div class="ean">EAN: ${card.ean}</div>
-      <div class="balance">Stanje: ${Number(card.balance).toFixed(2)} € | Točke: ${card.points}</div>
+      <div class="balance">Točke: ${card.points} (${(card.points * POINT_VALUE).toFixed(2)} €)</div>
       <hr/>
       <p style="font-size:11px">StandBuy s.p. • TrgoPOS</p>
       </body></html>
@@ -288,8 +309,8 @@ const BoniKarticeModule = () => {
                 <h3 className="text-white font-bold text-sm mb-3">Nova darilna kartica</h3>
                 <div className="grid grid-cols-3 gap-3 mb-3">
                   <div>
-                    <label className="text-gray-300 text-xs block mb-1">Začetno stanje (€)</label>
-                    <input value={newCardBalance} onChange={e => setNewCardBalance(e.target.value)} type="number"
+                    <label className="text-gray-300 text-xs block mb-1">Začetne točke</label>
+                    <input value={newCardPoints} onChange={e => setNewCardPoints(e.target.value)} type="number"
                       className="w-full h-9 px-3 bg-gray-600 border border-gray-500 rounded text-sm text-white" />
                   </div>
                   <div>
@@ -325,8 +346,8 @@ const BoniKarticeModule = () => {
                   <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Koda (8‑mest.)</th>
                   <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN‑13</th>
                   <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Imetnik</th>
-                  <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Stanje</th>
                   <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Točke</th>
+                  <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Vrednost (€)</th>
                   <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">PIN</th>
                   <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Status</th>
                   <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Akcije</th>
@@ -340,8 +361,8 @@ const BoniKarticeModule = () => {
                     <td className="border border-gray-300 px-3 py-2 text-sm font-mono font-bold">{card.code}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm font-mono text-gray-600">{card.ean}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm">{getHolderName(card.holder_id)}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm text-right font-medium">{Number(card.balance).toFixed(2)} €</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm text-right">{card.points}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{card.points}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-right text-gray-500">{card.points > 0 ? (card.points * POINT_VALUE).toFixed(2) + ' €' : '—'}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm text-center font-mono">{card.pin ? '••••' : '—'}</td>
                     <td className="border border-gray-300 px-3 py-2 text-sm text-center">
                       <span className={`px-2 py-0.5 rounded text-xs font-bold ${card.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -350,18 +371,39 @@ const BoniKarticeModule = () => {
                     </td>
                     <td className="border border-gray-300 px-3 py-2 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => handlePrintCard(card)} title="Natisni"
-                          className="p-1.5 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded transition-colors">
-                          <Printer className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => toggleCardActive(card)} title={card.active ? 'Deaktiviraj' : 'Aktiviraj'}
-                          className={`p-1.5 rounded transition-colors ${card.active ? 'bg-orange-100 hover:bg-orange-200 text-orange-700' : 'bg-green-100 hover:bg-green-200 text-green-700'}`}>
-                          {card.active ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
-                        </button>
-                        <button onClick={() => deleteCard(card.id)} title="Izbriši"
-                          className="p-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {addPointsCardId === card.id ? (
+                          <div className="flex items-center gap-1">
+                            <input value={addPointsValue} onChange={e => setAddPointsValue(e.target.value)} type="number" placeholder="Št. točk"
+                              className="w-20 h-7 px-2 bg-gray-100 border border-gray-400 rounded text-xs text-gray-800" autoFocus />
+                            <button onClick={() => handleAddPoints(card.id)} title="Potrdi"
+                              className="p-1 bg-green-100 hover:bg-green-200 text-green-700 rounded transition-colors">
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => { setAddPointsCardId(null); setAddPointsValue(''); }} title="Prekliči"
+                              className="p-1 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded transition-colors">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <button onClick={() => setAddPointsCardId(card.id)} title="Dodaj točke"
+                              className="p-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded transition-colors">
+                              <PlusCircle className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => handlePrintCard(card)} title="Natisni"
+                              className="p-1.5 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded transition-colors">
+                              <Printer className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => toggleCardActive(card)} title={card.active ? 'Deaktiviraj' : 'Aktiviraj'}
+                              className={`p-1.5 rounded transition-colors ${card.active ? 'bg-orange-100 hover:bg-orange-200 text-orange-700' : 'bg-green-100 hover:bg-green-200 text-green-700'}`}>
+                              {card.active ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                            </button>
+                            <button onClick={() => deleteCard(card.id)} title="Izbriši"
+                              className="p-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
