@@ -135,11 +135,15 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
 
   useEffect(() => {
-    fetchProducts(); fetchPartners();
+    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules();
     const channel = supabase
       .channel('bo-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchProducts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'partners' }, fetchPartners)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, fetchEmployees)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_requests' }, fetchLeaveRequests)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules' }, fetchSchedules)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -162,6 +166,46 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const fetchPartners = async () => {
     const { data } = await supabase.from('partners').select('*').order('name');
     if (data) setPartners((data as unknown as Partner[]) || []);
+  };
+  const fetchEmployees = async () => {
+    const { data } = await supabase.from('employees').select('*').order('first_name' as any);
+    if (data) {
+      setEmployees((data as any[]).map((e: any) => ({
+        id: e.id, firstName: e.first_name, lastName: e.last_name, code: e.code,
+        birthDate: e.birth_date, birthPlace: e.birth_place, position: e.position,
+        hireDate: e.hire_date, username: e.username, password: e.password,
+        address: e.address, postalCode: e.postal_code, city: e.city, country: e.country,
+        phone: e.phone, email: e.email, emso: e.emso, taxNumber: e.tax_number, iban: e.iban,
+      })));
+    }
+  };
+  const fetchLeaveRequests = async () => {
+    const { data } = await supabase.from('leave_requests').select('*').order('created_at' as any);
+    if (data) {
+      setLeaveRequests((data as any[]).map((lr: any) => ({
+        id: lr.id, employeeName: lr.employee_name, type: lr.type,
+        startDate: lr.start_date, endDate: lr.end_date, approver: lr.approver,
+        description: lr.description, status: lr.status,
+      })));
+    }
+  };
+  const fetchOrders = async () => {
+    const { data } = await supabase.from('orders').select('*').order('created_at' as any);
+    if (data) {
+      setSavedOrders((data as any[]).map((o: any) => ({
+        id: o.id, supplier: o.supplier, date: o.date, items: o.items as OrderItem[],
+        status: o.status, fromProfile: o.from_profile, toProfile: o.to_profile,
+        markedOrdered: o.marked_ordered, markedShipped: o.marked_shipped, receivedConfirmed: o.received_confirmed,
+      })));
+    }
+  };
+  const fetchSchedules = async () => {
+    const { data } = await supabase.from('schedules').select('*').order('created_at' as any);
+    if (data) {
+      setSchedules((data as any[]).map((s: any) => ({
+        id: s.id, employee: s.employee, day: s.day, start: s.start_time, end: s.end_time,
+      })));
+    }
   };
 
   const generateAuthCode = () => {
