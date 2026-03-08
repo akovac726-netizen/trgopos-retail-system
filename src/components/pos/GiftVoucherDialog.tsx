@@ -2,15 +2,17 @@ import { useState } from "react";
 import { Delete } from "lucide-react";
 
 interface GiftVoucherDialogProps {
-  onConfirm: (code: string, amount: number, type: 'use' | 'sell') => void;
+  onConfirm: (code: string, amount: number) => void;
   onClose: () => void;
   total: number;
   cartItems: { name: string }[];
 }
 
+const VOUCHER_VALUES = [5, 10, 15, 20, 25, 30, 50, 100];
+
 const GiftVoucherDialog = ({ onConfirm, onClose, total, cartItems }: GiftVoucherDialogProps) => {
   const [bonCode, setBonCode] = useState("");
-  const [bonValue, setBonValue] = useState("10");
+  const [selectedValue, setSelectedValue] = useState<number>(10);
 
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -55,28 +57,42 @@ const GiftVoucherDialog = ({ onConfirm, onClose, total, cartItems }: GiftVoucher
       <div className="flex-[6] flex flex-col gap-3">
         {/* Purple header */}
         <div className="bg-purple-600 rounded-lg p-4">
-          <h3 className="font-bold text-xl text-white">Darilni boni:</h3>
+          <h3 className="font-bold text-xl text-white">Izdaja darilnega bona:</h3>
+          <p className="text-purple-200 text-sm mt-1">Bon se doda kot artikel – plačajte ga na blagajni</p>
         </div>
 
-        {/* Fields */}
+        {/* Code input */}
         <div className="border-2 border-gray-600 bg-white rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium whitespace-nowrap">Vnesi številko bona:</span>
             <input type="text" value={bonCode} readOnly
               className="flex-1 border-2 border-gray-400 rounded px-3 py-1 text-sm font-mono" />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Vrednost bona:</span>
-            <div className="border-2 border-gray-400 rounded px-3 py-1 text-sm font-mono">
-              {bonValue} EUR
+          {/* Value selector */}
+          <div>
+            <span className="text-sm font-medium">Izberi vrednost bona:</span>
+            <div className="grid grid-cols-4 gap-2 mt-2">
+              {VOUCHER_VALUES.map(val => (
+                <button key={val} onClick={() => setSelectedValue(val)}
+                  className={`py-2 rounded-lg font-bold text-sm border-2 transition-colors ${
+                    selectedValue === val
+                      ? 'bg-purple-600 text-white border-purple-700'
+                      : 'bg-white text-gray-700 border-gray-400 hover:bg-gray-100'
+                  }`}>
+                  {val},00 €
+                </button>
+              ))}
             </div>
           </div>
+          <div className="bg-purple-50 border border-purple-300 rounded p-2 text-sm">
+            <strong>Bon: {bonCode || '—'}</strong> · Vrednost: <strong>{formatPrice(selectedValue)} €</strong>
+          </div>
           <p className="text-xs text-red-500 font-medium">
-            * Bon NE MORE biti izdan nobenemu podjetju
+            * Bon NE MORE biti izdan nobenemu podjetju (brez fakture)
           </p>
         </div>
 
-        {/* Zaključi račun + Numpad */}
+        {/* Numpad + actions */}
         <div className="flex gap-3 flex-1">
           <div className="flex flex-col gap-2 flex-1">
             {numKeys.map((row, ri) => (
@@ -108,12 +124,12 @@ const GiftVoucherDialog = ({ onConfirm, onClose, total, cartItems }: GiftVoucher
           <div className="flex flex-col gap-3 w-36">
             <button onClick={() => {
               if (bonCode.length >= 4) {
-                onConfirm(bonCode, parseFloat(bonValue) || 10, 'use');
+                onConfirm(bonCode, selectedValue);
               }
             }}
               disabled={bonCode.length < 4}
-              className="h-20 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-lg disabled:opacity-40 transition-colors">
-              Zaključi račun
+              className="h-20 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm disabled:opacity-40 transition-colors">
+              Dodaj bon<br/>v košarico
             </button>
             <button onClick={onClose}
               className="h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base transition-colors">
