@@ -1,0 +1,1 @@
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS register_id integer NOT NULL DEFAULT 1;

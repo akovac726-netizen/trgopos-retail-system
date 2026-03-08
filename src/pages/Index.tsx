@@ -29,6 +29,20 @@ const FALLBACK_CASHIERS: Cashier[] = [
 
 const EMBALAZA_EAN = "EMB001";
 
+// Get or assign a register ID for this device
+const getRegisterId = (): number => {
+  const stored = localStorage.getItem('trgopos_register_id');
+  if (stored) return parseInt(stored);
+  // Assign a new register ID based on timestamp to make it unique per device
+  const id = Math.floor(Date.now() % 100) + 1;
+  localStorage.setItem('trgopos_register_id', String(id));
+  return id;
+};
+
+const setRegisterId = (id: number) => {
+  localStorage.setItem('trgopos_register_id', String(id));
+};
+
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
   return products.reduce((acc, p) => {
     acc[p.ean] = { name: p.name, price: p.price };
@@ -53,6 +67,8 @@ const Index = () => {
   const [pendingInvoiceData, setPendingInvoiceData] = useState<InvoiceData | undefined>();
   const [closingHistory, setClosingHistory] = useState<ClosingReport[]>([]);
   const [receiptCounter, setReceiptCounter] = useState(0);
+  const [registerId, setRegisterIdState] = useState<number>(getRegisterId());
+  const [registerLocked, setRegisterLocked] = useState(false);
 
   // Dialog states
   const [showManagerCodeDialog, setShowManagerCodeDialog] = useState(false);
@@ -80,7 +96,7 @@ const Index = () => {
     fetchProducts();
 
     const fetchTransactions = async () => {
-      const { data } = await supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(100);
+      const { data } = await supabase.from('transactions').select('*').eq('register_id', registerId as any).order('created_at', { ascending: false }).limit(100);
       if (data) {
         setTransactions((data as any[]).map(t => ({
           id: t.receipt_number,
@@ -135,7 +151,18 @@ const Index = () => {
 
   const lastAddedItem = cartItems.length > 0 ? cartItems[cartItems.length - 1] : null;
 
-  const handleLogin = (cashier: Cashier) => { setCurrentCashier(cashier); setAppMode('pos'); setScreen('main'); };
+  const handleLogin = async (cashier: Cashier) => {
+    // Check if this register is locked for the day
+    const today = new Date().toISOString().split('T')[0];
+    const { data: lockCheck } = await supabase.from('register_closings').select('id')
+      .eq('register_id', registerId as any).eq('date', today as any).eq('type', 'Zaključek blagajne' as any).limit(1);
+    if (lockCheck && lockCheck.length > 0) {
+      setRegisterLocked(true);
+      toast.error(`Blagajna ${registerId} je že zaključena za danes. Uporabite drugo napravo.`);
+      return;
+    }
+    setCurrentCashier(cashier); setAppMode('pos'); setScreen('main');
+  };
   const handleBackOfficeLogin = (role: 'admin' | 'shop') => { setBackofficeRole(role); setAppMode('backoffice'); };
   const handleLogout = () => {
     setCurrentCashier(null); setCartItems([]); setSelectedItemIndex(null); setInputValue("");
@@ -317,6 +344,7 @@ const Index = () => {
       receipt_number: receiptNumber, items: cartItems as any, subtotal, discount: totalDiscount, total,
       payment_method: paymentMethod, amount_paid: amountPaid, change_amount: change,
       cashier_id: currentCashier?.id || '', cashier_name: currentCashier?.name || '', invoice_data: pendingInvoiceData as any,
+      register_id: registerId,
     } as any);
     return transaction;
   };
@@ -369,24 +397,40 @@ const Index = () => {
   };
 
   const handleEndShift = async (report: ClosingReport) => {
+    // Izkupiček - save to DB but do NOT logout
     await supabase.from('closing_reports').insert({
       type: report.type, cashier_name: report.cashier, cashier_id: report.cashierId,
       total: report.total, cash: report.cash, card: report.card, other: report.other,
       transaction_count: report.transactionCount, item_count: report.itemCount,
     } as any);
+    // Also save to register_closings for BackOffice visibility
+    await supabase.from('register_closings').insert({
+      register_id: registerId, type: 'Izkupiček', cashier_name: report.cashier, cashier_id: report.cashierId,
+      total: report.total, cash: report.cash, card: report.card, other: report.other,
+      transaction_count: report.transactionCount, item_count: report.itemCount,
+    } as any);
     setClosingHistory(prev => [report, ...prev]);
-    toast.success('Izmena zaključena');
-    handleLogout();
+    toast.success('Izkupiček natisnjen – blagajna ostane aktivna');
+    setPosTab('blagajna');
+    // NO logout - cashier stays logged in
   };
 
   const handleEndDay = async (report: ClosingReport) => {
+    // Zaključek blagajne - save, lock register, and logout
     await supabase.from('closing_reports').insert({
       type: report.type, cashier_name: report.cashier, cashier_id: report.cashierId,
       total: report.total, cash: report.cash, card: report.card, other: report.other,
       transaction_count: report.transactionCount, item_count: report.itemCount,
     } as any);
+    // Save to register_closings - this also locks the register for today
+    await supabase.from('register_closings').insert({
+      register_id: registerId, type: 'Zaključek blagajne', cashier_name: report.cashier, cashier_id: report.cashierId,
+      total: report.total, cash: report.cash, card: report.card, other: report.other,
+      transaction_count: report.transactionCount, item_count: report.itemCount,
+    } as any);
     setClosingHistory(prev => [report, ...prev]);
-    toast.success('Blagajna zaključena');
+    setRegisterLocked(true);
+    toast.success(`Blagajna ${registerId} zaključena za danes`);
     handleLogout();
   };
 
@@ -404,7 +448,7 @@ const Index = () => {
 
   // Login
   if (appMode === 'login') {
-    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={handleBackOfficeLogin} />;
+    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={handleBackOfficeLogin} registerId={registerId} registerLocked={registerLocked} />;
   }
 
   // BackOffice
@@ -414,7 +458,7 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <POSHeader cashier={currentCashier} activeTab={posTab} onTabChange={setPosTab} onLogout={handleLogout}
+      <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={setPosTab} onLogout={handleLogout}
         onInfo={() => setShowInfoDialog(true)}
         onSettings={() => {
           if (currentCashier?.id === '00087') {
@@ -471,7 +515,7 @@ const Index = () => {
 
         {posTab === 'zakljucek' && currentCashier && (
           <ZakljucekTab cashier={currentCashier} cashiers={cashiers} transactions={transactions}
-            closingHistory={closingHistory} onEndShift={handleEndShift} onEndDay={handleEndDay} onOpenDrawer={handleOpenDrawer} />
+            closingHistory={closingHistory} registerId={registerId} onEndShift={handleEndShift} onEndDay={handleEndDay} onOpenDrawer={handleOpenDrawer} />
         )}
       </main>
 

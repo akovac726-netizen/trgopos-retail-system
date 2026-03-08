@@ -220,7 +220,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     // Realtime trigger - forces component awareness of closing_reports/transactions changes
   };
 
-
+  const generateAuthCode = () => {
     const code = Math.floor(10000 + Math.random() * 90000).toString();
     setAuthCode(code);
     setAuthCodeExpiry(Date.now() + 4 * 60 * 60 * 1000);
@@ -1191,14 +1191,14 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
           </div>
         )}
 
-        {/* ZAKLJUČEVANJE - matches Diapozitiv5-4 exactly */}
+        {/* ZAKLJUČEVANJE - connected to DB register_closings */}
         {activeTab === 'zakljucevanje' && (
           <div className="relative h-full">
             <div className="bg-gray-400/60 px-6 py-3 inline-block min-w-[500px]">
-              <h2 className="text-white font-bold text-xl">Zaključevanje</h2>
+              <h2 className="text-white font-bold text-xl">Zaključevanje blagajn</h2>
             </div>
 
-            {/* Zaključi promet button - top right like image */}
+            {/* Zaključi promet button - top right */}
             <div className="absolute top-4 right-6">
               <button onClick={() => setShowZakljuciConfirm(true)}
                 className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors">
@@ -1206,7 +1206,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               </button>
             </div>
 
-            {/* Confirmation dialog */}
             {showZakljuciConfirm && (
               <div className="mt-6 ml-8 bg-white border-4 border-gray-800 rounded-lg p-8 max-w-[500px]">
                 <p className="text-center text-lg mb-6">Ali ste pripravljeni zaključiti?</p>
@@ -1217,6 +1216,11 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 </div>
               </div>
             )}
+
+            {/* Register closings from DB */}
+            <div className="px-6 py-4">
+              <RegisterClosingsTable />
+            </div>
           </div>
         )}
 
@@ -1467,6 +1471,52 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
       </div>
     </div>
+  );
+};
+
+const RegisterClosingsTable = () => {
+  const [closings, setClosings] = useState<any[]>([]);
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase.from('register_closings').select('*').order('closed_at', { ascending: false }).limit(50);
+      if (data) setClosings(data as any[]);
+    };
+    fetch();
+    const ch = supabase.channel('bo-reg-closings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'register_closings' }, fetch)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
+  return (
+    <table className="w-full border-collapse bg-white mt-4">
+      <thead><tr className="bg-gray-200">
+        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajna</th>
+        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Tip</th>
+        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajnik</th>
+        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
+        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Gotovina</th>
+        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Kartica</th>
+        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Skupaj</th>
+        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Računi</th>
+      </tr></thead>
+      <tbody>
+        {closings.length === 0 ? (
+          <tr><td colSpan={8} className="text-center py-4 text-gray-500">Ni zaključkov</td></tr>
+        ) : closings.map((c, i) => (
+          <tr key={c.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+            <td className="border border-gray-300 px-3 py-2 text-sm font-bold">Blagajna {c.register_id}</td>
+            <td className="border border-gray-300 px-3 py-2 text-sm">{c.type}</td>
+            <td className="border border-gray-300 px-3 py-2 text-sm">{c.cashier_name}</td>
+            <td className="border border-gray-300 px-3 py-2 text-sm">{new Date(c.closed_at).toLocaleString('sl-SI')}</td>
+            <td className="border border-gray-300 px-3 py-2 text-sm text-right">{Number(c.cash).toFixed(2)} €</td>
+            <td className="border border-gray-300 px-3 py-2 text-sm text-right">{Number(c.card).toFixed(2)} €</td>
+            <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{Number(c.total).toFixed(2)} €</td>
+            <td className="border border-gray-300 px-3 py-2 text-sm text-right">{c.transaction_count}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 };
 

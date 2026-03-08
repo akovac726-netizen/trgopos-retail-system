@@ -380,6 +380,54 @@ export type Database = {
         }
         Relationships: []
       }
+      register_closings: {
+        Row: {
+          card: number
+          cash: number
+          cashier_id: string
+          cashier_name: string
+          closed_at: string
+          date: string
+          id: string
+          item_count: number
+          other: number
+          register_id: number
+          total: number
+          transaction_count: number
+          type: string
+        }
+        Insert: {
+          card?: number
+          cash?: number
+          cashier_id: string
+          cashier_name: string
+          closed_at?: string
+          date?: string
+          id?: string
+          item_count?: number
+          other?: number
+          register_id: number
+          total?: number
+          transaction_count?: number
+          type?: string
+        }
+        Update: {
+          card?: number
+          cash?: number
+          cashier_id?: string
+          cashier_name?: string
+          closed_at?: string
+          date?: string
+          id?: string
+          item_count?: number
+          other?: number
+          register_id?: number
+          total?: number
+          transaction_count?: number
+          type?: string
+        }
+        Relationships: []
+      }
       schedules: {
         Row: {
           created_at: string
@@ -420,6 +468,7 @@ export type Database = {
           items: Json
           payment_method: string
           receipt_number: string
+          register_id: number
           subtotal: number
           total: number
           void_reason: string | null
@@ -437,6 +486,7 @@ export type Database = {
           items?: Json
           payment_method?: string
           receipt_number: string
+          register_id?: number
           subtotal?: number
           total?: number
           void_reason?: string | null
@@ -454,6 +504,7 @@ export type Database = {
           items?: Json
           payment_method?: string
           receipt_number?: string
+          register_id?: number
           subtotal?: number
           total?: number
           void_reason?: string | null
