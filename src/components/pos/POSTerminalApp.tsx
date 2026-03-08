@@ -8,6 +8,8 @@ interface TerminalRequest {
   amount: number;
   status: string;
   created_at: string;
+  type?: string;
+  metadata?: any;
 }
 
 interface POSTerminalAppProps {
@@ -45,8 +47,8 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
         .order('created_at', { ascending: false })
         .limit(1);
       if (data && data.length > 0) {
-        const req = data[0] as any;
-        setCurrentRequest(req as TerminalRequest);
+        const req = data[0] as TerminalRequest;
+        setCurrentRequest(req);
         if (req.type === 'pin_verify') {
           setScreen('gift-pin-entry');
           setGiftPinValue("");
@@ -66,9 +68,9 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
         schema: 'public',
         table: 'terminal_requests',
       }, (payload) => {
-        const req = payload.new as any;
+        const req = payload.new as TerminalRequest;
         if (req.status === 'pending' && req.register_id === selectedRegister) {
-          setCurrentRequest(req as TerminalRequest);
+          setCurrentRequest(req);
           if (req.type === 'pin_verify') {
             setScreen('gift-pin-entry');
             setGiftPinValue("");
@@ -87,9 +89,14 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
         table: 'terminal_requests',
       }, (payload) => {
         const req = payload.new as TerminalRequest;
-        if (req.status === 'cancelled' && currentRequest?.id === req.id) {
-          setCurrentRequest(null);
-          setScreen('idle');
+        if (req.status === 'cancelled') {
+          setCurrentRequest(prev => {
+            if (prev?.id === req.id) {
+              setScreen('idle');
+              return null;
+            }
+            return prev;
+          });
         }
       })
       .subscribe();
@@ -186,7 +193,7 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
 
   const handleGiftPinConfirm = async () => {
     if (!currentRequest || giftPinValue.length < 1) return;
-    const metadata = (currentRequest as any).metadata;
+    const metadata = currentRequest?.metadata;
     if (!metadata?.card_id) return;
 
     // Look up the card PIN from DB
@@ -446,7 +453,7 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
               <CreditCard className="w-8 h-8 text-amber-400 mx-auto mb-2" />
               <p className="text-white/50 text-xs mb-1">DARILNA KARTICA</p>
               <p className="text-white text-lg font-bold">Potrditev PIN kode</p>
-              <p className="text-white/40 text-xs mt-1">Kartica: {(currentRequest as any).metadata?.card_code || '—'}</p>
+              <p className="text-white/40 text-xs mt-1">Kartica: {currentRequest?.metadata?.card_code || '—'}</p>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
