@@ -614,6 +614,25 @@ const Index = () => {
                 <h3 className="font-bold text-base mb-2">Davčne stopnje</h3>
                 <p className="text-gray-600">DDV 22% (standard) | DDV 9.5% (znižana)</p>
               </div>
+              <div className="border-2 border-sky-400 rounded-lg p-4">
+                <h3 className="font-bold text-base mb-2">Menjava blagajne</h3>
+                <p className="text-gray-600 mb-3">Trenutna: <span className="font-bold text-sky-600">Blagajna {registerId}</span></p>
+                <div className="flex gap-2">
+                  {[1, 2, 3].map(id => (
+                    <button key={id} onClick={() => {
+                      localStorage.setItem('trgopos_register_id', String(id));
+                      setRegisterIdState(id);
+                      setShowSettingsDialog(false);
+                      toast.success(`Naprava nastavljena na Blagajno ${id}`);
+                    }}
+                      className={`flex-1 h-12 rounded-lg font-bold text-lg transition-colors border-2 ${
+                        id === registerId ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-gray-700 border-gray-300 hover:border-sky-400'
+                      }`}>
+                      {id}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             <button onClick={() => setShowSettingsDialog(false)}
               className="mt-4 w-full h-12 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-bold text-base transition-colors">
