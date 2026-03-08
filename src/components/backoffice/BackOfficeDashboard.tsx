@@ -1202,12 +1202,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Do</th>
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Pogoji</th>
                         <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Status</th>
-                        <th className="border border-gray-400 px-3 py-2 w-24"></th>
+                        {role === 'admin' && <th className="border border-gray-400 px-3 py-2 w-24"></th>}
                       </tr>
                     </thead>
                     <tbody>
                       {promotions.length === 0 ? (
-                        <tr><td colSpan={8} className="text-center py-4 text-gray-500">Ni akcij</td></tr>
+                        <tr><td colSpan={role === 'admin' ? 8 : 7} className="text-center py-4 text-gray-500">Ni akcij</td></tr>
                       ) : promotions.map((p, i) => {
                         const isExpired = new Date(p.end_date) < new Date();
                         const conditions = p.type === 'akcijska_cena' ? `${p.promo_price?.toFixed(2)} €`
