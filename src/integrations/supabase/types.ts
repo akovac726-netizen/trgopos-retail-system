@@ -503,6 +503,33 @@ export type Database = {
         }
         Relationships: []
       }
+      terminal_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          register_id: number
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          register_id: number
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          register_id?: number
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount_paid: number
