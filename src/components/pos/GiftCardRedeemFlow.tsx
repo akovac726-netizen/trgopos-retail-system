@@ -226,11 +226,14 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
   if (step === 'show_points') {
     const canUsePoints = total >= MIN_PURCHASE_FOR_POINTS && (card?.points || 0) > 0;
     const presets = [10, 25, 50, 100, 250, 500].filter(p => p <= maxRedeemablePoints);
+    const cardBalance = card?.balance || 0;
+    const canPayFull = cardBalance >= total;
+    const canPayPartial = cardBalance > 0 && cardBalance < total;
 
     return (
       <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: bg }}>
         {/* LEFT - Card info */}
-        <div className="flex-[4] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-3">
+        <div className="flex-[4] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-3 overflow-y-auto">
           <div className="flex items-center gap-2">
             <Gift className="w-6 h-6 text-green-600" />
             <span className="font-bold text-lg">Stanje kartice</span>
@@ -242,7 +245,7 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
           <div className="bg-blue-50 border border-blue-300 rounded-lg p-3 space-y-2">
             <div className="flex justify-between">
               <span>Stanje (€):</span>
-              <strong className="text-blue-700">{formatPrice(card?.balance || 0)} €</strong>
+              <strong className="text-blue-700">{formatPrice(cardBalance)} €</strong>
             </div>
             <div className="flex justify-between">
               <span>Točke:</span>
@@ -264,8 +267,8 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
           )}
         </div>
 
-        {/* RIGHT - Points selection */}
-        <div className="flex-[6] flex flex-col gap-3">
+        {/* RIGHT - Points selection + balance */}
+        <div className="flex-[6] flex flex-col gap-3 overflow-y-auto">
           <div className="border-2 border-gray-600 bg-white rounded-lg p-4">
             <h3 className="font-bold text-base mb-1">Za plačilo: {formatPrice(total)} €</h3>
             {pointsToUse > 0 && (
@@ -277,9 +280,59 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
           </div>
 
           {canUsePoints && (
-            <>
-              <div className="border-2 border-gray-600 bg-white rounded-lg p-3">
-                <h4 className="font-bold text-sm mb-2">Izberi število točk:</h4>
+            <div className="border-2 border-gray-600 bg-white rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-bold text-sm">Število točk:</h4>
+                <button onClick={() => { setUseManualInput(!useManualInput); setManualPointsInput(""); }}
+                  className="text-xs px-3 py-1 rounded border border-gray-400 hover:bg-gray-100 transition-colors font-medium">
+                  {useManualInput ? "Prednastavitve" : "Ročni vnos"}
+                </button>
+              </div>
+
+              {useManualInput ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1 border-2 border-gray-600 bg-gray-50 rounded-lg p-2 font-mono text-lg min-h-[2rem]">
+                      {manualPointsInput || "0"}
+                    </div>
+                    <span className="text-sm text-gray-500">/ {maxRedeemablePoints}</span>
+                  </div>
+                  <div className="grid grid-cols-6 gap-1">
+                    {['7','8','9','4','5','6','1','2','3'].map(k => (
+                      <button key={k} onClick={() => {
+                        const next = manualPointsInput + k;
+                        const val = parseInt(next);
+                        if (val <= maxRedeemablePoints) { setManualPointsInput(next); setPointsToUse(val); }
+                      }} className="h-10 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded font-bold text-lg text-gray-700 transition-colors">{k}</button>
+                    ))}
+                    <button onClick={() => {
+                      const next = manualPointsInput + '0';
+                      const val = parseInt(next);
+                      if (val <= maxRedeemablePoints) { setManualPointsInput(next); setPointsToUse(val); }
+                    }} className="h-10 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded font-bold text-lg text-gray-700 transition-colors">0</button>
+                    <button onClick={() => {
+                      const next = manualPointsInput.slice(0, -1);
+                      setManualPointsInput(next);
+                      setPointsToUse(parseInt(next) || 0);
+                    }} className="h-10 bg-red-500 hover:bg-red-600 border border-red-600 rounded flex items-center justify-center transition-colors">
+                      <Delete className="w-5 h-5 text-white" />
+                    </button>
+                    <button onClick={() => { setManualPointsInput(String(maxRedeemablePoints)); setPointsToUse(maxRedeemablePoints); }}
+                      className="h-10 bg-green-600 hover:bg-green-700 text-white border border-green-700 rounded font-bold text-xs transition-colors col-span-3">
+                      Vse ({maxRedeemablePoints})
+                    </button>
+                    <button onClick={() => { setManualPointsInput(""); setPointsToUse(0); }}
+                      className="h-10 bg-gray-500 hover:bg-gray-600 text-white border border-gray-600 rounded font-bold text-xs transition-colors col-span-3">
+                      Počisti
+                    </button>
+                  </div>
+                  {manualPointsInput && parseInt(manualPointsInput) > 0 && (
+                    <div className="text-sm text-green-700 font-medium">
+                      = {formatPrice((parseInt(manualPointsInput) || 0) * POINT_VALUE)} € popust
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <div className="grid grid-cols-3 gap-2">
                   {presets.map(p => (
                     <button key={p} onClick={() => setPointsToUse(p)}
@@ -291,7 +344,6 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
                       {p} ({formatPrice(p * POINT_VALUE)} €)
                     </button>
                   ))}
-                  {/* All points button */}
                   {maxRedeemablePoints > 0 && !presets.includes(maxRedeemablePoints) && (
                     <button onClick={() => setPointsToUse(maxRedeemablePoints)}
                       className={`h-12 rounded-lg font-bold text-base border-2 transition-colors ${
@@ -311,37 +363,38 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
                     Brez točk
                   </button>
                 </div>
-              </div>
-            </>
+              )}
+            </div>
           )}
 
-          <div className="flex gap-3 flex-1">
+          <div className="flex gap-3 mt-auto">
             <div className="flex-1" />
-            <div className="flex flex-col gap-3 w-44">
+            <div className="flex flex-col gap-2 w-44">
               <button onClick={onCancel}
-                className="h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
+                className="h-12 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
                 ← Nazaj
               </button>
 
               {canUsePoints && pointsToUse > 0 && (
                 <button onClick={handleConfirmPoints}
-                  className="h-16 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center transition-colors p-2">
+                  className="h-14 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center transition-colors p-2">
                   <CheckCircle className="w-5 h-5 mr-1" />
                   Uporabi {pointsToUse} točk
                 </button>
               )}
 
-              {card?.balance >= total && (
+              {canPayFull && (
                 <button onClick={handlePayBalance}
-                  className="h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center transition-colors p-2">
-                  Plačaj s stanjem<br/>({formatPrice(card.balance)} €)
+                  className="h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center transition-colors p-2">
+                  Plačaj s stanjem<br/>({formatPrice(cardBalance)} €)
                 </button>
               )}
 
-              {(!canUsePoints || pointsToUse === 0) && card?.balance < total && (
-                <div className="text-center text-gray-500 text-xs mt-2">
-                  Izberite točke ali se vrnite nazaj.
-                </div>
+              {canPayPartial && (
+                <button onClick={() => onPartialBalancePayment(card.id, cardBalance, total - cardBalance)}
+                  className="h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-xs flex items-center justify-center text-center transition-colors p-2 leading-tight">
+                  Delno plačilo<br/>{formatPrice(cardBalance)} € s kartice<br/>+ {formatPrice(total - cardBalance)} € ostalo
+                </button>
               )}
             </div>
           </div>
