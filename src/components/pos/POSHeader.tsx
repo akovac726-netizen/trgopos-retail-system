@@ -11,9 +11,10 @@ interface POSHeaderProps {
   onLogout: () => void;
   onInfo: () => void;
   onSettings: () => void;
+  isSelfCheckout?: boolean;
 }
 
-const POSHeader = ({ cashier, activeTab, registerId, onTabChange, onLogout, onInfo, onSettings }: POSHeaderProps) => {
+const POSHeader = ({ cashier, activeTab, registerId, onTabChange, onLogout, onInfo, onSettings, isSelfCheckout }: POSHeaderProps) => {
   const tabs: { id: POSTab; label: string }[] = [
     { id: 'blagajna', label: 'Blagajna' },
     { id: 'racuni', label: 'Računi' },
@@ -21,8 +22,9 @@ const POSHeader = ({ cashier, activeTab, registerId, onTabChange, onLogout, onIn
   ];
 
   return (
-    <header className="px-3 py-1.5 flex items-center justify-between" style={{ background: 'linear-gradient(180deg, #5bb8e8, #3a9fd8)' }}>
+    <header className="px-3 py-1.5 flex items-center justify-between" style={{ background: isSelfCheckout ? 'linear-gradient(180deg, #f59e0b, #d97706)' : 'linear-gradient(180deg, #5bb8e8, #3a9fd8)' }}>
       <div className="bg-white/90 rounded px-3 py-1.5 text-sm font-medium text-gray-800">
+        {isSelfCheckout && <span className="text-orange-600 font-bold mr-2">🛒 SAMOPLAČNIŠKA</span>}
         Blagajna št.: <strong>{registerId}</strong>, Blagajnik: <strong>{cashier?.name || 'ime in priimek'}</strong>
       </div>
 

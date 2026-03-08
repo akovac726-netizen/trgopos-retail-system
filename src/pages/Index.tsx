@@ -681,12 +681,13 @@ const Index = () => {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={setPosTab} onLogout={handleLogout}
+        isSelfCheckout={isSelfCheckout}
         onInfo={() => setShowInfoDialog(true)}
         onSettings={() => {
-          if (currentCashier?.id === '00087') {
+          if (currentCashier?.id === '00087' || currentCashier?.role === 'admin') {
             setShowSettingsDialog(true);
           } else {
-            toast.error('Nastavitve so dostopne samo profilu PODPORA STANDBUY');
+            toast.error('Nastavitve so dostopne samo profilu PODPORA STANDBUY ali Direktorju');
           }
         }}
       />
