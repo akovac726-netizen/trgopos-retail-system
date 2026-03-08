@@ -113,9 +113,9 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
         </div>
       </div>
 
-      {/* Action buttons - two rows */}
+      {/* Action buttons - two rows matching Diapozitiv7-4 */}
       <div className="grid grid-cols-3 gap-2 mb-2">
-        <button onClick={() => { if (selectedTransaction) { /* show preview */ } else toast.warning('Izberite račun'); }}
+        <button onClick={() => { if (selectedTransaction) { /* preview already shown */ } else toast.warning('Izberite račun'); }}
           className="h-12 bg-white border-2 border-gray-500 rounded-xl font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors">
           Pregled računa
         </button>

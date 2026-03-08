@@ -29,8 +29,8 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, onEndSh
   const totalItems = todayTransactions.reduce((s, t) => s + t.items.reduce((is, i) => is + i.quantity, 0), 0);
 
   const now = new Date();
-  const formatDate = now.toLocaleDateString('sl-SI');
-  const formatTime = now.toLocaleTimeString('sl-SI', { hour: '2-digit', minute: '2-digit' });
+  const formatDateStr = now.toLocaleDateString('sl-SI');
+  const formatTimeStr = now.toLocaleTimeString('sl-SI', { hour: '2-digit', minute: '2-digit' });
 
   const buildReport = (type: string): ClosingReport => ({
     id: Date.now().toString(), type, cashier: cashier.name, cashierId: cashier.id,
@@ -60,7 +60,7 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, onEndSh
 
   return (
     <div className="h-full flex items-center justify-center gap-8 p-6" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
-      {/* Left - Active cashiers */}
+      {/* Left - Active cashiers history */}
       <div className="flex flex-col w-80">
         <div className="border-2 border-gray-600 rounded-t-lg bg-amber-300 text-center py-3">
           <h3 className="font-bold text-lg">Zgodovina aktivnih<br />blagajnikov</h3>
@@ -80,7 +80,7 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, onEndSh
           <div className="space-y-1 text-sm">
             <p><strong>Številka blagajne:</strong> 1</p>
             <p><strong>Status blagajne:</strong> Aktivna</p>
-            <p><strong>Datum:</strong> {formatDate} <span className="ml-4"><strong>Ura:</strong> {formatTime}</span></p>
+            <p><strong>Datum:</strong> {formatDateStr} <span className="ml-4"><strong>Ura:</strong> {formatTimeStr}</span></p>
           </div>
         </div>
 
@@ -90,7 +90,7 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, onEndSh
           ODPRI BL. PREDAL
         </button>
 
-        {/* Action buttons */}
+        {/* Action buttons - Izkupiček (amber) + Zaključi (red) */}
         <div className="grid grid-cols-2 gap-3">
           <button onClick={() => handleClosingAction('shift')}
             className="h-24 bg-amber-400 hover:bg-amber-500 rounded-lg font-bold text-sm text-gray-800 flex flex-col items-center justify-center gap-2 transition-colors border-2 border-amber-500">
