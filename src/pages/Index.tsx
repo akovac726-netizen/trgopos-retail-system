@@ -483,6 +483,68 @@ const Index = () => {
       {showPartnerInvoiceDialog && (
         <PartnerInvoiceDialog onConfirm={handlePartnerInvoiceConfirm} onClose={() => setShowPartnerInvoiceDialog(false)} />
       )}
+
+      {/* Info dialog */}
+      {showInfoDialog && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowInfoDialog(false)}>
+          <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl border-2 border-gray-300" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-4 text-center">TrgoPOS</h2>
+            <div className="text-center mb-4">
+              <h3 className="text-3xl font-black">
+                <span className="text-sky-500">Stand</span><span className="text-sky-600">Buy</span>
+                <span className="text-orange-400 text-2xl ml-1">★</span>
+              </h3>
+            </div>
+            <div className="space-y-2 text-sm text-gray-700">
+              <p><strong>Program:</strong> TrgoPOS - Davčna blagajna</p>
+              <p><strong>Verzija:</strong> 1.0.0</p>
+              <p><strong>Razvoj:</strong> StandBuy s. p.</p>
+              <p><strong>Podpora:</strong> podpora@standbuy.si</p>
+              <p><strong>Leto:</strong> 2026</p>
+            </div>
+            <div className="border-t border-gray-300 mt-4 pt-3 text-xs text-gray-500 text-center">
+              © 2026 StandBuy s. p., vse pravice pridržane
+            </div>
+            <button onClick={() => setShowInfoDialog(false)}
+              className="mt-4 w-full h-12 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-bold text-base transition-colors">
+              Zapri
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Settings dialog - only for PODPORA STANDBUY */}
+      {showSettingsDialog && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowSettingsDialog(false)}>
+          <div className="bg-white rounded-xl p-8 max-w-lg w-full shadow-2xl border-2 border-gray-300" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-4">⚙ Nastavitve</h2>
+            <div className="space-y-4 text-sm">
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="font-bold text-base mb-2">Tiskalnik računov</h3>
+                <p className="text-gray-600">Status: <span className="text-green-600 font-bold">Povezan</span></p>
+                <p className="text-gray-600">Model: Epson TM-T20III</p>
+              </div>
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="font-bold text-base mb-2">POS Terminal</h3>
+                <p className="text-gray-600">Status: <span className="text-green-600 font-bold">Aktiven</span></p>
+              </div>
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="font-bold text-base mb-2">FURS povezava</h3>
+                <p className="text-gray-600">Status: <span className="text-amber-600 font-bold">Ni konfiguriran</span></p>
+                <p className="text-gray-500 text-xs mt-1">Digitalno potrdilo za davčno potrjevanje računov</p>
+              </div>
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="font-bold text-base mb-2">Davčne stopnje</h3>
+                <p className="text-gray-600">DDV 22% (standard) | DDV 9.5% (znižana)</p>
+              </div>
+            </div>
+            <button onClick={() => setShowSettingsDialog(false)}
+              className="mt-4 w-full h-12 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-bold text-base transition-colors">
+              Zapri
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
