@@ -21,6 +21,7 @@ import { ClosingReport } from "@/components/pos/ShiftEndDialog";
 import PriceCheckDialog from "@/components/pos/PriceCheckDialog";
 import BackOfficeDashboard from "@/components/backoffice/BackOfficeDashboard";
 import PartnerInvoiceDialog from "@/components/pos/PartnerInvoiceDialog";
+import POSTerminalApp from "@/components/pos/POSTerminalApp";
 
 // Fallback cashier for PODPORA STANDBUY (always available even if DB is empty)
 const FALLBACK_CASHIERS: Cashier[] = [
@@ -55,7 +56,7 @@ const getProductsLookup = (products: Product[]): Record<string, { name: string; 
 };
 
 const Index = () => {
-  const [appMode, setAppMode] = useState<'login' | 'pos' | 'backoffice'>('login');
+  const [appMode, setAppMode] = useState<'login' | 'pos' | 'backoffice' | 'terminal'>('login');
   const [backofficeRole, setBackofficeRole] = useState<'admin' | 'shop'>('shop');
   const [posTab, setPosTab] = useState<POSTab>('blagajna');
   const [screen, setScreen] = useState<'main' | 'payment' | 'complete' | 'giftvoucher'>('main');
@@ -370,10 +371,40 @@ const Index = () => {
   };
 
   const handleCardComplete = async () => {
-    const transaction = await createTransaction('kartica', total, 0);
-    setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
-    toast.success('Račun zaključen');
+    // Create a terminal request and wait for approval via realtime
+    const { data: req } = await supabase.from('terminal_requests').insert({
+      register_id: registerId,
+      amount: total,
+      status: 'pending',
+    }).select().single();
+
+    if (!req) {
+      toast.error('Napaka pri pošiljanju na terminal');
+      return;
+    }
+
+    toast.info('Čakam na potrditev POS terminala...');
+
+    // Listen for status change on this request
+    const channel = supabase.channel(`terminal-req-${req.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'terminal_requests',
+        filter: `id=eq.${req.id}`,
+      }, async (payload) => {
+        const updated = payload.new as any;
+        supabase.removeChannel(channel);
+        if (updated.status === 'approved') {
+          const transaction = await createTransaction('kartica', total, 0);
+          setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
+          await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+          toast.success('Plačilo s kartico potrjeno');
+        } else if (updated.status === 'declined') {
+          toast.error('Plačilo s kartico zavrnjeno');
+        }
+      })
+      .subscribe();
   };
 
   const handleBonPayment = async (code: string, amount: number) => {
@@ -459,9 +490,14 @@ const Index = () => {
   };
 
   // Login
+  if (appMode === 'terminal') {
+    return <POSTerminalApp onBack={() => setAppMode('login')} />;
+  }
+
   if (appMode === 'login') {
     return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={handleBackOfficeLogin} registerId={registerId} registerLocked={registerLocked}
-      onSelectRegister={(id: number) => { localStorage.setItem('trgopos_register_id', String(id)); setRegisterIdState(id); }} />;
+      onSelectRegister={(id: number) => { localStorage.setItem('trgopos_register_id', String(id)); setRegisterIdState(id); }}
+      onOpenTerminal={() => setAppMode('terminal')} />;
   }
 
   // BackOffice
