@@ -30,6 +30,10 @@ const cashiers: Cashier[] = [
   { id: '00087', name: 'PODPORA STANDBUY', password: '00087', role: 'admin', drawerCode: '1359' },
 ];
 
+const EMBALAZA_PRICE = 0.50;
+const EMBALAZA_NAME = "Vrečka (embalaža)";
+const EMBALAZA_EAN = "EMB001";
+
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
   return products.reduce((acc, p) => {
     acc[p.ean] = { name: p.name, price: p.price };
@@ -77,7 +81,6 @@ const Index = () => {
     };
     fetchProducts();
 
-    // Load transactions from DB
     const fetchTransactions = async () => {
       const { data } = await supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(100);
       if (data) {
@@ -144,6 +147,27 @@ const Index = () => {
     setInputValue("");
   };
 
+  // Embalaža - add a bag at 0.50 EUR
+  const handleEmbalaza = () => {
+    const existingIndex = cartItems.findIndex(item => item.ean === EMBALAZA_EAN && !item.isStornoed);
+    if (existingIndex >= 0) {
+      const newItems = [...cartItems];
+      newItems[existingIndex].quantity += 1;
+      setCartItems(newItems);
+      setSelectedItemIndex(existingIndex);
+    } else {
+      const newItem: CartItem = {
+        id: Date.now().toString(),
+        ean: EMBALAZA_EAN,
+        name: EMBALAZA_NAME,
+        price: EMBALAZA_PRICE,
+        quantity: 1,
+      };
+      setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
+    }
+    toast.success(`${EMBALAZA_NAME} dodana (0,50 €)`);
+  };
+
   const handleDiscount = () => {
     if (cartItems.length === 0) { toast.warning('Dodajte artikle pred popustom'); return; }
     setShowDiscountDialog(true);
@@ -169,13 +193,10 @@ const Index = () => {
     }
   };
 
-  // Storno logic
   const handleStorno = () => {
     if (selectedItemIndex === null) { toast.warning('Izberite artikel za storno'); return; }
     if (cartItems[selectedItemIndex]?.isStornoed) { toast.warning('Artikel je že storniran'); return; }
-    
     const lastActiveIndex = cartItems.length - 1 - [...cartItems].reverse().findIndex(item => !item.isStornoed);
-    
     if (selectedItemIndex === lastActiveIndex) {
       handleStornoItem(selectedItemIndex);
     } else {
@@ -194,13 +215,10 @@ const Index = () => {
   };
 
   const handleStornoConfirmed = () => {
-    if (pendingStornoIndex !== null && pendingStornoIndex >= 0) {
-      handleStornoItem(pendingStornoIndex);
-    }
+    if (pendingStornoIndex !== null && pendingStornoIndex >= 0) handleStornoItem(pendingStornoIndex);
     setPendingStornoIndex(null);
   };
 
-  // Return requires admin code
   const handleReturnRequest = () => {
     setManagerCodeTitle("ADMIN KODA za vračilo");
     setShowReturnManagerCode(true);
@@ -223,7 +241,6 @@ const Index = () => {
     toast.success(`${product.name} dodan`);
   };
 
-  // Quantity: directly set the quantity, no auto-offer
   const handleQuantityConfirm = (quantity: number) => {
     if (selectedItemIndex !== null && cartItems[selectedItemIndex] && !cartItems[selectedItemIndex].isStornoed) {
       const newItems = [...cartItems]; newItems[selectedItemIndex] = { ...newItems[selectedItemIndex], quantity };
@@ -243,6 +260,7 @@ const Index = () => {
   const deductStock = async (items: typeof cartItems) => {
     for (const item of items) {
       if (item.isStornoed) continue;
+      if (item.ean === EMBALAZA_EAN) continue; // embalaža doesn't have stock
       if (item.isReturn) {
         const { data } = await supabase.from('products').select('stock').eq('ean', item.ean as any).single();
         if (data) await supabase.from('products').update({ stock: (data as any).stock + item.quantity } as any).eq('ean', item.ean as any);
@@ -260,7 +278,6 @@ const Index = () => {
   const getNextReceiptNumber = async (): Promise<string> => {
     const { data, error } = await supabase.rpc('get_next_receipt_number' as any);
     if (error || !data) {
-      // Fallback: use local counter
       const next = receiptCounter + 1;
       setReceiptCounter(next);
       return String(next).padStart(6, '0');
@@ -270,37 +287,15 @@ const Index = () => {
 
   const createTransaction = async (paymentMethod: string, amountPaid: number, change: number = 0): Promise<Transaction> => {
     const receiptNumber = await getNextReceiptNumber();
-    
     const transaction: Transaction = {
-      id: receiptNumber,
-      items: cartItems,
-      subtotal,
-      discount: totalDiscount,
-      total,
-      paymentMethod,
-      amountPaid,
-      change,
-      timestamp: new Date(),
-      cashierId: currentCashier?.id || '',
-      cashierName: currentCashier?.name || '',
-      invoiceData: pendingInvoiceData,
+      id: receiptNumber, items: cartItems, subtotal, discount: totalDiscount, total, paymentMethod, amountPaid, change,
+      timestamp: new Date(), cashierId: currentCashier?.id || '', cashierName: currentCashier?.name || '', invoiceData: pendingInvoiceData,
     };
-
-    // Save to DB
     await supabase.from('transactions').insert({
-      receipt_number: receiptNumber,
-      items: cartItems as any,
-      subtotal,
-      discount: totalDiscount,
-      total,
-      payment_method: paymentMethod,
-      amount_paid: amountPaid,
-      change_amount: change,
-      cashier_id: currentCashier?.id || '',
-      cashier_name: currentCashier?.name || '',
-      invoice_data: pendingInvoiceData as any,
+      receipt_number: receiptNumber, items: cartItems as any, subtotal, discount: totalDiscount, total,
+      payment_method: paymentMethod, amount_paid: amountPaid, change_amount: change,
+      cashier_id: currentCashier?.id || '', cashier_name: currentCashier?.name || '', invoice_data: pendingInvoiceData as any,
     } as any);
-
     return transaction;
   };
 
@@ -319,30 +314,15 @@ const Index = () => {
   };
 
   const handleBonPayment = async (code: string, amount: number) => {
-    // Check if bon exists and has balance
     const { data: voucher } = await supabase.from('gift_vouchers').select('*').eq('code', code as any).single();
-    if (!voucher) {
-      toast.error('Bon ni najden');
-      return;
-    }
+    if (!voucher) { toast.error('Bon ni najden'); return; }
     const v = voucher as any;
-    if (v.is_used || v.remaining_amount <= 0) {
-      toast.error('Bon je že porabljen');
-      return;
-    }
-    if (v.remaining_amount < total) {
-      toast.error(`Bon nima dovolj sredstev (${v.remaining_amount} €)`);
-      return;
-    }
-
-    // Deduct from voucher
+    if (v.is_used || v.remaining_amount <= 0) { toast.error('Bon je že porabljen'); return; }
+    if (v.remaining_amount < total) { toast.error(`Bon nima dovolj sredstev (${v.remaining_amount} €)`); return; }
     await supabase.from('gift_vouchers').update({
-      remaining_amount: v.remaining_amount - total,
-      is_used: v.remaining_amount - total <= 0,
-      used_by: currentCashier?.id,
-      used_at: new Date().toISOString(),
+      remaining_amount: v.remaining_amount - total, is_used: v.remaining_amount - total <= 0,
+      used_by: currentCashier?.id, used_at: new Date().toISOString(),
     } as any).eq('id', v.id as any);
-
     const transaction = await createTransaction('darilni bon', total, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
     await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
@@ -361,24 +341,16 @@ const Index = () => {
     setPosTab('blagajna'); toast.success('Artikli kopirani v nov račun');
   };
   const handleVoidReceipt = async (t: Transaction) => {
-    // Update in DB
     await supabase.from('transactions').update({ voided: true } as any).eq('receipt_number', t.id as any);
     setTransactions(prev => prev.filter(tr => tr.id !== t.id));
     toast.success(`Račun #${t.id} storniran`);
   };
 
   const handleEndShift = async (report: ClosingReport) => {
-    // Save to DB
     await supabase.from('closing_reports').insert({
-      type: report.type,
-      cashier_name: report.cashier,
-      cashier_id: report.cashierId,
-      total: report.total,
-      cash: report.cash,
-      card: report.card,
-      other: report.other,
-      transaction_count: report.transactionCount,
-      item_count: report.itemCount,
+      type: report.type, cashier_name: report.cashier, cashier_id: report.cashierId,
+      total: report.total, cash: report.cash, card: report.card, other: report.other,
+      transaction_count: report.transactionCount, item_count: report.itemCount,
     } as any);
     setClosingHistory(prev => [report, ...prev]);
     toast.success('Izmena zaključena');
@@ -387,15 +359,9 @@ const Index = () => {
 
   const handleEndDay = async (report: ClosingReport) => {
     await supabase.from('closing_reports').insert({
-      type: report.type,
-      cashier_name: report.cashier,
-      cashier_id: report.cashierId,
-      total: report.total,
-      cash: report.cash,
-      card: report.card,
-      other: report.other,
-      transaction_count: report.transactionCount,
-      item_count: report.itemCount,
+      type: report.type, cashier_name: report.cashier, cashier_id: report.cashierId,
+      total: report.total, cash: report.cash, card: report.card, other: report.other,
+      transaction_count: report.transactionCount, item_count: report.itemCount,
     } as any);
     setClosingHistory(prev => [report, ...prev]);
     toast.success('Blagajna zaključena');
@@ -406,13 +372,9 @@ const Index = () => {
     setPendingInvoiceData(invoiceData); setShowPartnerInvoiceDialog(false);
   };
 
-  // Gift voucher creation
   const handleCreateGiftVoucher = async (code: string, amount: number) => {
     await supabase.from('gift_vouchers').insert({
-      code,
-      amount,
-      remaining_amount: amount,
-      created_by: currentCashier?.id || '',
+      code, amount, remaining_amount: amount, created_by: currentCashier?.id || '',
     } as any);
     toast.success(`Darilni bon ${code} ustvarjen (${amount} EUR)`);
     setScreen('main');
@@ -445,6 +407,7 @@ const Index = () => {
             onQuantity={() => { if (selectedItemIndex === null) { toast.warning('Izberite artikel'); return; } if (cartItems[selectedItemIndex]?.isStornoed) { toast.warning('Artikel je storniran'); return; } setShowQuantityDialog(true); }}
             onDiscount={handleDiscount} onReturn={handleReturnRequest} onStorno={handleStorno}
             onGiftVoucher={() => setScreen('giftvoucher')}
+            onEmbalaza={handleEmbalaza}
           />
         )}
 
@@ -452,9 +415,7 @@ const Index = () => {
           <GiftVoucherDialog
             total={total}
             cartItems={cartItems.filter(i => !i.isStornoed).map(i => ({ name: i.name }))}
-            onConfirm={(code, amount, type) => {
-              handleCreateGiftVoucher(code, amount);
-            }}
+            onConfirm={(code, amount, type) => { handleCreateGiftVoucher(code, amount); }}
             onClose={() => setScreen('main')}
           />
         )}

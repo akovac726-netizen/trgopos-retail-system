@@ -7,6 +7,7 @@ interface PaymentTabProps {
   subtotal: number;
   total: number;
   totalDiscount: number;
+  receiptNumber?: string;
   onCashPayment: (amountPaid: number) => void;
   onCardPayment: () => void;
   onInvoice: () => void;
@@ -14,7 +15,7 @@ interface PaymentTabProps {
   onBonPayment?: (code: string, amount: number) => void;
 }
 
-const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment }: PaymentTabProps) => {
+const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment }: PaymentTabProps) => {
   const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon'>('select');
   const [inputValue, setInputValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -25,30 +26,22 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
   const change = amountPaid - total;
 
   const handleKeyPress = (key: string) => {
-    if (step === 'bon') {
-      setBonCode(prev => prev + key);
-    } else {
-      setInputValue(prev => prev + key);
-    }
+    if (step === 'bon') setBonCode(prev => prev + key);
+    else setInputValue(prev => prev + key);
   };
   const handleDelete = () => {
-    if (step === 'bon') {
-      setBonCode(prev => prev.slice(0, -1));
-    } else {
-      setInputValue(prev => prev.slice(0, -1));
-      setConfirmed(false);
-    }
+    if (step === 'bon') setBonCode(prev => prev.slice(0, -1));
+    else { setInputValue(prev => prev.slice(0, -1)); setConfirmed(false); }
   };
 
   const handleBanknote = (value: number) => {
-    setInputValue(String(value));
+    const current = parseFloat(inputValue) || 0;
+    setInputValue((current + value).toFixed(2));
     setConfirmed(false);
   };
 
   const handleConfirm = () => {
-    if (amountPaid > 0) {
-      setConfirmed(true);
-    }
+    if (amountPaid > 0) setConfirmed(true);
   };
 
   const numKeys = [
@@ -57,10 +50,12 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
     ['1', '2', '3'],
   ];
 
-  // Payment method selection - matches Diapozitiv4-5
+  const bg = "linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)";
+
+  // Payment method selection - matches Diapozitiv4-6
   if (step === 'select') {
     return (
-      <div className="h-full flex gap-3 p-3" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
+      <div className="h-full flex gap-3 p-3" style={{ background: bg }}>
         {/* LEFT - Receipt list */}
         <div className="flex-[4] flex flex-col">
           <div className="flex items-center border-2 border-gray-600 bg-white rounded-t">
@@ -85,8 +80,8 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
           </div>
         </div>
 
-        {/* RIGHT - Payment method buttons */}
-        <div className="flex-[6] flex flex-col gap-4">
+        {/* RIGHT - Payment buttons in 2 rows + invoice + back */}
+        <div className="flex-[6] flex flex-col gap-4 pt-2">
           <div className="grid grid-cols-3 gap-3">
             <button onClick={() => setStep('cash')}
               className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
@@ -96,7 +91,8 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
               className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
               Kartica
             </button>
-            <button className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
+            <button
+              className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
               Darilna<br/>kartica
             </button>
           </div>
@@ -105,7 +101,8 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
               className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
               Darilni bon
             </button>
-            <button className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
+            <button
+              className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
               Dobropis<br/>podjetja
             </button>
           </div>
@@ -126,10 +123,10 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
     );
   }
 
-  // Card terminal - matches Diapozitiv5-5 (blue background)
+  // Card terminal - matches Diapozitiv5-6 (blue overlay)
   if (step === 'card') {
     return (
-      <div className="h-full flex gap-3 p-3 relative" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
+      <div className="h-full flex gap-3 p-3 relative" style={{ background: bg }}>
         <div className="absolute inset-0 bg-black/30 z-10" />
         <div className="absolute inset-0 z-20 flex items-center justify-center">
           <div className="bg-sky-200 border-2 border-gray-500 rounded-xl p-8 text-center min-w-[420px]">
@@ -159,7 +156,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
     const hasVoucherInCart = cartItems.some(i => i.name.toLowerCase().includes('bon') || i.name.toLowerCase().includes('darilni'));
 
     return (
-      <div className="h-full flex gap-3 p-3" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
+      <div className="h-full flex gap-3 p-3" style={{ background: bg }}>
         <div className="flex-[4] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-2">
           <div className="font-bold text-lg">Plačilo z darilnim bonom</div>
           <div className="border-t border-dashed border-gray-400 pt-2" />
@@ -190,17 +187,10 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
                 </div>
               ))}
               <div className="flex gap-2 flex-1">
-                <button onClick={() => handleKeyPress('0')}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-                  0
-                </button>
-                <button onClick={() => handleKeyPress(',')}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-                  ,
-                </button>
-                <button onClick={handleDelete}
-                  className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
-                    <Delete className="w-7 h-7 text-white" />
+                <button onClick={() => handleKeyPress('0')} className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">0</button>
+                <button onClick={() => handleKeyPress(',')} className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">,</button>
+                <button onClick={handleDelete} className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
+                  <Delete className="w-7 h-7 text-white" />
                 </button>
               </div>
             </div>
@@ -212,9 +202,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
               </button>
               <button onClick={() => {
                 if (hasVoucherInCart) return;
-                if (bonCode.length >= 4 && onBonPayment) {
-                  onBonPayment(bonCode, total);
-                }
+                if (bonCode.length >= 4 && onBonPayment) onBonPayment(bonCode, total);
               }}
                 disabled={bonCode.length < 4 || hasVoucherInCart}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center disabled:opacity-40 transition-colors p-2">
@@ -227,9 +215,10 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
     );
   }
 
-  // Cash payment - matches Diapozitiv6-5 with BANKOVCI
+  // Cash payment - matches Diapozitiv6-6
+  const now = new Date();
   return (
-    <div className="h-full flex gap-3 p-3" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
+    <div className="h-full flex gap-3 p-3" style={{ background: bg }}>
       {/* LEFT - Receipt summary */}
       <div className="flex-[3] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-2">
         <div className="flex justify-between">
@@ -257,10 +246,10 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
         </div>
 
         <div className="flex gap-3 flex-1">
-          {/* BANKOVCI */}
+          {/* BANKOVCI - matching image exactly */}
           <div className="flex flex-col gap-2 w-44">
             <div className="border-2 border-gray-600 bg-white rounded-lg p-2">
-              <h4 className="font-bold text-center text-sm tracking-[0.2em] mb-2">BANKOVCI</h4>
+              <h4 className="font-bold text-center text-sm tracking-[0.2em] mb-2">B A N K O V C I</h4>
               <div className="grid grid-cols-2 gap-1.5">
                 {[200, 100, 50, 20, 10, 5].map(v => (
                   <button key={v} onClick={() => handleBanknote(v)}
@@ -272,7 +261,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
               <div className="flex gap-1.5 mt-1.5 justify-center">
                 {[2, 1].map(v => (
                   <button key={v} onClick={() => handleBanknote(v)}
-                    className="w-14 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-lg transition-colors">
+                    className="w-14 h-10 bg-blue-700 hover:bg-blue-800 text-white rounded-full font-bold text-lg transition-colors">
                     {v}
                   </button>
                 ))}
@@ -280,14 +269,12 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
             </div>
           </div>
 
-          {/* Input + Numpad */}
+          {/* Input display + Numpad */}
           <div className="flex flex-col gap-2 flex-1">
-            {/* Input display */}
             <div className="border-2 border-gray-600 bg-white rounded-lg p-3">
               <div className="font-mono text-xl font-bold text-gray-800 min-h-[1.5rem]">{inputValue || ''}</div>
             </div>
 
-            {/* Numpad */}
             <div className="flex flex-col gap-1.5 flex-1">
               {numKeys.map((row, ri) => (
                 <div key={ri} className="flex gap-1.5 flex-1">
@@ -300,16 +287,9 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, onCashPayment, 
                 </div>
               ))}
               <div className="flex gap-1.5 flex-1">
-                <button onClick={() => handleKeyPress('0')}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-                  0
-                </button>
-                <button onClick={() => handleKeyPress('.')}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-                  ,
-                </button>
-                <button onClick={handleDelete}
-                  className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
+                <button onClick={() => handleKeyPress('0')} className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">0</button>
+                <button onClick={() => handleKeyPress('.')} className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">,</button>
+                <button onClick={handleDelete} className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
                   <Delete className="w-7 h-7 text-white" />
                 </button>
               </div>
