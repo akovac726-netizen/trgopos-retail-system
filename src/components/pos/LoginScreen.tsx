@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Cashier } from "@/types/pos";
-import { Power, RotateCcw, Delete } from "lucide-react";
+import { Power, RotateCcw, Delete, CreditCard } from "lucide-react";
 
 type AppMode = 'trgopos' | 'backoffice';
 
@@ -253,6 +253,15 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
           <span className="text-xl">↵</span> POTRDI
         </button>
       </div>
+      )}
+
+      {/* POS Terminal button - bottom right */}
+      {onOpenTerminal && (
+        <button onClick={onOpenTerminal}
+          className="absolute bottom-3 right-4 z-20 flex items-center gap-2 bg-gray-800/80 hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors backdrop-blur border border-gray-600">
+          <CreditCard className="w-4 h-4" />
+          POS Terminal
+        </button>
       )}
 
       {/* Footer */}
