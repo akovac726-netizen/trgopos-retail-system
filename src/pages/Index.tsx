@@ -937,7 +937,7 @@ const Index = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-bold text-base">🛒 Samoplačniška blagajna</h3>
-                    <p className="text-gray-500 text-xs mt-1">Samoplačniške blagajne imajo ločene oznake (A1, A2, A3)</p>
+                    <p className="text-gray-500 text-xs mt-1">Ločen register ID (101–103) za ločeno beleženje transakcij</p>
                   </div>
                   <button onClick={async () => {
                     const canActivate = currentCashier?.id === '00087' || currentCashier?.role === 'admin';
@@ -946,15 +946,32 @@ const Index = () => {
                       return;
                     }
                     const newState = !isSelfCheckout;
-                    const label = newState ? (selfCheckoutLabel || 'A1') : '';
-                    await supabase.from('self_checkout_config').upsert({
-                      register_id: registerId, enabled: newState, label,
-                      activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
-                    } as any, { onConflict: 'register_id' });
-                    setIsSelfCheckout(newState);
-                    if (!newState) setSelfCheckoutLabel('');
-                    else if (!selfCheckoutLabel) setSelfCheckoutLabel('A1');
-                    toast.success(newState ? `Samoplačniška blagajna ${label} AKTIVIRANA` : `Samoplačniški način IZKLOPLJEN`);
+                    if (newState) {
+                      const label = selfCheckoutLabel || 'A1';
+                      const scId = labelToRegisterId(label);
+                      await supabase.from('self_checkout_config').upsert({
+                        register_id: scId, enabled: true, label,
+                        activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
+                      } as any, { onConflict: 'register_id' });
+                      setIsSelfCheckout(true);
+                      setSelfCheckoutLabel(label);
+                      setRegisterIdState(scId);
+                      localStorage.setItem('trgopos_register_id', String(scId));
+                      toast.success(`Samoplačniška blagajna ${label} AKTIVIRANA (register ${scId})`);
+                    } else {
+                      // Deactivate — find which SC config was active
+                      const scId = SELF_CHECKOUT_IDS.includes(registerId) ? registerId : labelToRegisterId(selfCheckoutLabel || 'A1');
+                      await supabase.from('self_checkout_config').upsert({
+                        register_id: scId, enabled: false, label: '',
+                        activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
+                      } as any, { onConflict: 'register_id' });
+                      setIsSelfCheckout(false);
+                      setSelfCheckoutLabel('');
+                      // Revert to base register 1
+                      setRegisterIdState(1);
+                      localStorage.setItem('trgopos_register_id', '1');
+                      toast.success('Samoplačniški način IZKLOPLJEN – blagajna nastavljena na 1');
+                    }
                   }}
                     className={`w-16 h-8 rounded-full relative transition-colors ${isSelfCheckout ? 'bg-orange-500' : 'bg-gray-300'}`}>
                     <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${isSelfCheckout ? 'right-1' : 'left-1'}`} />
@@ -964,24 +981,29 @@ const Index = () => {
                   <>
                     <p className="text-xs text-gray-500">Izberite oznako samoplačniške blagajne:</p>
                     <div className="flex gap-2">
-                      {['A1', 'A2', 'A3'].map(label => (
-                        <button key={label} onClick={async () => {
-                          setSelfCheckoutLabel(label);
-                          await supabase.from('self_checkout_config').upsert({
-                            register_id: registerId, enabled: true, label,
-                            activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
-                          } as any, { onConflict: 'register_id' });
-                          toast.success(`Samoplačniška blagajna nastavljena na ${label}`);
-                        }}
-                          className={`flex-1 h-12 rounded-lg font-bold text-lg transition-colors border-2 ${
-                            selfCheckoutLabel === label ? 'bg-orange-500 text-white border-orange-600' : 'bg-white text-gray-700 border-gray-300 hover:border-orange-400'
-                          }`}>
-                          🛒 {label}
-                        </button>
-                      ))}
+                      {['A1', 'A2', 'A3'].map(label => {
+                        const scId = labelToRegisterId(label);
+                        return (
+                          <button key={label} onClick={async () => {
+                            setSelfCheckoutLabel(label);
+                            setRegisterIdState(scId);
+                            localStorage.setItem('trgopos_register_id', String(scId));
+                            await supabase.from('self_checkout_config').upsert({
+                              register_id: scId, enabled: true, label,
+                              activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
+                            } as any, { onConflict: 'register_id' });
+                            toast.success(`Samoplačniška blagajna ${label} (register ${scId})`);
+                          }}
+                            className={`flex-1 h-12 rounded-lg font-bold text-lg transition-colors border-2 ${
+                              selfCheckoutLabel === label ? 'bg-orange-500 text-white border-orange-600' : 'bg-white text-gray-700 border-gray-300 hover:border-orange-400'
+                            }`}>
+                            🛒 {label}
+                          </button>
+                        );
+                      })}
                     </div>
                     <div className="bg-orange-50 border border-orange-300 rounded p-2 text-orange-700 text-xs font-bold">
-                      ✅ Samoplačniška blagajna {selfCheckoutLabel || 'A1'} – samo kartica + darilna kartica brez točk
+                      ✅ Samoplačniška blagajna {selfCheckoutLabel || 'A1'} (register ID: {registerId}) – transakcije se beležijo ločeno
                     </div>
                   </>
                 )}
