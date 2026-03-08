@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Delete, Loader2 } from "lucide-react";
 import { CartItem } from "@/types/pos";
 
@@ -13,14 +13,16 @@ interface PaymentTabProps {
   onInvoice: () => void;
   onBack: () => void;
   onBonPayment?: (code: string, amount: number) => void;
+  keyboardEnabled?: boolean;
 }
 
-const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment }: PaymentTabProps) => {
+const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, keyboardEnabled }: PaymentTabProps) => {
   const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon'>('select');
   const [cardWaiting, setCardWaiting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [bonCode, setBonCode] = useState("");
+  const lastEnterRef = useRef<number>(0);
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const amountPaid = parseFloat(inputValue) || 0;
