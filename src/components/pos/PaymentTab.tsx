@@ -47,6 +47,76 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
     if (amountPaid > 0) setConfirmed(true);
   };
 
+  // Keyboard support for payment screens
+  useEffect(() => {
+    if (!keyboardEnabled) return;
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if (step === 'select') {
+        // On selection screen: 1=Gotovina, 2=Kartica, Escape=Nazaj
+        if (e.key === '1') { e.preventDefault(); setStep('cash'); }
+        else if (e.key === '2') { e.preventDefault(); setStep('card'); }
+        else if (e.key === 'Escape') { e.preventDefault(); onBack(); }
+        return;
+      }
+
+      if (step === 'card') {
+        if (e.key === 'Enter' && !cardWaiting) { e.preventDefault(); setCardWaiting(true); onCardPayment(); }
+        else if (e.key === 'Escape') { e.preventDefault(); setCardWaiting(false); setStep('select'); }
+        return;
+      }
+
+      if (step === 'bon') {
+        if (e.key >= '0' && e.key <= '9') { e.preventDefault(); setBonCode(prev => prev + e.key); }
+        else if (e.key === 'Backspace') { e.preventDefault(); setBonCode(prev => prev.slice(0, -1)); }
+        else if (e.key === 'Enter') {
+          e.preventDefault();
+          const hasVoucherInCart = cartItems.some(i => i.name.toLowerCase().includes('bon') || i.name.toLowerCase().includes('darilni'));
+          if (!hasVoucherInCart && bonCode.length >= 4 && onBonPayment) onBonPayment(bonCode, total);
+        }
+        else if (e.key === 'Escape') { e.preventDefault(); setStep('select'); }
+        return;
+      }
+
+      // Cash payment screen
+      if (step === 'cash') {
+        if (e.key >= '0' && e.key <= '9') {
+          e.preventDefault();
+          setInputValue(prev => prev + e.key);
+          setConfirmed(false);
+        } else if (e.key === '.' || e.key === ',') {
+          e.preventDefault();
+          setInputValue(prev => prev + '.');
+          setConfirmed(false);
+        } else if (e.key === 'Backspace') {
+          e.preventDefault();
+          setInputValue(prev => prev.slice(0, -1));
+          setConfirmed(false);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          const now = Date.now();
+          const currentAmountPaid = parseFloat(inputValue) || 0;
+          if (confirmed && currentAmountPaid >= total && (now - lastEnterRef.current) < 800) {
+            // Double Enter = Zaključi, tiskaj račun
+            onCashPayment(currentAmountPaid);
+          } else if (currentAmountPaid > 0) {
+            // Single Enter = Potrdi
+            setConfirmed(true);
+          }
+          lastEnterRef.current = now;
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setStep('select');
+        }
+        return;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [keyboardEnabled, step, cardWaiting, inputValue, confirmed, bonCode, total, cartItems, onCashPayment, onCardPayment, onBack, onBonPayment]);
+
   const numKeys = [
     ['7', '8', '9'],
     ['4', '5', '6'],
