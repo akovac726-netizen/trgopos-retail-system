@@ -135,7 +135,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
 
   useEffect(() => {
-    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules();
+    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB();
     const channel = supabase
       .channel('bo-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchProducts)
@@ -144,6 +144,9 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_requests' }, fetchLeaveRequests)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules' }, fetchSchedules)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'business_days' }, fetchBusinessDay)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'closing_reports' }, fetchClosingReportsFromDB)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, fetchClosingReportsFromDB)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
