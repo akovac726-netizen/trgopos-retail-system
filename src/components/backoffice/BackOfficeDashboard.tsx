@@ -160,7 +160,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
 
   useEffect(() => {
-    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB();
+    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB(); fetchPromotions();
     const channel = supabase
       .channel('bo-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchProducts)
@@ -172,6 +172,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       .on('postgres_changes', { event: '*', schema: 'public', table: 'business_days' }, fetchBusinessDay)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'closing_reports' }, fetchClosingReportsFromDB)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, fetchClosingReportsFromDB)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'promotions' }, fetchPromotions)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
