@@ -27,8 +27,6 @@ const FALLBACK_CASHIERS: Cashier[] = [
   { id: '00087', name: 'PODPORA STANDBUY', password: '00087', role: 'admin', drawerCode: '1359' },
 ];
 
-const EMBALAZA_PRICE = 0.50;
-const EMBALAZA_NAME = "Vrečka (embalaža)";
 const EMBALAZA_EAN = "EMB001";
 
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
@@ -165,8 +163,14 @@ const Index = () => {
     setInputValue("");
   };
 
-  // Embalaža - add a bag at 0.50 EUR
+  // Embalaža - add a bag from products DB
   const handleEmbalaza = () => {
+    const lookup = getProductsLookup(products);
+    const emb = lookup[EMBALAZA_EAN];
+    if (!emb) {
+      toast.error('Artikel embalaže (EMB001) ni najden v bazi. Dodajte ga v BackOffice.');
+      return;
+    }
     const existingIndex = cartItems.findIndex(item => item.ean === EMBALAZA_EAN && !item.isStornoed);
     if (existingIndex >= 0) {
       const newItems = [...cartItems];
@@ -177,13 +181,13 @@ const Index = () => {
       const newItem: CartItem = {
         id: Date.now().toString(),
         ean: EMBALAZA_EAN,
-        name: EMBALAZA_NAME,
-        price: EMBALAZA_PRICE,
+        name: emb.name,
+        price: emb.price,
         quantity: 1,
       };
       setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
     }
-    toast.success(`${EMBALAZA_NAME} dodana (0,50 €)`);
+    toast.success(`${emb.name} dodana (${emb.price.toFixed(2)} €)`);
   };
 
   const handleDiscount = () => {
@@ -278,7 +282,7 @@ const Index = () => {
   const deductStock = async (items: typeof cartItems) => {
     for (const item of items) {
       if (item.isStornoed) continue;
-      if (item.ean === EMBALAZA_EAN) continue; // embalaža doesn't have stock
+      // embalaža now tracked in products table, no skip needed
       if (item.isReturn) {
         const { data } = await supabase.from('products').select('stock').eq('ean', item.ean as any).single();
         if (data) await supabase.from('products').update({ stock: (data as any).stock + item.quantity } as any).eq('ean', item.ean as any);
