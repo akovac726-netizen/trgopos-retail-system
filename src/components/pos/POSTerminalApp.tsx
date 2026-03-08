@@ -25,6 +25,9 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
   const [pinValue, setPinValue] = useState("");
   const [pinError, setPinError] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [giftPinValue, setGiftPinValue] = useState("");
+  const [giftPinError, setGiftPinError] = useState(false);
+  const [giftPinAttempts, setGiftPinAttempts] = useState(0);
 
   const formatPrice = (price: number) =>
     price.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
