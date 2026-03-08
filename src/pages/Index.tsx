@@ -458,7 +458,7 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <POSHeader cashier={currentCashier} activeTab={posTab} onTabChange={setPosTab} onLogout={handleLogout}
+      <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={setPosTab} onLogout={handleLogout}
         onInfo={() => setShowInfoDialog(true)}
         onSettings={() => {
           if (currentCashier?.id === '00087') {
