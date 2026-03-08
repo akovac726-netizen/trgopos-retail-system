@@ -96,7 +96,7 @@ const Index = () => {
     fetchProducts();
 
     const fetchTransactions = async () => {
-      const { data } = await supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(100);
+      const { data } = await supabase.from('transactions').select('*').eq('register_id', registerId as any).order('created_at', { ascending: false }).limit(100);
       if (data) {
         setTransactions((data as any[]).map(t => ({
           id: t.receipt_number,
