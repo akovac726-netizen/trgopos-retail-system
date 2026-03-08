@@ -29,14 +29,16 @@ const FALLBACK_CASHIERS: Cashier[] = [
 
 const EMBALAZA_EAN = "EMB001";
 
-// Get or assign a register ID for this device
+// Get or assign a register ID for this device (max 3 registers)
+const MAX_REGISTERS = 3;
 const getRegisterId = (): number => {
   const stored = localStorage.getItem('trgopos_register_id');
-  if (stored) return parseInt(stored);
-  // Assign a new register ID based on timestamp to make it unique per device
-  const id = Math.floor(Date.now() % 100) + 1;
-  localStorage.setItem('trgopos_register_id', String(id));
-  return id;
+  if (stored) {
+    const id = parseInt(stored);
+    if (id >= 1 && id <= MAX_REGISTERS) return id;
+  }
+  // No valid ID stored - will be assigned on login screen
+  return 0;
 };
 
 // setRegisterId can be used to manually assign a register number
@@ -449,7 +451,8 @@ const Index = () => {
 
   // Login
   if (appMode === 'login') {
-    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={handleBackOfficeLogin} registerId={registerId} registerLocked={registerLocked} />;
+    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={handleBackOfficeLogin} registerId={registerId} registerLocked={registerLocked}
+      onSelectRegister={(id: number) => { localStorage.setItem('trgopos_register_id', String(id)); setRegisterIdState(id); }} />;
   }
 
   // BackOffice
