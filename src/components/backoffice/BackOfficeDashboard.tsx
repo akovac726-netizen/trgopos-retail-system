@@ -1668,10 +1668,41 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         )}
 
         {/* FINANČNA POROČILA */}
-        {activeTab === 'financna' && (
+        {activeTab === 'financna' && (() => {
+          const SC_IDS = [101, 102, 103];
+          const regLabel = (id: number) => SC_IDS.includes(id) ? `🛒 A${id - 100}` : `Blagajna ${id}`;
+          const fcFiltered = financeClosings.filter(c => {
+            if (financeFilter === 'regular') return !SC_IDS.includes(c.register_id);
+            if (financeFilter === 'self') return SC_IDS.includes(c.register_id);
+            return true;
+          });
+          const totalReg = financeClosings.filter(c => !SC_IDS.includes(c.register_id)).reduce((s, c) => s + Number(c.total), 0);
+          const totalSelf = financeClosings.filter(c => SC_IDS.includes(c.register_id)).reduce((s, c) => s + Number(c.total), 0);
+          const fcTotalCash = fcFiltered.reduce((s, c) => s + Number(c.cash), 0);
+          const fcTotalCard = fcFiltered.reduce((s, c) => s + Number(c.card), 0);
+          const fcTotal = fcFiltered.reduce((s, c) => s + Number(c.total), 0);
+          const fcTxCount = fcFiltered.reduce((s, c) => s + Number(c.transaction_count), 0);
+          return (
           <div>
             <div className="bg-gray-600/80 px-6 py-3"><h2 className="text-white font-bold text-xl">Finančna poročila</h2></div>
             <div className="px-6 py-4">
+              {/* Register type filter */}
+              <div className="flex gap-2 mb-4">
+                {([
+                  { id: 'all' as const, label: 'Vse blagajne' },
+                  { id: 'regular' as const, label: `Navadne (1–3) · ${totalReg.toFixed(2)} €` },
+                  { id: 'self' as const, label: `🛒 Samoplačniške (A1–A3) · ${totalSelf.toFixed(2)} €` },
+                ]).map(f => (
+                  <button key={f.id} onClick={() => setFinanceFilter(f.id)}
+                    className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+                      financeFilter === f.id ? (f.id === 'self' ? 'bg-orange-500 text-white' : 'bg-sky-500 text-white') : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sub-tabs */}
               <div className="flex gap-2 mb-4">
                 {(['statistics', 'sales', 'efficiency'] as const).map(tab => (
                   <button key={tab} onClick={() => setReportSubTab(tab)}
@@ -1684,18 +1715,20 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-gray-200 border border-gray-400 rounded-lg p-6">
                     <h3 className="font-bold mb-3">Skupni promet</h3>
-                    <p className="text-3xl font-bold">{closingReports.reduce((s, r) => s + r.total, 0).toFixed(2)} €</p>
+                    <p className="text-3xl font-bold">{fcTotal.toFixed(2)} €</p>
+                    <p className="text-xs text-gray-500 mt-1">{fcTxCount} transakcij</p>
                   </div>
                   <div className="bg-gray-200 border border-gray-400 rounded-lg p-6">
                     <h3 className="font-bold mb-3">Plačilna sredstva</h3>
-                    <p className="text-sm">Gotovina: {closingReports.reduce((s, r) => s + r.cash, 0).toFixed(2)} €</p>
-                    <p className="text-sm">Kartica: {closingReports.reduce((s, r) => s + r.card, 0).toFixed(2)} €</p>
+                    <p className="text-sm">Gotovina: {fcTotalCash.toFixed(2)} €</p>
+                    <p className="text-sm">Kartica: {fcTotalCard.toFixed(2)} €</p>
                   </div>
                 </div>
               )}
               {reportSubTab === 'sales' && (
                 <table className="w-full border-collapse bg-white">
                   <thead><tr className="bg-gray-200">
+                    <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajna</th>
                     <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
                     <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajnik</th>
                     <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Gotovina</th>
@@ -1703,15 +1736,16 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                     <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Skupaj</th>
                   </tr></thead>
                   <tbody>
-                    {closingReports.length === 0 ? (
-                      <tr><td colSpan={5} className="text-center py-4 text-gray-500">Ni podatkov</td></tr>
-                    ) : closingReports.map((r, i) => (
-                      <tr key={r.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
-                        <td className="border border-gray-300 px-3 py-2 text-sm">{r.date}</td>
-                        <td className="border border-gray-300 px-3 py-2 text-sm">{r.cashier}</td>
-                        <td className="border border-gray-300 px-3 py-2 text-sm text-right">{r.cash.toFixed(2)} €</td>
-                        <td className="border border-gray-300 px-3 py-2 text-sm text-right">{r.card.toFixed(2)} €</td>
-                        <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{r.total.toFixed(2)} €</td>
+                    {fcFiltered.length === 0 ? (
+                      <tr><td colSpan={6} className="text-center py-4 text-gray-500">Ni podatkov</td></tr>
+                    ) : fcFiltered.map((c: any, i: number) => (
+                      <tr key={c.id} className={`${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} ${SC_IDS.includes(c.register_id) ? 'border-l-4 border-l-orange-400' : ''}`}>
+                        <td className={`border border-gray-300 px-3 py-2 text-sm font-bold ${SC_IDS.includes(c.register_id) ? 'text-orange-600' : ''}`}>{regLabel(c.register_id)}</td>
+                        <td className="border border-gray-300 px-3 py-2 text-sm">{new Date(c.closed_at).toLocaleString('sl-SI')}</td>
+                        <td className="border border-gray-300 px-3 py-2 text-sm">{c.cashier_name}</td>
+                        <td className="border border-gray-300 px-3 py-2 text-sm text-right">{Number(c.cash).toFixed(2)} €</td>
+                        <td className="border border-gray-300 px-3 py-2 text-sm text-right">{Number(c.card).toFixed(2)} €</td>
+                        <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{Number(c.total).toFixed(2)} €</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1720,31 +1754,36 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               {reportSubTab === 'efficiency' && (
                 <table className="w-full border-collapse bg-white">
                   <thead><tr className="bg-gray-200">
-                    <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Prodajalec</th>
+                    <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Prodajalec / Blagajna</th>
                     <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Št. transakcij</th>
                     <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Promet</th>
                     <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Povprečen račun</th>
                   </tr></thead>
                   <tbody>
-                    {knownEmployees.map((emp, i) => {
-                      const r = closingReports.filter(x => x.cashier === emp);
-                      const total = r.reduce((s, x) => s + x.total, 0);
-                      const tx = r.reduce((s, x) => s + x.transactionCount, 0);
-                      return (
-                        <tr key={emp} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="border border-gray-300 px-3 py-2 text-sm font-medium">{emp}</td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-right">{tx}</td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{total.toFixed(2)} €</td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-right">{tx > 0 ? (total / tx).toFixed(2) : '0.00'} €</td>
+                    {(() => {
+                      const grouped: Record<string, { total: number; tx: number }> = {};
+                      fcFiltered.forEach((c: any) => {
+                        const key = c.cashier_name || 'Neznano';
+                        if (!grouped[key]) grouped[key] = { total: 0, tx: 0 };
+                        grouped[key].total += Number(c.total);
+                        grouped[key].tx += Number(c.transaction_count);
+                      });
+                      return Object.entries(grouped).map(([name, data], i) => (
+                        <tr key={name} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="border border-gray-300 px-3 py-2 text-sm font-medium">{name}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-right">{data.tx}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{data.total.toFixed(2)} €</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-right">{data.tx > 0 ? (data.total / data.tx).toFixed(2) : '0.00'} €</td>
                         </tr>
-                      );
-                    })}
+                      ));
+                    })()}
                   </tbody>
                 </table>
               )}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* PARTNERJI */}
         {activeTab === 'partnerji' && (
