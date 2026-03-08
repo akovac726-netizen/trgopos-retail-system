@@ -546,6 +546,7 @@ const Index = () => {
   const handleNewTransaction = () => {
     setCartItems([]); setSelectedItemIndex(null); setInputValue("");
     setLastTransaction(null); setPendingInvoiceData(undefined); setScreen('main');
+    setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0);
   };
 
   const handlePrintReceipt = (t: Transaction) => toast.success(`Račun #${t.id} se tiska...`);
@@ -681,10 +682,13 @@ const Index = () => {
         {posTab === 'blagajna' && screen === 'payment' && (
           <PaymentTab
             cartItems={cartItems.filter(i => !i.isStornoed)} subtotal={subtotal} total={total} totalDiscount={totalDiscount}
-            onCashPayment={handleCashComplete} onCardPayment={handleCardComplete}
-            onInvoice={() => setShowPartnerInvoiceDialog(true)} onBack={() => setScreen('main')}
+            onCashPayment={(amountPaid) => { handleCashComplete(amountPaid); setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0); }}
+            onCardPayment={() => { handleCardComplete(); setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0); }}
+            onInvoice={() => setShowPartnerInvoiceDialog(true)} onBack={() => { setScreen('main'); setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0); }}
             onBonPayment={handleBonPayment}
             onGiftCardPayment={handleGiftCardPayment}
+            onGiftCardPointsRedeem={handleGiftCardPointsRedeem}
+            onGiftCardBalancePayment={handleGiftCardBalancePayment}
             keyboardEnabled={keyboardEnabled}
           />
         )}
