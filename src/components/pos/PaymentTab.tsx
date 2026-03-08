@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Delete, Loader2 } from "lucide-react";
 import { CartItem } from "@/types/pos";
+import GiftCardRedeemFlow from "./GiftCardRedeemFlow";
 
 interface PaymentTabProps {
   cartItems: CartItem[];
@@ -14,10 +15,12 @@ interface PaymentTabProps {
   onBack: () => void;
   onBonPayment?: (code: string, amount: number) => void;
   onGiftCardPayment?: (code: string) => void;
+  onGiftCardPointsRedeem?: (cardId: string, pointsUsed: number, discountAmount: number) => void;
+  onGiftCardBalancePayment?: (cardId: string, amount: number) => void;
   keyboardEnabled?: boolean;
 }
 
-const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, keyboardEnabled }: PaymentTabProps) => {
+const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, onGiftCardPointsRedeem, onGiftCardBalancePayment, keyboardEnabled }: PaymentTabProps) => {
   const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon' | 'giftcard'>('select');
   const [cardWaiting, setCardWaiting] = useState(false);
   const [inputValue, setInputValue] = useState("");
