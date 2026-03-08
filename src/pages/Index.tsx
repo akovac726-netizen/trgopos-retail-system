@@ -39,7 +39,9 @@ const getRegisterId = (): number => {
   return id;
 };
 
-const setRegisterId = (id: number) => {
+// setRegisterId can be used to manually assign a register number
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const setRegisterIdValue = (id: number) => {
   localStorage.setItem('trgopos_register_id', String(id));
 };
 
@@ -96,7 +98,7 @@ const Index = () => {
     fetchProducts();
 
     const fetchTransactions = async () => {
-      const { data } = await supabase.from('transactions').select('*').eq('register_id', registerId as any).order('created_at', { ascending: false }).limit(100);
+      const { data } = await supabase.from('transactions').select('*').eq('register_id', registerId).order('created_at', { ascending: false }).limit(100);
       if (data) {
         setTransactions((data as any[]).map(t => ({
           id: t.receipt_number,
@@ -155,7 +157,7 @@ const Index = () => {
     // Check if this register is locked for the day
     const today = new Date().toISOString().split('T')[0];
     const { data: lockCheck } = await supabase.from('register_closings').select('id')
-      .eq('register_id', registerId as any).eq('date', today as any).eq('type', 'Zaključek blagajne' as any).limit(1);
+      .eq('register_id', registerId).eq('date', today).eq('type', 'Zaključek blagajne').limit(1);
     if (lockCheck && lockCheck.length > 0) {
       setRegisterLocked(true);
       toast.error(`Blagajna ${registerId} je že zaključena za danes. Uporabite drugo napravo.`);
@@ -311,21 +313,21 @@ const Index = () => {
       if (item.isStornoed) continue;
       // embalaža now tracked in products table, no skip needed
       if (item.isReturn) {
-        const { data } = await supabase.from('products').select('stock').eq('ean', item.ean as any).single();
-        if (data) await supabase.from('products').update({ stock: (data as any).stock + item.quantity } as any).eq('ean', item.ean as any);
+        const { data } = await supabase.from('products').select('stock').eq('ean', item.ean).single();
+        if (data) await supabase.from('products').update({ stock: data.stock + item.quantity }).eq('ean', item.ean);
       } else {
-        const { data } = await supabase.from('products').select('stock, name, min_stock').eq('ean', item.ean as any).single();
+        const { data } = await supabase.from('products').select('stock, name, min_stock').eq('ean', item.ean).single();
         if (data) {
-          const d = data as any; const newStock = Math.max(0, (d.stock || 0) - item.quantity);
-          await supabase.from('products').update({ stock: newStock } as any).eq('ean', item.ean as any);
-          if (newStock <= (d.min_stock || 0)) toast.warning(`⚠ Nizka zaloga: ${d.name} (${newStock} kosov)`);
+          const newStock = Math.max(0, (data.stock || 0) - item.quantity);
+          await supabase.from('products').update({ stock: newStock }).eq('ean', item.ean);
+          if (newStock <= (data.min_stock || 0)) toast.warning(`⚠ Nizka zaloga: ${data.name} (${newStock} kosov)`);
         }
       }
     }
   };
 
   const getNextReceiptNumber = async (): Promise<string> => {
-    const { data, error } = await supabase.rpc('get_next_receipt_number' as any);
+    const { data, error } = await supabase.rpc('get_next_receipt_number');
     if (error || !data) {
       const next = receiptCounter + 1;
       setReceiptCounter(next);
@@ -345,7 +347,7 @@ const Index = () => {
       payment_method: paymentMethod, amount_paid: amountPaid, change_amount: change,
       cashier_id: currentCashier?.id || '', cashier_name: currentCashier?.name || '', invoice_data: pendingInvoiceData as any,
       register_id: registerId,
-    } as any);
+    });
     return transaction;
   };
 
@@ -364,15 +366,14 @@ const Index = () => {
   };
 
   const handleBonPayment = async (code: string, amount: number) => {
-    const { data: voucher } = await supabase.from('gift_vouchers').select('*').eq('code', code as any).single();
+    const { data: voucher } = await supabase.from('gift_vouchers').select('*').eq('code', code).single();
     if (!voucher) { toast.error('Bon ni najden'); return; }
-    const v = voucher as any;
-    if (v.is_used || v.remaining_amount <= 0) { toast.error('Bon je že porabljen'); return; }
-    if (v.remaining_amount < total) { toast.error(`Bon nima dovolj sredstev (${v.remaining_amount} €)`); return; }
+    if (voucher.is_used || voucher.remaining_amount <= 0) { toast.error('Bon je že porabljen'); return; }
+    if (voucher.remaining_amount < total) { toast.error(`Bon nima dovolj sredstev (${voucher.remaining_amount} €)`); return; }
     await supabase.from('gift_vouchers').update({
-      remaining_amount: v.remaining_amount - total, is_used: v.remaining_amount - total <= 0,
+      remaining_amount: voucher.remaining_amount - total, is_used: voucher.remaining_amount - total <= 0,
       used_by: currentCashier?.id, used_at: new Date().toISOString(),
-    } as any).eq('id', v.id as any);
+    }).eq('id', voucher.id);
     const transaction = await createTransaction('darilni bon', total, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
     await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
@@ -391,7 +392,7 @@ const Index = () => {
     setPosTab('blagajna'); toast.success('Artikli kopirani v nov račun');
   };
   const handleVoidReceipt = async (t: Transaction) => {
-    await supabase.from('transactions').update({ voided: true } as any).eq('receipt_number', t.id as any);
+    await supabase.from('transactions').update({ voided: true }).eq('receipt_number', t.id);
     setTransactions(prev => prev.filter(tr => tr.id !== t.id));
     toast.success(`Račun #${t.id} storniran`);
   };
@@ -402,13 +403,13 @@ const Index = () => {
       type: report.type, cashier_name: report.cashier, cashier_id: report.cashierId,
       total: report.total, cash: report.cash, card: report.card, other: report.other,
       transaction_count: report.transactionCount, item_count: report.itemCount,
-    } as any);
+    });
     // Also save to register_closings for BackOffice visibility
     await supabase.from('register_closings').insert({
       register_id: registerId, type: 'Izkupiček', cashier_name: report.cashier, cashier_id: report.cashierId,
       total: report.total, cash: report.cash, card: report.card, other: report.other,
       transaction_count: report.transactionCount, item_count: report.itemCount,
-    } as any);
+    });
     setClosingHistory(prev => [report, ...prev]);
     toast.success('Izkupiček natisnjen – blagajna ostane aktivna');
     setPosTab('blagajna');
@@ -421,13 +422,13 @@ const Index = () => {
       type: report.type, cashier_name: report.cashier, cashier_id: report.cashierId,
       total: report.total, cash: report.cash, card: report.card, other: report.other,
       transaction_count: report.transactionCount, item_count: report.itemCount,
-    } as any);
+    });
     // Save to register_closings - this also locks the register for today
     await supabase.from('register_closings').insert({
       register_id: registerId, type: 'Zaključek blagajne', cashier_name: report.cashier, cashier_id: report.cashierId,
       total: report.total, cash: report.cash, card: report.card, other: report.other,
       transaction_count: report.transactionCount, item_count: report.itemCount,
-    } as any);
+    });
     setClosingHistory(prev => [report, ...prev]);
     setRegisterLocked(true);
     toast.success(`Blagajna ${registerId} zaključena za danes`);
@@ -441,7 +442,7 @@ const Index = () => {
   const handleCreateGiftVoucher = async (code: string, amount: number) => {
     await supabase.from('gift_vouchers').insert({
       code, amount, remaining_amount: amount, created_by: currentCashier?.id || '',
-    } as any);
+    });
     toast.success(`Darilni bon ${code} ustvarjen (${amount} EUR)`);
     setScreen('main');
   };
