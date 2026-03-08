@@ -614,6 +614,7 @@ export type Database = {
           created_at: string
           enabled: boolean
           id: string
+          label: string
           register_id: number
           updated_at: string
         }
@@ -623,6 +624,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id?: string
+          label?: string
           register_id: number
           updated_at?: string
         }
@@ -632,6 +634,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id?: string
+          label?: string
           register_id?: number
           updated_at?: string
         }
