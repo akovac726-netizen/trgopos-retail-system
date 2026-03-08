@@ -100,6 +100,8 @@ const Index = () => {
   const [pointsUsed, setPointsUsed] = useState(0);
   const [isSelfCheckout, setIsSelfCheckout] = useState(false);
   const [selfCheckoutLabel, setSelfCheckoutLabel] = useState("");
+  const [pendingTabChange, setPendingTabChange] = useState<POSTab | null>(null);
+  const [showTabAdminCode, setShowTabAdminCode] = useState(false);
 
 
   // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
@@ -709,7 +711,14 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={setPosTab} onLogout={handleLogout}
+      <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={(tab) => {
+          if (isSelfCheckout && (tab === 'racuni' || tab === 'zakljucek')) {
+            setPendingTabChange(tab);
+            setShowTabAdminCode(true);
+          } else {
+            setPosTab(tab);
+          }
+        }} onLogout={handleLogout}
         isSelfCheckout={isSelfCheckout} selfCheckoutLabel={selfCheckoutLabel}
         onInfo={() => setShowInfoDialog(true)}
         onSettings={() => {
@@ -789,6 +798,9 @@ const Index = () => {
       )}
       {showReturnManagerCode && (
         <ManagerCodeDialog title="ADMIN KODA za vračilo" onSuccess={() => { setShowReturnManagerCode(false); setShowReturnDialog(true); }} onClose={() => setShowReturnManagerCode(false)} />
+      )}
+      {showTabAdminCode && (
+        <ManagerCodeDialog title={`ADMIN KODA za ${pendingTabChange === 'racuni' ? 'Račune' : 'Zaključek'}`} onSuccess={() => { setShowTabAdminCode(false); if (pendingTabChange) setPosTab(pendingTabChange); setPendingTabChange(null); }} onClose={() => { setShowTabAdminCode(false); setPendingTabChange(null); }} />
       )}
       {showProductSearchDialog && (
         <ProductSearchDialog products={products} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
