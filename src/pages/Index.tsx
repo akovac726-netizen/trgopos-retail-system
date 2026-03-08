@@ -683,7 +683,7 @@ const Index = () => {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={setPosTab} onLogout={handleLogout}
-        isSelfCheckout={isSelfCheckout}
+        isSelfCheckout={isSelfCheckout} selfCheckoutLabel={selfCheckoutLabel}
         onInfo={() => setShowInfoDialog(true)}
         onSettings={() => {
           if (currentCashier?.id === '00087' || currentCashier?.role === 'admin') {
