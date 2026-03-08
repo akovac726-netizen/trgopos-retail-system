@@ -253,7 +253,7 @@ const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalan
 
   // STEP 3: Show points & select redemption
   if (step === 'show_points') {
-    const canUsePoints = total >= MIN_PURCHASE_FOR_POINTS && (card?.points || 0) > 0;
+    const canUsePoints = !isSelfCheckout && total >= MIN_PURCHASE_FOR_POINTS && (card?.points || 0) > 0;
     const cardBalance = card?.balance || 0;
     const canPayFull = cardBalance >= total;
     const canPayPartial = cardBalance > 0 && cardBalance < total;
