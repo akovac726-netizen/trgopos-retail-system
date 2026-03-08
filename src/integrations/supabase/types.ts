@@ -359,6 +359,54 @@ export type Database = {
         }
         Relationships: []
       }
+      promotions: {
+        Row: {
+          active: boolean
+          created_at: string
+          discount_percent: number | null
+          end_date: string
+          id: string
+          product_ean: string
+          product_name: string
+          promo_price: number | null
+          qty_free: number | null
+          qty_required: number | null
+          start_date: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          discount_percent?: number | null
+          end_date: string
+          id?: string
+          product_ean: string
+          product_name?: string
+          promo_price?: number | null
+          qty_free?: number | null
+          qty_required?: number | null
+          start_date: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          discount_percent?: number | null
+          end_date?: string
+          id?: string
+          product_ean?: string
+          product_name?: string
+          promo_price?: number | null
+          qty_free?: number | null
+          qty_required?: number | null
+          start_date?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       receipt_counters: {
         Row: {
           id: string
