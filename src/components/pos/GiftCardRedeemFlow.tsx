@@ -1,36 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Delete, Loader2, CreditCard, Lock, Gift, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface GiftCardRedeemFlowProps {
   total: number;
+  registerId: number;
   onApplyDiscount: (pointsUsed: number, discountAmount: number, cardId: string) => void;
   onPayWithBalance: (cardId: string, amount: number) => void;
   onPartialBalancePayment: (cardId: string, cardAmount: number, remainingTotal: number) => void;
   onCancel: () => void;
 }
 
-type Step = 'enter_code' | 'loading' | 'enter_pin' | 'show_points' | 'confirm';
+type Step = 'enter_code' | 'loading' | 'waiting_pin' | 'pin_approved' | 'pin_declined' | 'show_points' | 'confirm';
 
 const POINT_VALUE = 0.01; // 1 point = 0.01 €
 const MIN_PURCHASE_FOR_POINTS = 5; // min 5€ purchase to use points
 
-const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartialBalancePayment, onCancel }: GiftCardRedeemFlowProps) => {
+const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalance, onPartialBalancePayment, onCancel }: GiftCardRedeemFlowProps) => {
   const [step, setStep] = useState<Step>('enter_code');
   const [code, setCode] = useState("");
-  const [pin, setPin] = useState("");
   const [card, setCard] = useState<any>(null);
   const [pointsToUse, setPointsToUse] = useState(0);
   const [manualPointsInput, setManualPointsInput] = useState("");
   const [useManualInput, setUseManualInput] = useState(false);
   const [error, setError] = useState("");
+  const [pinRequestId, setPinRequestId] = useState<string | null>(null);
+  const channelRef = useRef<any>(null);
 
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const maxRedeemablePoints = card ? Math.min(
     card.points || 0,
-    Math.floor(total / POINT_VALUE) // can't discount more than total
+    Math.floor(total / POINT_VALUE)
   ) : 0;
   const discountAmount = pointsToUse * POINT_VALUE;
   const remainingTotal = total - discountAmount;
@@ -43,12 +45,41 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
 
   const bg = "linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)";
 
+  // Listen for PIN verification result from terminal
+  useEffect(() => {
+    if (step !== 'waiting_pin' || !pinRequestId) return;
+
+    const channel = supabase
+      .channel(`pin-verify-${pinRequestId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'terminal_requests',
+      }, (payload) => {
+        const req = payload.new as any;
+        if (req.id === pinRequestId) {
+          if (req.status === 'approved') {
+            setStep('show_points');
+            toast.success('PIN koda potrjena na terminalu');
+          } else if (req.status === 'declined') {
+            setError('PIN koda zavrnjena na terminalu.');
+            setStep('enter_code');
+            setCode("");
+            setCard(null);
+          }
+        }
+      })
+      .subscribe();
+
+    channelRef.current = channel;
+    return () => { supabase.removeChannel(channel); };
+  }, [step, pinRequestId]);
+
   const handleLookupCard = async () => {
     if (code.length < 4) return;
     setStep('loading');
     setError("");
 
-    // Try by code first, then by EAN
     let { data: foundCard } = await supabase.from('gift_cards').select('*').eq('code', code).eq('active', true).single();
     if (!foundCard) {
       const { data: byEan } = await supabase.from('gift_cards').select('*').eq('ean', code).eq('active', true).single();
@@ -63,24 +94,36 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
 
     setCard(foundCard);
 
-    // If card has a PIN set, require PIN entry
+    // If card has a PIN, send PIN verify request to POS terminal
     if ((foundCard as any).pin && (foundCard as any).pin.length > 0) {
-      setStep('enter_pin');
+      const { data: req } = await supabase.from('terminal_requests').insert({
+        register_id: registerId,
+        amount: 0,
+        status: 'pending',
+        type: 'pin_verify',
+        metadata: { card_id: (foundCard as any).id, card_code: (foundCard as any).code },
+      } as any).select().single();
+
+      if (req) {
+        setPinRequestId((req as any).id);
+        setStep('waiting_pin');
+      } else {
+        setError("Napaka pri pošiljanju zahteve na terminal.");
+        setStep('enter_code');
+      }
     } else {
-      // No PIN, go directly to points
       setStep('show_points');
     }
   };
 
-  const handleVerifyPin = () => {
-    if (!card) return;
-    if (pin === card.pin) {
-      setError("");
-      setStep('show_points');
-    } else {
-      setError("Napačna PIN koda. Poskusite znova.");
-      setPin("");
+  const handleCancelPinRequest = async () => {
+    if (pinRequestId) {
+      await supabase.from('terminal_requests').update({ status: 'cancelled' } as any).eq('id', pinRequestId);
     }
+    setPinRequestId(null);
+    setStep('enter_code');
+    setCode("");
+    setCard(null);
   };
 
   const handleConfirmPoints = () => {
