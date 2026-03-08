@@ -103,6 +103,16 @@ const Index = () => {
   const [pendingTabChange, setPendingTabChange] = useState<POSTab | null>(null);
   const [showTabAdminCode, setShowTabAdminCode] = useState(false);
 
+  // After payment: create gift vouchers in DB for any bon items in the cart
+  const createGiftVouchersFromCart = async () => {
+    const bonItems = cartItems.filter(i => !i.isStornoed && i.ean.startsWith('BON-'));
+    for (const item of bonItems) {
+      const code = item.ean.replace('BON-', '');
+      await supabase.from('gift_vouchers').insert({
+        code, amount: item.price, remaining_amount: item.price, created_by: currentCashier?.id || '',
+      });
+    }
+  };
 
   // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
   const fetchTransactions = async (cashierId?: string) => {
