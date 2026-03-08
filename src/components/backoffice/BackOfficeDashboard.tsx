@@ -1001,7 +1001,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                       className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
                   </div>
 
-                  {showAddForm && (
+                  {showAddForm && role === 'admin' && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                       <div className="bg-gray-200 rounded-xl p-6 w-[500px] border border-gray-400">
                         <div className="flex justify-end gap-2 mb-4">
@@ -1057,9 +1057,11 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           <td className="border border-gray-300 px-3 py-2 text-sm">{p.category}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.stock}</td>
+                          {role === 'admin' && (
                           <td className="border border-gray-300 px-3 py-2 text-center">
                             <button onClick={() => handleEditStart(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
                           </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -1102,7 +1104,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               {artikliSubTab === 'akcije' && (
                 <>
                   {/* Promo form dialog */}
-                  {showPromoForm && (
+                  {showPromoForm && role === 'admin' && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                       <div className="bg-gray-200 rounded-xl p-6 w-[520px] border border-gray-400">
                         <h3 className="font-bold text-lg mb-4">{editingPromo ? 'Uredi akcijo' : 'Nova akcija'}</h3>
