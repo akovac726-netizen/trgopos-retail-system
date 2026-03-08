@@ -161,9 +161,18 @@ const Index = () => {
     const { data: lockCheck } = await supabase.from('register_closings').select('id')
       .eq('register_id', registerId).eq('date', today).eq('type', 'Zaključek blagajne').limit(1);
     if (lockCheck && lockCheck.length > 0) {
-      setRegisterLocked(true);
-      toast.error(`Blagajna ${registerId} je že zaključena za danes. Uporabite drugo napravo.`);
-      return;
+      // PODPORA STANDBUY (id 00087) can unlock registers
+      if (cashier.id === '00087') {
+        // Delete the closing record to unlock this register
+        await supabase.from('register_closings').delete()
+          .eq('register_id', registerId).eq('date', today).eq('type', 'Zaključek blagajne');
+        setRegisterLocked(false);
+        toast.success(`Blagajna ${registerId} odklenjena s profilom PODPORA STANDBUY`);
+      } else {
+        setRegisterLocked(true);
+        toast.error(`Blagajna ${registerId} je že zaključena za danes. Samo PODPORA STANDBUY jo lahko odklene.`);
+        return;
+      }
     }
     setCurrentCashier(cashier); setAppMode('pos'); setScreen('main');
   };
