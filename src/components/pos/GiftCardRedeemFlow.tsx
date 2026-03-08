@@ -1,36 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Delete, Loader2, CreditCard, Lock, Gift, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface GiftCardRedeemFlowProps {
   total: number;
+  registerId: number;
   onApplyDiscount: (pointsUsed: number, discountAmount: number, cardId: string) => void;
   onPayWithBalance: (cardId: string, amount: number) => void;
   onPartialBalancePayment: (cardId: string, cardAmount: number, remainingTotal: number) => void;
   onCancel: () => void;
 }
 
-type Step = 'enter_code' | 'loading' | 'enter_pin' | 'show_points' | 'confirm';
+type Step = 'enter_code' | 'loading' | 'waiting_pin' | 'pin_approved' | 'pin_declined' | 'show_points' | 'confirm';
 
 const POINT_VALUE = 0.01; // 1 point = 0.01 €
 const MIN_PURCHASE_FOR_POINTS = 5; // min 5€ purchase to use points
 
-const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartialBalancePayment, onCancel }: GiftCardRedeemFlowProps) => {
+const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalance, onPartialBalancePayment, onCancel }: GiftCardRedeemFlowProps) => {
   const [step, setStep] = useState<Step>('enter_code');
   const [code, setCode] = useState("");
-  const [pin, setPin] = useState("");
   const [card, setCard] = useState<any>(null);
   const [pointsToUse, setPointsToUse] = useState(0);
   const [manualPointsInput, setManualPointsInput] = useState("");
   const [useManualInput, setUseManualInput] = useState(false);
   const [error, setError] = useState("");
+  const [pinRequestId, setPinRequestId] = useState<string | null>(null);
+  const channelRef = useRef<any>(null);
 
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const maxRedeemablePoints = card ? Math.min(
     card.points || 0,
-    Math.floor(total / POINT_VALUE) // can't discount more than total
+    Math.floor(total / POINT_VALUE)
   ) : 0;
   const discountAmount = pointsToUse * POINT_VALUE;
   const remainingTotal = total - discountAmount;
@@ -43,12 +45,41 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
 
   const bg = "linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)";
 
+  // Listen for PIN verification result from terminal
+  useEffect(() => {
+    if (step !== 'waiting_pin' || !pinRequestId) return;
+
+    const channel = supabase
+      .channel(`pin-verify-${pinRequestId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'terminal_requests',
+      }, (payload) => {
+        const req = payload.new as any;
+        if (req.id === pinRequestId) {
+          if (req.status === 'approved') {
+            setStep('show_points');
+            toast.success('PIN koda potrjena na terminalu');
+          } else if (req.status === 'declined') {
+            setError('PIN koda zavrnjena na terminalu.');
+            setStep('enter_code');
+            setCode("");
+            setCard(null);
+          }
+        }
+      })
+      .subscribe();
+
+    channelRef.current = channel;
+    return () => { supabase.removeChannel(channel); };
+  }, [step, pinRequestId]);
+
   const handleLookupCard = async () => {
     if (code.length < 4) return;
     setStep('loading');
     setError("");
 
-    // Try by code first, then by EAN
     let { data: foundCard } = await supabase.from('gift_cards').select('*').eq('code', code).eq('active', true).single();
     if (!foundCard) {
       const { data: byEan } = await supabase.from('gift_cards').select('*').eq('ean', code).eq('active', true).single();
@@ -63,24 +94,36 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
 
     setCard(foundCard);
 
-    // If card has a PIN set, require PIN entry
+    // If card has a PIN, send PIN verify request to POS terminal
     if ((foundCard as any).pin && (foundCard as any).pin.length > 0) {
-      setStep('enter_pin');
+      const { data: req } = await supabase.from('terminal_requests').insert({
+        register_id: registerId,
+        amount: 0,
+        status: 'pending',
+        type: 'pin_verify',
+        metadata: { card_id: (foundCard as any).id, card_code: (foundCard as any).code },
+      } as any).select().single();
+
+      if (req) {
+        setPinRequestId((req as any).id);
+        setStep('waiting_pin');
+      } else {
+        setError("Napaka pri pošiljanju zahteve na terminal.");
+        setStep('enter_code');
+      }
     } else {
-      // No PIN, go directly to points
       setStep('show_points');
     }
   };
 
-  const handleVerifyPin = () => {
-    if (!card) return;
-    if (pin === card.pin) {
-      setError("");
-      setStep('show_points');
-    } else {
-      setError("Napačna PIN koda. Poskusite znova.");
-      setPin("");
+  const handleCancelPinRequest = async () => {
+    if (pinRequestId) {
+      await supabase.from('terminal_requests').update({ status: 'cancelled' } as any).eq('id', pinRequestId);
     }
+    setPinRequestId(null);
+    setStep('enter_code');
+    setCode("");
+    setCard(null);
   };
 
   const handleConfirmPoints = () => {
@@ -171,8 +214,8 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
     );
   }
 
-  // STEP 2: Enter PIN
-  if (step === 'enter_pin') {
+  // STEP 2: Waiting for PIN on terminal
+  if (step === 'waiting_pin') {
     return (
       <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: bg }}>
         <div className="flex-[4] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-3">
@@ -183,7 +226,7 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
           <div className="border-t border-dashed border-gray-400 pt-2" />
           <div>Kartica: <strong>{card?.code}</strong></div>
           <div className="bg-amber-50 border border-amber-300 rounded p-3 text-amber-800 text-sm mt-4">
-            🔒 Stranka naj vnese svojo PIN kodo za potrditev dostopa do točk.
+            🔒 Stranka vnese PIN kodo na POS terminalu.
           </div>
           {error && (
             <div className="bg-red-100 border border-red-400 rounded p-3 text-red-700 font-bold text-sm mt-2">
@@ -192,31 +235,16 @@ const GiftCardRedeemFlow = ({ total, onApplyDiscount, onPayWithBalance, onPartia
           )}
         </div>
 
-        <div className="flex-[6] flex flex-col gap-3">
-          <div className="border-2 border-gray-600 bg-white rounded-lg p-4">
-            <h3 className="font-bold text-base mb-2">PIN koda:</h3>
-            <div className="border-2 border-gray-600 bg-gray-50 rounded-lg p-3 font-mono text-3xl min-h-[2.5rem] tracking-[0.5em] text-center">
-              {'●'.repeat(pin.length)}
-            </div>
+        <div className="flex-[6] flex flex-col items-center justify-center gap-6">
+          <div className="bg-white border-2 border-gray-600 rounded-xl p-8 text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-amber-500 mx-auto mb-4" />
+            <h3 className="font-bold text-xl mb-2">Čakam na vnos PIN kode...</h3>
+            <p className="text-gray-600 text-sm">Stranka naj vnese PIN kodo na POS terminalu (Blagajna {registerId})</p>
           </div>
-
-          <div className="flex gap-3 flex-1">
-            {renderNumpad(
-              k => setPin(prev => prev.length < 6 ? prev + k : prev),
-              () => setPin(prev => prev.slice(0, -1))
-            )}
-            <div className="flex flex-col gap-3 w-36">
-              <button onClick={() => { setStep('enter_code'); setPin(''); setError(''); }}
-                className="h-16 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
-                ← Nazaj
-              </button>
-              <button onClick={handleVerifyPin}
-                disabled={pin.length < 1}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center disabled:opacity-40 transition-colors p-2">
-                Potrdi PIN
-              </button>
-            </div>
-          </div>
+          <button onClick={handleCancelPinRequest}
+            className="h-14 w-48 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
+            ← Prekliči
+          </button>
         </div>
       </div>
     );

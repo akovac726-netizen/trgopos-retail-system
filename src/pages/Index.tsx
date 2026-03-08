@@ -691,7 +691,7 @@ const Index = () => {
 
         {posTab === 'blagajna' && screen === 'payment' && (
           <PaymentTab
-            cartItems={cartItems.filter(i => !i.isStornoed)} subtotal={subtotal} total={total} totalDiscount={totalDiscount}
+            cartItems={cartItems.filter(i => !i.isStornoed)} subtotal={subtotal} total={total} totalDiscount={totalDiscount} registerId={registerId}
             onCashPayment={(amountPaid) => { handleCashComplete(amountPaid); setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0); }}
             onCardPayment={() => { handleCardComplete(); setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0); }}
             onInvoice={() => setShowPartnerInvoiceDialog(true)} onBack={() => { setScreen('main'); setPointsDiscount(0); setPointsCardId(null); setPointsUsed(0); }}

@@ -612,25 +612,31 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          metadata: Json | null
           register_id: number
           responded_at: string | null
           status: string
+          type: string
         }
         Insert: {
           amount?: number
           created_at?: string
           id?: string
+          metadata?: Json | null
           register_id: number
           responded_at?: string | null
           status?: string
+          type?: string
         }
         Update: {
           amount?: number
           created_at?: string
           id?: string
+          metadata?: Json | null
           register_id?: number
           responded_at?: string | null
           status?: string
+          type?: string
         }
         Relationships: []
       }
