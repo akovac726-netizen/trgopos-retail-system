@@ -30,15 +30,21 @@ const FALLBACK_CASHIERS: Cashier[] = [
 
 const EMBALAZA_EAN = "EMB001";
 
-// Get or assign a register ID for this device (max 3 registers)
+// Get or assign a register ID for this device (max 3 registers + self-checkout 101-103)
 const MAX_REGISTERS = 3;
+const SELF_CHECKOUT_LABELS: Record<string, number> = { 'A1': 101, 'A2': 102, 'A3': 103 };
+const SELF_CHECKOUT_IDS = [101, 102, 103];
+const labelToRegisterId = (label: string): number => SELF_CHECKOUT_LABELS[label] || 101;
+const registerIdToLabel = (id: number): string => {
+  const entry = Object.entries(SELF_CHECKOUT_LABELS).find(([, v]) => v === id);
+  return entry ? entry[0] : `A${id - 100}`;
+};
 const getRegisterId = (): number => {
   const stored = localStorage.getItem('trgopos_register_id');
   if (stored) {
     const id = parseInt(stored);
-    if (id >= 1 && id <= MAX_REGISTERS) return id;
+    if ((id >= 1 && id <= MAX_REGISTERS) || SELF_CHECKOUT_IDS.includes(id)) return id;
   }
-  // No valid ID stored - will be assigned on login screen
   return 0;
 };
 
