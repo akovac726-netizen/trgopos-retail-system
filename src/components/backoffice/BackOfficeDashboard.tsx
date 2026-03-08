@@ -184,7 +184,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     const interval = setInterval(() => {
       const remaining = Math.max(0, Math.floor((authCodeExpiry - Date.now()) / 1000));
       setAuthCountdown(remaining);
-      if (remaining <= 0) { setAuthCode(null); setAuthCodeExpiry(0); }
+      if (remaining <= 0) { setAuthCode(null); setAuthCodeExpiry(0); localStorage.removeItem('trgopos_auth_code'); }
     }, 1000);
     return () => clearInterval(interval);
   }, [authCodeExpiry]);
