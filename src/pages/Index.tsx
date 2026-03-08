@@ -633,6 +633,7 @@ const Index = () => {
                   ))}
                 </div>
               </div>
+            </div>
             <button onClick={() => setShowSettingsDialog(false)}
               className="mt-4 w-full h-12 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-bold text-base transition-colors">
               Zapri
