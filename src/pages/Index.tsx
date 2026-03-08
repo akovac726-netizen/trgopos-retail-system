@@ -22,13 +22,9 @@ import PriceCheckDialog from "@/components/pos/PriceCheckDialog";
 import BackOfficeDashboard from "@/components/backoffice/BackOfficeDashboard";
 import PartnerInvoiceDialog from "@/components/pos/PartnerInvoiceDialog";
 
-const cashiers: Cashier[] = [
-  { id: '70001', name: 'Dženan Kedić', password: '70001', role: 'admin', drawerCode: '2082' },
-  { id: '70002', name: 'Eva Zakrajšek', password: '70002', role: 'cashier', drawerCode: '4268' },
-  { id: '80001', name: 'Študent 1', password: '80001', role: 'cashier', drawerCode: '2468' },
-  { id: '80002', name: 'Študent 2', password: '80002', role: 'cashier', drawerCode: '2468' },
+// Fallback cashier for PODPORA STANDBUY (always available even if DB is empty)
+const FALLBACK_CASHIERS: Cashier[] = [
   { id: '00087', name: 'PODPORA STANDBUY', password: '00087', role: 'admin', drawerCode: '1359' },
-  { id: '03157', name: 'Melisa Kedić', password: '03157', role: 'cashier', drawerCode: '2015' },
 ];
 
 const EMBALAZA_PRICE = 0.50;
@@ -54,6 +50,7 @@ const Index = () => {
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [cashiers, setCashiers] = useState<Cashier[]>(FALLBACK_CASHIERS);
   const [showDrawerDialog, setShowDrawerDialog] = useState(false);
   const [pendingInvoiceData, setPendingInvoiceData] = useState<InvoiceData | undefined>();
   const [closingHistory, setClosingHistory] = useState<ClosingReport[]>([]);
@@ -105,9 +102,27 @@ const Index = () => {
     };
     fetchTransactions();
 
-    const channel = supabase.channel('pos-products')
+    const fetchEmployees = async () => {
+      const { data } = await supabase.from('employees').select('*');
+      if (data && data.length > 0) {
+        const dbCashiers: Cashier[] = data.map((e: any) => ({
+          id: e.username || e.code || e.id,
+          name: `${e.first_name} ${e.last_name}`,
+          password: e.password || e.username || e.code,
+          role: (e.position?.toLowerCase().includes('admin') || e.position?.toLowerCase().includes('direktor') || e.position?.toLowerCase().includes('vodja')) ? 'admin' as const : 'cashier' as const,
+          drawerCode: e.code || '',
+        }));
+        // Always include PODPORA STANDBUY fallback
+        const hasSupport = dbCashiers.some(c => c.id === '00087');
+        setCashiers(hasSupport ? dbCashiers : [...FALLBACK_CASHIERS, ...dbCashiers]);
+      }
+    };
+    fetchEmployees();
+
+    const channel = supabase.channel('pos-data')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => fetchTransactions())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => fetchEmployees())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
