@@ -1386,18 +1386,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         )}
 
         {/* DOKUMENTI */}
-        {activeTab === 'dokumenti' && (
-          <div>
-            <div className="bg-gray-600/80 px-6 py-3"><h2 className="text-white font-bold text-xl">Dokumenti</h2></div>
-            <div className="px-6 py-4 grid grid-cols-2 gap-4">
-              {['Fakture', 'Dobropisi', 'Prevzemni listi', 'Naročilnice'].map(doc => (
-                <div key={doc} className="bg-gray-200 border border-gray-400 rounded-lg p-6 cursor-pointer hover:bg-gray-300 transition-colors">
-                  <h3 className="font-bold text-gray-800">{doc}</h3>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {activeTab === 'dokumenti' && <DokumentiModule role={role} />}
 
         {/* NALEPKE / CENOVKE */}
         {activeTab === 'nalepke' && (
@@ -1933,6 +1922,201 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
           </div>
         )}
 
+      </div>
+    </div>
+  );
+};
+
+// ─── DOKUMENTI MODULE ───
+type DocTab = 'fakture' | 'dobropisi' | 'prevzemi' | 'narocilnice';
+
+const DokumentiModule = ({ role }: { role: 'admin' | 'shop' }) => {
+  const [docTab, setDocTab] = useState<DocTab>('fakture');
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [returns, setReturns] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      const { data } = await supabase.from('transactions').select('*')
+        .not('invoice_data', 'is', null)
+        .order('created_at', { ascending: false }).limit(50);
+      if (data) setInvoices(data);
+    };
+    const fetchReturns = async () => {
+      const { data } = await supabase.from('transactions').select('*')
+        .eq('voided', true)
+        .order('created_at', { ascending: false }).limit(50);
+      if (data) setReturns(data);
+    };
+    const fetchOrders = async () => {
+      const { data } = await supabase.from('orders').select('*')
+        .order('created_at', { ascending: false }).limit(50);
+      if (data) setOrders(data);
+    };
+    fetchInvoices(); fetchReturns(); fetchOrders();
+    const ch = supabase.channel('bo-docs')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => { fetchInvoices(); fetchReturns(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
+  const tabs: { id: DocTab; label: string; count: number }[] = [
+    { id: 'fakture', label: 'Fakture', count: invoices.length },
+    { id: 'dobropisi', label: 'Dobropisi / Vračila', count: returns.length },
+    { id: 'prevzemi', label: 'Prevzemni listi', count: orders.filter(o => o.received_confirmed).length },
+    { id: 'narocilnice', label: 'Naročilnice', count: orders.length },
+  ];
+
+  return (
+    <div>
+      <div className="bg-gray-600/80 px-6 py-3 flex items-center justify-between">
+        <h2 className="text-white font-bold text-xl">Dokumenti</h2>
+        <span className="text-white/60 text-xs">Profil: {role === 'admin' ? 'Direktor' : 'Trgovina'}</span>
+      </div>
+      <div className="flex gap-1 px-6 mt-3">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setDocTab(t.id)}
+            className={`px-5 py-2 text-sm font-medium border border-gray-400 transition-colors ${
+              docTab === t.id ? 'bg-green-400 text-gray-900 font-bold' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+            }`}>
+            {t.label} <span className="ml-1 text-xs opacity-70">({t.count})</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="px-6 py-4">
+        {/* FAKTURE */}
+        {docTab === 'fakture' && (
+          <table className="w-full border-collapse bg-white">
+            <thead><tr className="bg-gray-200">
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Št. računa</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kupec</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Davčna št.</th>
+              <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Znesek</th>
+              <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Blagajna</th>
+            </tr></thead>
+            <tbody>
+              {invoices.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-4 text-gray-500">Ni izdanih faktur</td></tr>
+              ) : invoices.map((inv: any, i: number) => {
+                const invData = inv.invoice_data || {};
+                return (
+                  <tr key={inv.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="border border-gray-300 px-3 py-2 text-sm font-mono font-bold">{inv.receipt_number}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{new Date(inv.created_at).toLocaleString('sl-SI')}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{invData.name || invData.company || '-'}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{invData.taxNumber || '-'}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{Number(inv.total).toFixed(2)} €</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">{inv.register_id > 100 ? `🛒 A${inv.register_id - 100}` : inv.register_id}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {/* DOBROPISI / VRAČILA */}
+        {docTab === 'dobropisi' && (
+          <table className="w-full border-collapse bg-white">
+            <thead><tr className="bg-gray-200">
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Št. računa</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajnik</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Razlog</th>
+              <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Znesek</th>
+              <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Blagajna</th>
+            </tr></thead>
+            <tbody>
+              {returns.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-4 text-gray-500">Ni dobropisov ali vračil</td></tr>
+              ) : returns.map((ret: any, i: number) => (
+                <tr key={ret.id} className={`${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} text-red-700`}>
+                  <td className="border border-gray-300 px-3 py-2 text-sm font-mono font-bold">{ret.receipt_number}</td>
+                  <td className="border border-gray-300 px-3 py-2 text-sm">{new Date(ret.created_at).toLocaleString('sl-SI')}</td>
+                  <td className="border border-gray-300 px-3 py-2 text-sm">{ret.cashier_name}</td>
+                  <td className="border border-gray-300 px-3 py-2 text-sm">{ret.void_reason || 'Storno'}</td>
+                  <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">-{Number(ret.total).toFixed(2)} €</td>
+                  <td className="border border-gray-300 px-3 py-2 text-sm text-center">{ret.register_id > 100 ? `🛒 A${ret.register_id - 100}` : ret.register_id}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {/* PREVZEMNI LISTI */}
+        {docTab === 'prevzemi' && (
+          <table className="w-full border-collapse bg-white">
+            <thead><tr className="bg-gray-200">
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Št.</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Dobavitelj</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Od profila</th>
+              <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Št. artiklov</th>
+              <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Prevzeto</th>
+            </tr></thead>
+            <tbody>
+              {(() => {
+                const confirmed = orders.filter(o => o.received_confirmed);
+                return confirmed.length === 0 ? (
+                  <tr><td colSpan={6} className="text-center py-4 text-gray-500">Ni prevzemnih listov</td></tr>
+                ) : confirmed.map((o: any, i: number) => {
+                  const items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []);
+                  return (
+                    <tr key={o.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                      <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{i + 1}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm font-bold">{o.supplier}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{o.date}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{o.from_profile || '-'}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm text-right">{items.length}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                        <span className="px-2 py-0.5 bg-green-500 text-white rounded text-xs font-bold">✓ Prevzeto</span>
+                      </td>
+                    </tr>
+                  );
+                });
+              })()}
+            </tbody>
+          </table>
+        )}
+
+        {/* NAROČILNICE */}
+        {docTab === 'narocilnice' && (
+          <table className="w-full border-collapse bg-white">
+            <thead><tr className="bg-gray-200">
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Št.</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Dobavitelj</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Status</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Od → Za</th>
+              <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Št. artiklov</th>
+              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Opomba</th>
+            </tr></thead>
+            <tbody>
+              {orders.length === 0 ? (
+                <tr><td colSpan={7} className="text-center py-4 text-gray-500">Ni naročilnic</td></tr>
+              ) : orders.map((o: any, i: number) => {
+                const items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []);
+                const statusColor = o.status === 'Poslano' ? 'bg-blue-500' : o.status === 'Dostavljeno' ? 'bg-green-500' : 'bg-gray-400';
+                return (
+                  <tr key={o.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{i + 1}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm font-bold">{o.supplier}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{o.date}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      <span className={`px-2 py-0.5 ${statusColor} text-white rounded text-xs font-bold`}>{o.status}</span>
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{o.from_profile || '-'} → {o.to_profile || '-'}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-right">{items.length}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-gray-500 truncate max-w-[150px]">{o.note || '-'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
