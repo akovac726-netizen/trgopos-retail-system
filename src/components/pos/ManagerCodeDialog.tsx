@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ManagerCodeDialogProps {
   onSuccess: () => void;
@@ -10,20 +11,10 @@ interface ManagerCodeDialogProps {
 
 const UNIVERSAL_CODE = "80175";
 
-const isValidAuthCode = (code: string): boolean => {
-  try {
-    const stored = localStorage.getItem('trgopos_auth_code');
-    if (!stored) return false;
-    const { code: savedCode, expiry } = JSON.parse(stored);
-    return code === savedCode && Date.now() < expiry;
-  } catch {
-    return false;
-  }
-};
-
 const ManagerCodeDialog = ({ onSuccess, onClose, title = "Koda poslovodje" }: ManagerCodeDialogProps) => {
   const [code, setCode] = useState("");
   const [error, setError] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   const handleKeyPress = (key: string) => {
     if (code.length < 5) {
@@ -37,8 +28,26 @@ const ManagerCodeDialog = ({ onSuccess, onClose, title = "Koda poslovodje" }: Ma
     setError(false);
   };
 
-  const handleConfirm = () => {
-    if (code === UNIVERSAL_CODE || isValidAuthCode(code)) {
+  const handleConfirm = async () => {
+    if (code === UNIVERSAL_CODE) {
+      toast.success("Koda poslovodje potrjena");
+      onSuccess();
+      onClose();
+      return;
+    }
+
+    setChecking(true);
+    // Check database for valid generated code
+    const { data } = await supabase
+      .from('auth_codes')
+      .select('code, expires_at')
+      .eq('code', code)
+      .gt('expires_at', new Date().toISOString())
+      .limit(1);
+
+    setChecking(false);
+
+    if (data && data.length > 0) {
       toast.success("Koda poslovodje potrjena");
       onSuccess();
       onClose();
@@ -88,10 +97,10 @@ const ManagerCodeDialog = ({ onSuccess, onClose, title = "Koda poslovodje" }: Ma
             </button>
             <button
               onClick={handleConfirm}
-              disabled={code.length !== 5}
+              disabled={code.length !== 5 || checking}
               className="h-12 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors disabled:opacity-50"
             >
-              Potrdi
+              {checking ? '...' : 'Potrdi'}
             </button>
           </div>
         </div>

@@ -184,7 +184,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     const interval = setInterval(() => {
       const remaining = Math.max(0, Math.floor((authCodeExpiry - Date.now()) / 1000));
       setAuthCountdown(remaining);
-      if (remaining <= 0) { setAuthCode(null); setAuthCodeExpiry(0); localStorage.removeItem('trgopos_auth_code'); }
+      if (remaining <= 0) { setAuthCode(null); setAuthCodeExpiry(0); }
     }, 1000);
     return () => clearInterval(interval);
   }, [authCodeExpiry]);
@@ -312,15 +312,23 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
   const promoTypeLabel = (t: PromoType) => t === 'akcijska_cena' ? 'Akcijska cena' : t === 'popust_percent' ? '% Popust' : 'Količinska akcija';
 
-  const generateAuthCode = () => {
+  const generateAuthCode = async () => {
     const code = Math.floor(10000 + Math.random() * 90000).toString();
+    const expiresAt = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+    
+    // Delete old codes first, then insert new one
+    await supabase.from('auth_codes').delete().lt('expires_at', new Date().toISOString());
+    const { error } = await supabase.from('auth_codes').insert({ code, expires_at: expiresAt });
+    
+    if (error) {
+      toast.error('Napaka pri shranjevanju kode');
+      return;
+    }
+    
     setAuthCode(code);
-    const expiry = Date.now() + 4 * 60 * 60 * 1000;
-    setAuthCodeExpiry(expiry);
+    setAuthCodeExpiry(Date.now() + 4 * 60 * 60 * 1000);
     setAuthCountdown(4 * 60 * 60);
-    // Store in localStorage so ManagerCodeDialog can validate
-    localStorage.setItem('trgopos_auth_code', JSON.stringify({ code, expiry }));
-    toast.success('Admin koda generirana – veljavna 4 ure');
+    toast.success('Admin koda generirana – veljavna 4 ure, sinhronizirana na vse naprave');
   };
   const formatCountdown = (s: number) => `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 
