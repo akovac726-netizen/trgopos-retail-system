@@ -1,29 +1,43 @@
 ================================================================
-STANDBUY BACKOFFICE - CELOTNA KODA ZA NOV PROJEKT
-================================================================
-Navodila: V novem Lovable projektu ustvarite spodnje datoteke.
-Povežite se na isto bazo z istim URL in ključem.
+ STANDBUY BACKOFFICE – LOČEN PROJEKT
+ Izvoz: 2026-03-08
 ================================================================
 
-====== .env ======
-VITE_SUPABASE_URL=https://rzcidhfpazukmfypdzqg.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y2lkaGZwYXp1a21meXBkenFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTQ0OTQsImV4cCI6MjA4NjkzMDQ5NH0.1L-EDw8z0fFJl9hD5kmlR_NCdiOnjH_6_caQLMonj_A
+OPIS:
+BackOffice je upravljalski modul za vodjo/direktorja trgovine.
+Moduli: Artikli, Naročila, Dokumenti, Nalepke, Urnik, 
+Zaključevanje, Inventura, Finančna poročila, Partnerji,
+Boni in kartice, Avtorizacija, TrgoBackEnd (Zaposleni, Dopusti).
 
-====== src/integrations/supabase/client.ts ======
-import { createClient } from '@supabase/supabase-js';
+POVEZAVA NA BAZO:
+Ta projekt se poveže na ISTO Lovable Cloud bazo kot TrgoPOS.
+V .env novega projekta vnesi:
+  VITE_SUPABASE_URL=https://rzcidhfpazukmfypdzqg.supabase.co
+  VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...1L-EDw8z0fFJl9hD5kmlR_NCdiOnjH_6_caQLMonj_A
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+================================================================
+DATOTEKE ZA NOV PROJEKT:
+================================================================
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  }
-});
+1. src/components/backoffice/BackOfficeDashboard.tsx  (2222 vrstic)
+   → Celotna BackOffice logika, vsi moduli
 
-====== src/pages/Index.tsx ======
+2. src/components/backoffice/BoniKarticeModule.tsx     (583 vrstic)
+   → Modul Boni in kartice (darilne kartice, boni, imetniki)
+
+3. src/pages/Index.tsx
+   → Spodaj je login + prikaz BackOfficeDashboard
+
+4. src/integrations/supabase/client.ts
+   → Supabase klient
+
+POTREBNI PAKETI:
+  @supabase/supabase-js, sonner, lucide-react, react-router-dom
+
+================================================================
+DATOTEKA: src/pages/Index.tsx (login za BackOffice)
+================================================================
+
 import { useState } from "react";
 import { toast } from "sonner";
 import BackOfficeDashboard from "@/components/backoffice/BackOfficeDashboard";
@@ -70,9 +84,7 @@ const Index = () => {
             placeholder="Geslo:" className="w-full h-11 px-4 bg-gray-400/80 text-gray-900 font-medium placeholder:text-gray-600 focus:outline-none text-sm border rounded border-gray-500" />
         </div>
         <div className="flex justify-center mb-6">
-          <button onClick={handleLogin} className="px-10 py-3 bg-sky-500 hover:bg-sky-600 text-white font-bold text-lg rounded-lg transition-colors shadow-lg">
-            PRIJAVA
-          </button>
+          <button onClick={handleLogin} className="px-10 py-3 bg-sky-500 hover:bg-sky-600 text-white font-bold text-lg rounded-lg transition-colors shadow-lg">PRIJAVA</button>
         </div>
         <div className="text-center mb-6">
           <h3 className="text-4xl font-black tracking-wide">
@@ -82,36 +94,22 @@ const Index = () => {
         </div>
         <div className="flex justify-center gap-4">
           <button onClick={() => { setUsername('StandBuyAdmin'); setPassword(''); }}
-            className="px-8 py-2 bg-transparent border-2 border-gray-400 text-gray-200 rounded-full font-medium text-sm hover:bg-gray-600/50 transition-colors">
-            Direktor
-          </button>
+            className="px-8 py-2 bg-transparent border-2 border-gray-400 text-gray-200 rounded-full font-medium text-sm hover:bg-gray-600/50">Direktor</button>
           <button onClick={() => { setUsername('StandBuy.si'); setPassword(''); }}
-            className="px-8 py-2 bg-transparent border-2 border-gray-400 text-gray-200 rounded-full font-medium text-sm hover:bg-gray-600/50 transition-colors">
-            Poslovalnica
-          </button>
+            className="px-8 py-2 bg-transparent border-2 border-gray-400 text-gray-200 rounded-full font-medium text-sm hover:bg-gray-600/50">Poslovalnica</button>
         </div>
       </div>
-      <p className="absolute bottom-3 left-0 right-0 text-center text-xs text-gray-500">
-        TrgoPOS © 2026 StandBuy s. p., vse pravice pridržane
-      </p>
+      <p className="absolute bottom-3 left-0 right-0 text-center text-xs text-gray-500">TrgoPOS © 2026 StandBuy s. p.</p>
     </div>
   );
 };
 
 export default Index;
 
-====== OPOMBA ======
-Datoteki BackOfficeDashboard.tsx (2222 vrstic) in BoniKarticeModule.tsx (583 vrstic)
-sta preveliki za to datoteko. Kopirajte ju neposredno iz tega projekta:
-- src/components/backoffice/BackOfficeDashboard.tsx
-- src/components/backoffice/BoniKarticeModule.tsx
-
-Potrebni paketi (npm install):
-- @supabase/supabase-js
-- sonner
-- lucide-react
-- react-router-dom
-
 ================================================================
-KONEC IZVOZA
+OPOMBA:
+BackOfficeDashboard.tsx in BoniKarticeModule.tsx sta preveliki
+za to datoteko. Kopiraj ju iz Code Editor-ja v tem projektu:
+  src/components/backoffice/BackOfficeDashboard.tsx
+  src/components/backoffice/BoniKarticeModule.tsx
 ================================================================
