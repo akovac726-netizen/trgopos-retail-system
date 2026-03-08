@@ -1138,11 +1138,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                       <label className="text-xs font-medium block mb-1">Do</label>
                       <input type="time" value={newEnd} onChange={e => setNewEnd(e.target.value)} className="h-8 px-2 bg-white border border-gray-400 rounded text-sm" />
                     </div>
-                    <button onClick={() => {
-                      if (!newEmployee) { toast.error('Izberite zaposlenega'); return; }
-                      setSchedules(prev => [...prev, { id: Date.now().toString(), employee: newEmployee, day: newDay, start: newStart, end: newEnd }]);
-                      toast.success('Dodano');
-                    }} className="h-8 px-4 bg-green-600 text-white font-bold rounded text-sm">Dodaj</button>
+                    <button onClick={handleAddSchedule} className="h-8 px-4 bg-green-600 text-white font-bold rounded text-sm">Dodaj</button>
                   </div>
                   <table className="w-full border-collapse bg-white">
                     <thead><tr className="bg-gray-200">
