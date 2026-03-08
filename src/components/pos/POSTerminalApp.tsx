@@ -438,6 +438,91 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
             <p className="text-white/40 text-sm mt-2">Plačilo preklicano</p>
           </div>
         )}
+
+        {/* ─── GIFT CARD PIN ENTRY ─── */}
+        {screen === 'gift-pin-entry' && currentRequest && (
+          <div className="w-full max-w-xs animate-fade-in">
+            <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-5 mb-4 text-center">
+              <CreditCard className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+              <p className="text-white/50 text-xs mb-1">DARILNA KARTICA</p>
+              <p className="text-white text-lg font-bold">Potrditev PIN kode</p>
+              <p className="text-white/40 text-xs mt-1">Kartica: {(currentRequest as any).metadata?.card_code || '—'}</p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
+              <p className="text-white/50 text-xs text-center mb-3 flex items-center justify-center gap-1.5">
+                <Lock className="w-3.5 h-3.5" /> VNESITE PIN KODO
+              </p>
+              <div className="flex justify-center gap-3 mb-1">
+                {[0, 1, 2, 3].map(i => (
+                  <div key={i} className={`w-4 h-4 rounded-full border-2 transition-all ${
+                    i < giftPinValue.length ? 'bg-amber-400 border-amber-400' : 'border-white/30'
+                  }`} />
+                ))}
+              </div>
+              {giftPinError && (
+                <p className="text-red-400 text-xs text-center mt-2">
+                  Napačna PIN koda ({3 - giftPinAttempts} {3 - giftPinAttempts === 1 ? 'poskus' : 'poskusi'} preostali)
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 mb-4">
+              {numKeys.map((row, ri) => (
+                <div key={ri} className="flex gap-2 justify-center">
+                  {row.map(key => (
+                    <button key={key} onClick={() => handleGiftPinKey(key)}
+                      className="w-16 h-14 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-xl font-bold text-2xl text-white transition-colors">
+                      {key}
+                    </button>
+                  ))}
+                </div>
+              ))}
+              <div className="flex gap-2 justify-center">
+                <button onClick={handleGiftPinCancel}
+                  className="w-16 h-14 bg-red-600/60 hover:bg-red-600 rounded-xl font-bold text-xs text-white transition-colors flex items-center justify-center">
+                  <XCircle className="w-5 h-5" />
+                </button>
+                <button onClick={() => handleGiftPinKey('0')}
+                  className="w-16 h-14 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-xl font-bold text-2xl text-white transition-colors">
+                  0
+                </button>
+                <button onClick={handleGiftPinDelete}
+                  className="w-16 h-14 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-white transition-colors flex items-center justify-center">
+                  <Delete className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <button onClick={handleGiftPinConfirm}
+              disabled={giftPinValue.length < 1}
+              className="w-full h-14 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl font-bold text-lg transition-colors disabled:opacity-30">
+              POTRDI PIN
+            </button>
+          </div>
+        )}
+
+        {/* ─── GIFT PIN APPROVED ─── */}
+        {screen === 'gift-pin-approved' && (
+          <div className="text-center animate-fade-in">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-green-500/20 border-2 border-green-500/40 flex items-center justify-center">
+              <CheckCircle2 className="w-12 h-12 text-green-400" />
+            </div>
+            <p className="text-green-400 text-2xl font-bold">PIN POTRJEN</p>
+            <p className="text-white/40 text-sm mt-2">Dostop do točk odobren</p>
+          </div>
+        )}
+
+        {/* ─── GIFT PIN DECLINED ─── */}
+        {screen === 'gift-pin-declined' && (
+          <div className="text-center animate-fade-in">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-red-500/20 border-2 border-red-500/40 flex items-center justify-center">
+              <XCircle className="w-12 h-12 text-red-400" />
+            </div>
+            <p className="text-red-400 text-2xl font-bold">PIN ZAVRNJEN</p>
+            <p className="text-white/40 text-sm mt-2">Preveč napačnih poskusov</p>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
