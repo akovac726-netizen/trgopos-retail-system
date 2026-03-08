@@ -254,10 +254,16 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     else setOrderItems(prev => [...prev, { productId: p.id, ean: p.ean, name: p.name, quantity: 1 }]);
     toast.success(`${p.name} dodan`);
   };
-  const handleSaveOrder = () => {
+  const handleSaveOrder = async () => {
     if (!orderSupplier || orderItems.length === 0) { toast.error('Vnesite dobavitelja in artikle'); return; }
-    const o: SavedOrder = { id: Date.now().toString(), supplier: orderSupplier, date: orderDate, items: [...orderItems], status: 'Poslano', fromProfile: role === 'shop' ? 'Trgovina' : 'Direktor', toProfile: role === 'shop' ? 'Direktor' : 'Trgovina' };
-    setSavedOrders(prev => [o, ...prev]); setOrderItems([]); setOrderSupplier(""); setOrderNote(""); setOrderSubTab('list');
+    const orderData = {
+      supplier: orderSupplier, date: orderDate, items: JSON.stringify(orderItems),
+      status: 'Poslano', from_profile: role === 'shop' ? 'Trgovina' : 'Direktor',
+      to_profile: role === 'shop' ? 'Direktor' : 'Trgovina', note: orderNote,
+    };
+    const { error } = await supabase.from('orders').insert(orderData as any);
+    if (error) { toast.error('Napaka pri shranjevanju'); return; }
+    setOrderItems([]); setOrderSupplier(""); setOrderNote(""); setOrderSubTab('list');
     toast.success('Naročilnica poslana');
   };
 
@@ -267,19 +273,65 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     } else toast.error('Napačni podatki');
   };
 
-  const handleSaveEmployee = () => {
+  const handleSaveEmployee = async () => {
     if (!editingEmployee || !editingEmployee.firstName || !editingEmployee.lastName) { toast.error('Ime in priimek sta obvezna'); return; }
-    const exists = employees.find(e => e.id === editingEmployee.id);
-    if (exists) { setEmployees(prev => prev.map(e => e.id === editingEmployee.id ? editingEmployee : e)); toast.success('Posodobljeno'); }
-    else { setEmployees(prev => [...prev, editingEmployee]); toast.success('Dodano'); }
+    const dbData = {
+      first_name: editingEmployee.firstName, last_name: editingEmployee.lastName, code: editingEmployee.code,
+      birth_date: editingEmployee.birthDate, birth_place: editingEmployee.birthPlace, position: editingEmployee.position,
+      hire_date: editingEmployee.hireDate, username: editingEmployee.username, password: editingEmployee.password,
+      address: editingEmployee.address, postal_code: editingEmployee.postalCode, city: editingEmployee.city,
+      country: editingEmployee.country, phone: editingEmployee.phone, email: editingEmployee.email,
+      emso: editingEmployee.emso, tax_number: editingEmployee.taxNumber, iban: editingEmployee.iban,
+    };
+    const existsInDb = employees.find(e => e.id === editingEmployee.id);
+    if (existsInDb) {
+      const { error } = await supabase.from('employees').update(dbData as any).eq('id', editingEmployee.id as any);
+      if (error) { toast.error('Napaka'); return; }
+      toast.success('Posodobljeno');
+    } else {
+      const { error } = await supabase.from('employees').insert(dbData as any);
+      if (error) { toast.error('Napaka'); return; }
+      toast.success('Dodano');
+    }
     setEditingEmployee(null); setShowEmployeeForm(false);
   };
 
-  const handleCreateLeave = () => {
+  const handleDeleteEmployee = async (emp: Employee) => {
+    if (!confirm(`Izbrišete ${emp.firstName} ${emp.lastName}?`)) return;
+    await supabase.from('employees').delete().eq('id', emp.id as any);
+    toast.success('Izbrisano');
+  };
+
+  const handleCreateLeave = async () => {
     if (!leaveEmployee || !leaveStart || !leaveEnd) { toast.error('Izpolnite vsa polja'); return; }
-    setLeaveRequests(prev => [...prev, { id: Date.now().toString(), employeeName: leaveEmployee, type: leaveType, startDate: leaveStart, endDate: leaveEnd, approver: leaveApprover, description: leaveDesc, status: 'pending' }]);
+    const leaveData = {
+      employee_name: leaveEmployee, type: leaveType, start_date: leaveStart,
+      end_date: leaveEnd, approver: leaveApprover, description: leaveDesc, status: 'pending',
+    };
+    const { error } = await supabase.from('leave_requests').insert(leaveData as any);
+    if (error) { toast.error('Napaka'); return; }
     setShowLeaveForm(false); setLeaveEmployee(""); setLeaveStart(""); setLeaveEnd(""); setLeaveDesc("");
     toast.success('Zahtevek ustvarjen');
+  };
+
+  const handleDeleteLeave = async (lr: LeaveRequest) => {
+    if (!confirm('Izbrišete zahtevek?')) return;
+    await supabase.from('leave_requests').delete().eq('id', lr.id as any);
+    toast.success('Izbrisano');
+  };
+
+  const handleAddSchedule = async () => {
+    if (!newEmployee) { toast.error('Izberite zaposlenega'); return; }
+    const { error } = await supabase.from('schedules').insert({
+      employee: newEmployee, day: newDay, start_time: newStart, end_time: newEnd,
+    } as any);
+    if (error) { toast.error('Napaka'); return; }
+    toast.success('Dodano');
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    await supabase.from('schedules').delete().eq('id', id as any);
+    toast.success('Izbrisano');
   };
 
   const handleOpenBusiness = async () => {
