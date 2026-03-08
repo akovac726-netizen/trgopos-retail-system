@@ -14,7 +14,7 @@ interface POSTerminalAppProps {
   onBack: () => void;
 }
 
-type TerminalScreen = 'select-register' | 'idle' | 'card-detected' | 'pin-entry' | 'processing' | 'approved' | 'declined';
+type TerminalScreen = 'select-register' | 'idle' | 'card-detected' | 'pin-entry' | 'processing' | 'approved' | 'declined' | 'gift-pin-entry' | 'gift-pin-approved' | 'gift-pin-declined';
 
 const PIN_THRESHOLD = 50; // EUR – above this amount, PIN is required
 
