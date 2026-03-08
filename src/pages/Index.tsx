@@ -151,7 +151,18 @@ const Index = () => {
 
   const lastAddedItem = cartItems.length > 0 ? cartItems[cartItems.length - 1] : null;
 
-  const handleLogin = (cashier: Cashier) => { setCurrentCashier(cashier); setAppMode('pos'); setScreen('main'); };
+  const handleLogin = async (cashier: Cashier) => {
+    // Check if this register is locked for the day
+    const today = new Date().toISOString().split('T')[0];
+    const { data: lockCheck } = await supabase.from('register_closings').select('id')
+      .eq('register_id', registerId as any).eq('date', today as any).eq('type', 'Zaključek blagajne' as any).limit(1);
+    if (lockCheck && lockCheck.length > 0) {
+      setRegisterLocked(true);
+      toast.error(`Blagajna ${registerId} je že zaključena za danes. Uporabite drugo napravo.`);
+      return;
+    }
+    setCurrentCashier(cashier); setAppMode('pos'); setScreen('main');
+  };
   const handleBackOfficeLogin = (role: 'admin' | 'shop') => { setBackofficeRole(role); setAppMode('backoffice'); };
   const handleLogout = () => {
     setCurrentCashier(null); setCartItems([]); setSelectedItemIndex(null); setInputValue("");
@@ -333,6 +344,7 @@ const Index = () => {
       receipt_number: receiptNumber, items: cartItems as any, subtotal, discount: totalDiscount, total,
       payment_method: paymentMethod, amount_paid: amountPaid, change_amount: change,
       cashier_id: currentCashier?.id || '', cashier_name: currentCashier?.name || '', invoice_data: pendingInvoiceData as any,
+      register_id: registerId,
     } as any);
     return transaction;
   };
@@ -385,24 +397,40 @@ const Index = () => {
   };
 
   const handleEndShift = async (report: ClosingReport) => {
+    // Izkupiček - save to DB but do NOT logout
     await supabase.from('closing_reports').insert({
       type: report.type, cashier_name: report.cashier, cashier_id: report.cashierId,
       total: report.total, cash: report.cash, card: report.card, other: report.other,
       transaction_count: report.transactionCount, item_count: report.itemCount,
     } as any);
+    // Also save to register_closings for BackOffice visibility
+    await supabase.from('register_closings').insert({
+      register_id: registerId, type: 'Izkupiček', cashier_name: report.cashier, cashier_id: report.cashierId,
+      total: report.total, cash: report.cash, card: report.card, other: report.other,
+      transaction_count: report.transactionCount, item_count: report.itemCount,
+    } as any);
     setClosingHistory(prev => [report, ...prev]);
-    toast.success('Izmena zaključena');
-    handleLogout();
+    toast.success('Izkupiček natisnjen – blagajna ostane aktivna');
+    setPosTab('blagajna');
+    // NO logout - cashier stays logged in
   };
 
   const handleEndDay = async (report: ClosingReport) => {
+    // Zaključek blagajne - save, lock register, and logout
     await supabase.from('closing_reports').insert({
       type: report.type, cashier_name: report.cashier, cashier_id: report.cashierId,
       total: report.total, cash: report.cash, card: report.card, other: report.other,
       transaction_count: report.transactionCount, item_count: report.itemCount,
     } as any);
+    // Save to register_closings - this also locks the register for today
+    await supabase.from('register_closings').insert({
+      register_id: registerId, type: 'Zaključek blagajne', cashier_name: report.cashier, cashier_id: report.cashierId,
+      total: report.total, cash: report.cash, card: report.card, other: report.other,
+      transaction_count: report.transactionCount, item_count: report.itemCount,
+    } as any);
     setClosingHistory(prev => [report, ...prev]);
-    toast.success('Blagajna zaključena');
+    setRegisterLocked(true);
+    toast.success(`Blagajna ${registerId} zaključena za danes`);
     handleLogout();
   };
 
