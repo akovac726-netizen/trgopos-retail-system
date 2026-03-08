@@ -157,10 +157,20 @@ const Index = () => {
     };
     fetchEmployees();
 
+    // Check self-checkout config for this register
+    const checkSelfCheckout = async () => {
+      if (registerId > 0) {
+        const { data } = await supabase.from('self_checkout_config').select('*').eq('register_id', registerId).eq('enabled', true).maybeSingle();
+        setIsSelfCheckout(!!data);
+      }
+    };
+    checkSelfCheckout();
+
     const channel = supabase.channel('pos-data')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => fetchTransactions())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => fetchEmployees())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'self_checkout_config' }, () => checkSelfCheckout())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
