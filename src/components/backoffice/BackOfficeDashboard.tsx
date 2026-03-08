@@ -37,6 +37,14 @@ interface BackOfficeDashboardProps {
 }
 
 type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'avtorizacija';
+type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti';
+type PromoType = 'akcijska_cena' | 'popust_percent' | 'kolicinska';
+interface Promotion {
+  id: string; type: PromoType; product_ean: string; product_name: string;
+  start_date: string; end_date: string; promo_price: number | null;
+  discount_percent: number | null; qty_required: number | null; qty_free: number | null;
+  active: boolean;
+}
 
 const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], role }: BackOfficeDashboardProps) => {
   const [activeTab, setActiveTab] = useState<Tab>('poslovanje');
