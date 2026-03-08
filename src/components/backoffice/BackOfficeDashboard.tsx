@@ -153,6 +153,8 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [promoDiscountPercent, setPromoDiscountPercent] = useState("");
   const [promoQtyRequired, setPromoQtyRequired] = useState("");
   const [promoQtyFree, setPromoQtyFree] = useState("");
+  const [nalepkeSubTab, setNalepkeSubTab] = useState<'cenovke' | 'akcijske'>('cenovke');
+  const [selectedForPromoLabel, setSelectedForPromoLabel] = useState<string[]>([]);
 
   const closingReports = externalReports;
   const categories = ['Higiena', 'Osebna nega', 'Pijače', 'Žvečilni gumi', 'Pisarniški material', 'Kartice', 'Ostalo'];
