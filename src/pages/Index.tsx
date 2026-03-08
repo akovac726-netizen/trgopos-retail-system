@@ -468,26 +468,36 @@ const Index = () => {
       .subscribe();
   };
 
-  const handleBonPayment = async (code: string, amount: number) => {
-    const { data: voucher } = await supabase.from('gift_vouchers').select('*').eq('code', code).single();
-    if (!voucher) { toast.error('Bon ni najden'); return; }
-    if (voucher.is_used || voucher.remaining_amount <= 0) { toast.error('Bon je že porabljen'); return; }
-    const bonAmount = Number(voucher.amount);
-    if (total < bonAmount) { toast.error(`Znesek računa (${total.toFixed(2)} €) mora biti večji ali enak vrednosti bona (${bonAmount.toFixed(2)} €)`); return; }
-    // Bon se porabi v celoti - ni delne porabe
-    await supabase.from('gift_vouchers').update({
-      remaining_amount: 0, is_used: true,
-      used_by: currentCashier?.id, used_at: new Date().toISOString(),
-    }).eq('id', voucher.id);
-    // Razliko plača stranka z drugim plačilnim sredstvom
-    const remainingToPay = total - bonAmount;
+  const handleBonPayment = async (codes: string[]) => {
+    if (total < 10) { toast.error('Bon se lahko uporabi samo pri znesku nad 10,00 €'); return; }
+    
+    // Validate all vouchers first
+    const vouchers: any[] = [];
+    for (const code of codes) {
+      const { data: voucher } = await supabase.from('gift_vouchers').select('*').eq('code', code).single();
+      if (!voucher) { toast.error(`Bon ${code} ni najden`); return; }
+      if (voucher.is_used || voucher.remaining_amount <= 0) { toast.error(`Bon ${code} je že porabljen`); return; }
+      vouchers.push(voucher);
+    }
+    
+    const bonTotal = vouchers.length * 10; // Each voucher = 10€
+    
+    // Mark all vouchers as used (full consumption, no partial)
+    for (const voucher of vouchers) {
+      await supabase.from('gift_vouchers').update({
+        remaining_amount: 0, is_used: true,
+        used_by: currentCashier?.id, used_at: new Date().toISOString(),
+      }).eq('id', voucher.id);
+    }
+    
+    const remainingToPay = total - bonTotal;
     if (remainingToPay > 0) {
-      toast.info(`Bon unovčen (${bonAmount.toFixed(2)} €). Preostali znesek: ${remainingToPay.toFixed(2)} € plačajte z drugim sredstvom.`);
+      toast.info(`${vouchers.length}x bon unovčen (${bonTotal.toFixed(2)} €). Preostali znesek: ${remainingToPay.toFixed(2)} € plačajte z drugim sredstvom.`);
     }
     const transaction = await createTransaction('darilni bon', total, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
     await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
-    toast.success('Plačilo z bonom uspešno');
+    toast.success(`Plačilo z ${vouchers.length} bonom/i uspešno`);
   };
 
   const handleGiftCardPayment = async (code: string) => {

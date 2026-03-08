@@ -14,7 +14,7 @@ interface PaymentTabProps {
   onCardPayment: () => void;
   onInvoice: () => void;
   onBack: () => void;
-  onBonPayment?: (code: string, amount: number) => void;
+  onBonPayment?: (codes: string[]) => void;
   onGiftCardPayment?: (code: string) => void;
   onGiftCardPointsRedeem?: (cardId: string, pointsUsed: number, discountAmount: number) => void;
   onGiftCardBalancePayment?: (cardId: string, amount: number) => void;
@@ -28,6 +28,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
   const [inputValue, setInputValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [bonCode, setBonCode] = useState("");
+  const [addedBonCodes, setAddedBonCodes] = useState<string[]>([]);
   const [giftCardCode, setGiftCardCode] = useState("");
   const [giftCardPin, setGiftCardPin] = useState("");
   const [giftCardPinStep, setGiftCardPinStep] = useState(false);
@@ -84,7 +85,13 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
         else if (e.key === 'Enter') {
           e.preventDefault();
           const hasVoucherInCart = cartItems.some(i => i.name.toLowerCase().includes('bon') || i.name.toLowerCase().includes('darilni'));
-          if (!hasVoucherInCart && bonCode.length >= 4 && onBonPayment) onBonPayment(bonCode, total);
+          if (!hasVoucherInCart && bonCode.length >= 4) {
+            // Add bon to list
+            if (!addedBonCodes.includes(bonCode)) {
+              setAddedBonCodes(prev => [...prev, bonCode]);
+              setBonCode("");
+            }
+          }
         }
         else if (e.key === 'Escape') { e.preventDefault(); setStep('select'); }
         return;
@@ -136,7 +143,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [keyboardEnabled, step, cardWaiting, inputValue, confirmed, bonCode, giftCardCode, total, cartItems, onCashPayment, onCardPayment, onBack, onBonPayment, onGiftCardPayment]);
+  }, [keyboardEnabled, step, cardWaiting, inputValue, confirmed, bonCode, addedBonCodes, giftCardCode, total, cartItems, onCashPayment, onCardPayment, onBack, onBonPayment, onGiftCardPayment]);
 
   const numKeys = [
     ['7', '8', '9'],
@@ -259,6 +266,8 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
   // Bon payment
   if (step === 'bon') {
     const hasVoucherInCart = cartItems.some(i => i.name.toLowerCase().includes('bon') || i.name.toLowerCase().includes('darilni'));
+    const bonDiscount = addedBonCodes.length * 10;
+    const remainingAfterBons = total - bonDiscount;
 
     return (
       <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: bg }}>
@@ -266,9 +275,30 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
           <div className="font-bold text-lg">Plačilo z darilnim bonom</div>
           <div className="border-t border-dashed border-gray-400 pt-2" />
           <div>Skupaj za plačilo: <strong>{formatPrice(total)} €</strong></div>
+          {addedBonCodes.length > 0 && (
+            <>
+              <div className="border-t border-dashed border-gray-400 pt-2" />
+              <div className="font-bold text-sm text-purple-700">Dodani boni ({addedBonCodes.length}x 10,00 €):</div>
+              {addedBonCodes.map((c, i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <span className="font-mono text-xs">{c}</span>
+                  <button onClick={() => setAddedBonCodes(prev => prev.filter((_, idx) => idx !== i))}
+                    className="text-red-500 text-xs font-bold hover:underline">Odstrani</button>
+                </div>
+              ))}
+              <div className="border-t border-dashed border-gray-400 pt-2" />
+              <div>Popust z boni: <strong className="text-green-700">-{formatPrice(bonDiscount)} €</strong></div>
+              <div>Preostalo za plačilo: <strong className="text-lg">{formatPrice(Math.max(0, remainingAfterBons))} €</strong></div>
+            </>
+          )}
           {hasVoucherInCart && (
             <div className="bg-red-100 border border-red-400 rounded p-3 text-red-700 font-bold text-sm mt-4">
               ⚠ Z bonom NI MOGOČE plačati nakupa novega bona!
+            </div>
+          )}
+          {total < 10 && (
+            <div className="bg-red-100 border border-red-400 rounded p-3 text-red-700 font-bold text-sm mt-4">
+              ⚠ Bon se lahko uporabi samo pri znesku nad 10,00 €!
             </div>
           )}
         </div>
@@ -301,17 +331,27 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
             </div>
 
             <div className="flex flex-col gap-3 w-36">
-              <button onClick={() => setStep('select')}
-                className="h-16 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
+              <button onClick={() => { setStep('select'); setAddedBonCodes([]); setBonCode(""); }}
+                className="h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
                 ← Nazaj
               </button>
               <button onClick={() => {
-                if (hasVoucherInCart) return;
-                if (bonCode.length >= 4 && onBonPayment) onBonPayment(bonCode, total);
+                if (hasVoucherInCart || total < 10) return;
+                if (bonCode.length >= 4 && !addedBonCodes.includes(bonCode)) {
+                  setAddedBonCodes(prev => [...prev, bonCode]);
+                  setBonCode("");
+                }
               }}
-                disabled={bonCode.length < 4 || hasVoucherInCart}
+                disabled={bonCode.length < 4 || hasVoucherInCart || total < 10 || addedBonCodes.includes(bonCode)}
+                className="h-16 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center disabled:opacity-40 transition-colors p-2">
+                + Dodaj bon
+              </button>
+              <button onClick={() => {
+                if (addedBonCodes.length > 0 && onBonPayment) onBonPayment(addedBonCodes);
+              }}
+                disabled={addedBonCodes.length === 0 || hasVoucherInCart}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center disabled:opacity-40 transition-colors p-2">
-                Potrdi bon
+                Potrdi plačilo
               </button>
             </div>
           </div>
