@@ -799,6 +799,9 @@ const Index = () => {
       {showReturnManagerCode && (
         <ManagerCodeDialog title="ADMIN KODA za vračilo" onSuccess={() => { setShowReturnManagerCode(false); setShowReturnDialog(true); }} onClose={() => setShowReturnManagerCode(false)} />
       )}
+      {showTabAdminCode && (
+        <ManagerCodeDialog title={`ADMIN KODA za ${pendingTabChange === 'racuni' ? 'Račune' : 'Zaključek'}`} onSuccess={() => { setShowTabAdminCode(false); if (pendingTabChange) setPosTab(pendingTabChange); setPendingTabChange(null); }} onClose={() => { setShowTabAdminCode(false); setPendingTabChange(null); }} />
+      )}
       {showProductSearchDialog && (
         <ProductSearchDialog products={products} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
       )}
