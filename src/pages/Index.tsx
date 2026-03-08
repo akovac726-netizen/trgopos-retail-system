@@ -515,7 +515,7 @@ const Index = () => {
 
         {posTab === 'zakljucek' && currentCashier && (
           <ZakljucekTab cashier={currentCashier} cashiers={cashiers} transactions={transactions}
-            closingHistory={closingHistory} onEndShift={handleEndShift} onEndDay={handleEndDay} onOpenDrawer={handleOpenDrawer} />
+            closingHistory={closingHistory} registerId={registerId} onEndShift={handleEndShift} onEndDay={handleEndDay} onOpenDrawer={handleOpenDrawer} />
         )}
       </main>
 

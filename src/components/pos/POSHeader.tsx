@@ -6,13 +6,14 @@ export type POSTab = 'blagajna' | 'racuni' | 'zakljucek';
 interface POSHeaderProps {
   cashier: Cashier | null;
   activeTab: POSTab;
+  registerId: number;
   onTabChange: (tab: POSTab) => void;
   onLogout: () => void;
   onInfo: () => void;
   onSettings: () => void;
 }
 
-const POSHeader = ({ cashier, activeTab, onTabChange, onLogout, onInfo, onSettings }: POSHeaderProps) => {
+const POSHeader = ({ cashier, activeTab, registerId, onTabChange, onLogout, onInfo, onSettings }: POSHeaderProps) => {
   const tabs: { id: POSTab; label: string }[] = [
     { id: 'blagajna', label: 'Blagajna' },
     { id: 'racuni', label: 'Računi' },
@@ -22,7 +23,7 @@ const POSHeader = ({ cashier, activeTab, onTabChange, onLogout, onInfo, onSettin
   return (
     <header className="px-3 py-1.5 flex items-center justify-between" style={{ background: 'linear-gradient(180deg, #5bb8e8, #3a9fd8)' }}>
       <div className="bg-white/90 rounded px-3 py-1.5 text-sm font-medium text-gray-800">
-        Blagajna. št.: <strong>1</strong>, Blagajnik: <strong>{cashier?.name || 'ime in priimek'}</strong>
+        Blagajna št.: <strong>{registerId}</strong>, Blagajnik: <strong>{cashier?.name || 'ime in priimek'}</strong>
       </div>
 
       <div className="flex items-center gap-1">
