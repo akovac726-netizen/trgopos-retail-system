@@ -1041,7 +1041,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kategorija</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Zaloga</th>
-                        <th className="border border-gray-400 px-3 py-2 w-10"></th>
+                        {role === 'admin' && <th className="border border-gray-400 px-3 py-2 w-10"></th>}
                       </tr>
                     </thead>
                     <tbody>
