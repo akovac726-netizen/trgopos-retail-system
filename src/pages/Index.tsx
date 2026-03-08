@@ -185,7 +185,6 @@ const Index = () => {
         setIsSelfCheckout(false);
         setSelfCheckoutLabel('');
       }
-      }
     };
     checkSelfCheckout();
 
