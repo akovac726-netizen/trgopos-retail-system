@@ -55,7 +55,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
   // Payment method selection - matches Diapozitiv4-6
   if (step === 'select') {
     return (
-      <div className="h-full flex gap-3 p-3" style={{ background: bg }}>
+      <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: bg }}>
         {/* LEFT - Receipt list */}
         <div className="flex-[4] flex flex-col">
           <div className="flex items-center border-2 border-gray-600 bg-white rounded-t">
@@ -126,7 +126,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
   // Card terminal - matches Diapozitiv5-7 (blue overlay with POTRDI + PREKLIČI)
   if (step === 'card') {
     return (
-      <div className="h-full flex gap-3 p-3 relative" style={{ background: bg }}>
+      <div className="h-full flex gap-3 p-3 relative overflow-hidden" style={{ background: bg }}>
         <div className="absolute inset-0 bg-black/30 z-10" />
         <div className="absolute inset-0 z-20 flex items-center justify-center">
           <div className="bg-sky-200 border-2 border-gray-500 rounded-xl p-8 text-center min-w-[420px]">
@@ -156,7 +156,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
     const hasVoucherInCart = cartItems.some(i => i.name.toLowerCase().includes('bon') || i.name.toLowerCase().includes('darilni'));
 
     return (
-      <div className="h-full flex gap-3 p-3" style={{ background: bg }}>
+      <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: bg }}>
         <div className="flex-[4] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-2">
           <div className="font-bold text-lg">Plačilo z darilnim bonom</div>
           <div className="border-t border-dashed border-gray-400 pt-2" />
@@ -218,7 +218,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
   // Cash payment - matches Diapozitiv6-6
   const now = new Date();
   return (
-    <div className="h-full flex gap-3 p-3" style={{ background: bg }}>
+    <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: bg }}>
       {/* LEFT - Receipt summary */}
       <div className="flex-[3] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-2">
         <div className="flex justify-between">
