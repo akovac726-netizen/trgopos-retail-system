@@ -548,7 +548,7 @@ const Index = () => {
     }
     const transaction = await createTransaction('darilni bon', total, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
     toast.success(`Plačilo z ${vouchers.length} bonom/i uspešno`);
   };
 
