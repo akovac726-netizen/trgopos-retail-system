@@ -246,7 +246,71 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     // Realtime trigger - forces component awareness of closing_reports/transactions changes
   };
 
-  const generateAuthCode = () => {
+  const fetchPromotions = async () => {
+    const { data } = await supabase.from('promotions').select('*').order('start_date' as any);
+    if (data) setPromotions((data as any[]).map((p: any) => ({
+      id: p.id, type: p.type, product_ean: p.product_ean, product_name: p.product_name,
+      start_date: p.start_date, end_date: p.end_date, promo_price: p.promo_price,
+      discount_percent: p.discount_percent, qty_required: p.qty_required, qty_free: p.qty_free,
+      active: p.active,
+    })));
+  };
+
+  const resetPromoForm = () => {
+    setShowPromoForm(false); setEditingPromo(null); setPromoType('akcijska_cena');
+    setPromoEan(""); setPromoProductName(""); setPromoStartDate(new Date().toISOString().split('T')[0]);
+    setPromoEndDate(""); setPromoPrice(""); setPromoDiscountPercent(""); setPromoQtyRequired(""); setPromoQtyFree("");
+  };
+
+  const handlePromoEanLookup = (ean: string) => {
+    setPromoEan(ean);
+    const found = products.find(p => p.ean === ean);
+    if (found) setPromoProductName(found.name);
+    else setPromoProductName("");
+  };
+
+  const handleSavePromo = async () => {
+    if (!promoEan || !promoStartDate || !promoEndDate) { toast.error('Izpolnite vsa obvezna polja'); return; }
+    const productName = promoProductName || products.find(p => p.ean === promoEan)?.name || promoEan;
+    const d: any = {
+      type: promoType, product_ean: promoEan, product_name: productName,
+      start_date: promoStartDate, end_date: promoEndDate, active: true,
+      promo_price: promoType === 'akcijska_cena' ? parseFloat(promoPrice) || null : null,
+      discount_percent: promoType === 'popust_percent' ? parseFloat(promoDiscountPercent) || null : null,
+      qty_required: promoType === 'kolicinska' ? parseInt(promoQtyRequired) || null : null,
+      qty_free: promoType === 'kolicinska' ? parseInt(promoQtyFree) || null : null,
+    };
+    if (editingPromo) {
+      const { error } = await supabase.from('promotions').update(d).eq('id', editingPromo.id as any);
+      if (error) toast.error('Napaka'); else { toast.success('Akcija posodobljena'); resetPromoForm(); }
+    } else {
+      const { error } = await supabase.from('promotions').insert(d);
+      if (error) toast.error('Napaka'); else { toast.success('Akcija ustvarjena'); resetPromoForm(); }
+    }
+  };
+
+  const handleEditPromo = (p: Promotion) => {
+    setEditingPromo(p); setPromoType(p.type); setPromoEan(p.product_ean);
+    setPromoProductName(p.product_name); setPromoStartDate(p.start_date); setPromoEndDate(p.end_date);
+    setPromoPrice(p.promo_price?.toString() || ""); setPromoDiscountPercent(p.discount_percent?.toString() || "");
+    setPromoQtyRequired(p.qty_required?.toString() || ""); setPromoQtyFree(p.qty_free?.toString() || "");
+    setShowPromoForm(true);
+  };
+
+  const handleDeletePromo = async (p: Promotion) => {
+    if (!confirm(`Izbrišete akcijo za ${p.product_name}?`)) return;
+    await supabase.from('promotions').delete().eq('id', p.id as any);
+    toast.success('Akcija izbrisana');
+  };
+
+  const handleTogglePromo = async (p: Promotion) => {
+    await supabase.from('promotions').update({ active: !p.active } as any).eq('id', p.id as any);
+    toast.success(p.active ? 'Akcija deaktivirana' : 'Akcija aktivirana');
+  };
+
+  const promoTypeLabel = (t: PromoType) => t === 'akcijska_cena' ? 'Akcijska cena' : t === 'popust_percent' ? '% Popust' : 'Količinska akcija';
+
+
     const code = Math.floor(10000 + Math.random() * 90000).toString();
     setAuthCode(code);
     setAuthCodeExpiry(Date.now() + 4 * 60 * 60 * 1000);
