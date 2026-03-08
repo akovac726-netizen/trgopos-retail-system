@@ -252,6 +252,7 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
           <span className="text-xl">↵</span> POTRDI
         </button>
       </div>
+      )}
 
       {/* Footer */}
       <p className="relative z-10 text-center text-xs text-gray-500 py-3">
