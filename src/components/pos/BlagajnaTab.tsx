@@ -24,13 +24,14 @@ interface BlagajnaTabProps {
   onStorno: () => void;
   onGiftVoucher: () => void;
   onEmbalaza: () => void;
+  isSelfCheckout?: boolean;
 }
 
 const BlagajnaTab = ({
   cartItems, selectedItemIndex, inputValue, subtotal, total, totalDiscount, lastAddedItem,
   onSelectItem, onKeyPress, onDelete, onConfirm, onProceedToPayment,
   onOpenDrawer, onProductSearch, onPriceCheck, onQuantity, onDiscount, onReturn, onStorno,
-  onGiftVoucher, onEmbalaza,
+  onGiftVoucher, onEmbalaza, isSelfCheckout,
 }: BlagajnaTabProps) => {
   const listRef = useRef<HTMLDivElement>(null);
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -112,18 +113,18 @@ const BlagajnaTab = ({
           </div>
         </div>
 
-        {/* Top action row: ODPRI BL. PREDAL + Preveri ceno + DARILNI BONI + Zaključi račun */}
+        {/* Top action row */}
         <div className="flex gap-2">
-          <button onClick={onOpenDrawer}
-            className="flex-1 h-14 bg-blue-600 hover:bg-blue-700 text-white border-2 border-blue-700 rounded-lg font-bold text-sm transition-colors">
+          <button onClick={isSelfCheckout ? undefined : onOpenDrawer} disabled={isSelfCheckout}
+            className={`flex-1 h-14 rounded-lg font-bold text-sm transition-colors border-2 ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 border-gray-400/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-700'}`}>
             ODPRI<br/>BL. PREDAL
           </button>
-          <button onClick={onPriceCheck}
-            className="flex-1 h-14 bg-yellow-500 hover:bg-yellow-600 text-gray-900 border-2 border-yellow-600 rounded-lg font-bold text-sm transition-colors">
+          <button onClick={isSelfCheckout ? undefined : onPriceCheck} disabled={isSelfCheckout}
+            className={`flex-1 h-14 rounded-lg font-bold text-sm transition-colors border-2 ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 border-gray-400/50 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-gray-900 border-yellow-600'}`}>
             Preveri<br/>ceno
           </button>
-          <button onClick={onGiftVoucher}
-            className="flex-1 h-14 bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-700 rounded-lg font-bold text-sm transition-colors">
+          <button onClick={isSelfCheckout ? undefined : onGiftVoucher} disabled={isSelfCheckout}
+            className={`flex-1 h-14 rounded-lg font-bold text-sm transition-colors border-2 ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 border-gray-400/50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700 text-white border-purple-700'}`}>
             DARILNI<br/>BONI
           </button>
           <button onClick={onProceedToPayment} disabled={cartItems.length === 0}
@@ -144,8 +145,8 @@ const BlagajnaTab = ({
               className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
               Embalaža
             </button>
-            <button onClick={onReturn}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center">
+            <button onClick={isSelfCheckout ? undefined : onReturn} disabled={isSelfCheckout}
+              className={`flex-1 rounded-lg font-bold text-sm transition-colors flex items-center justify-center ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'}`}>
               Vračilo
             </button>
           </div>
@@ -184,8 +185,8 @@ const BlagajnaTab = ({
               className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
               Količina
             </button>
-            <button onClick={onDiscount}
-              className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
+            <button onClick={isSelfCheckout ? undefined : onDiscount} disabled={isSelfCheckout}
+              className={`flex-1 rounded-lg font-bold text-sm transition-colors flex items-center justify-center border-2 ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 border-gray-400/50 cursor-not-allowed' : 'bg-white border-gray-600 text-gray-800 hover:bg-gray-50'}`}>
               Popust
             </button>
             <button onClick={onStorno}

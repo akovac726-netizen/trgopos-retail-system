@@ -293,6 +293,13 @@ const Index = () => {
   const handleStorno = () => {
     if (selectedItemIndex === null) { toast.warning('Izberite artikel za storno'); return; }
     if (cartItems[selectedItemIndex]?.isStornoed) { toast.warning('Artikel je že storniran'); return; }
+    if (isSelfCheckout) {
+      // Self-checkout: ALL stornos require MASTER ADMIN code
+      setPendingStornoIndex(selectedItemIndex);
+      setManagerCodeTitle("MASTER ADMIN KODA za storno (samoplačniška)");
+      setShowManagerCodeDialog(true);
+      return;
+    }
     const lastActiveIndex = cartItems.length - 1 - [...cartItems].reverse().findIndex(item => !item.isStornoed);
     if (selectedItemIndex === lastActiveIndex) {
       handleStornoItem(selectedItemIndex);
@@ -708,6 +715,7 @@ const Index = () => {
             onDiscount={handleDiscount} onReturn={handleReturnRequest} onStorno={handleStorno}
             onGiftVoucher={() => setScreen('giftvoucher')}
             onEmbalaza={handleEmbalaza}
+            isSelfCheckout={isSelfCheckout}
           />
         )}
 
