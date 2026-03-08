@@ -331,6 +331,9 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
         onPayWithBalance={(cardId, amount) => {
           if (onGiftCardBalancePayment) onGiftCardBalancePayment(cardId, amount);
         }}
+        onPartialBalancePayment={(cardId, cardAmount, remainingTotal) => {
+          if (onGiftCardPartialBalance) onGiftCardPartialBalance(cardId, cardAmount, remainingTotal);
+        }}
         onCancel={() => setStep('select')}
       />
     );
