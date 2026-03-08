@@ -575,7 +575,8 @@ const Index = () => {
 
         {posTab === 'racuni' && (
           <RacuniTab transactions={transactions} onPrintReceipt={handlePrintReceipt}
-            onPrintInvoice={handlePrintInvoice} onCopyToNew={handleCopyToNew} onVoidReceipt={handleVoidReceipt} />
+            onPrintInvoice={handlePrintInvoice} onCopyToNew={handleCopyToNew} onVoidReceipt={handleVoidReceipt}
+            isSupport={currentCashier?.id === '00087'} />
         )}
 
         {posTab === 'zakljucek' && currentCashier && (
