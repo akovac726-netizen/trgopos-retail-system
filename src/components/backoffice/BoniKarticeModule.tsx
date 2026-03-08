@@ -109,7 +109,7 @@ const BoniKarticeModule = () => {
     if (data) setHolders(data as any[]);
   };
 
-  const POINT_VALUE = 0.01;
+  const POINT_VALUE = 0.15;
 
   const handleCreateCard = async () => {
     const code = generate8Digit();
