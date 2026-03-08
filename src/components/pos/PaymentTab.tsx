@@ -17,10 +17,11 @@ interface PaymentTabProps {
   onGiftCardPayment?: (code: string) => void;
   onGiftCardPointsRedeem?: (cardId: string, pointsUsed: number, discountAmount: number) => void;
   onGiftCardBalancePayment?: (cardId: string, amount: number) => void;
+  onGiftCardPartialBalance?: (cardId: string, cardAmount: number, remainingTotal: number) => void;
   keyboardEnabled?: boolean;
 }
 
-const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, onGiftCardPointsRedeem, onGiftCardBalancePayment, keyboardEnabled }: PaymentTabProps) => {
+const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, onGiftCardPointsRedeem, onGiftCardBalancePayment, onGiftCardPartialBalance, keyboardEnabled }: PaymentTabProps) => {
   const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon' | 'giftcard'>('select');
   const [cardWaiting, setCardWaiting] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -329,6 +330,9 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
         }}
         onPayWithBalance={(cardId, amount) => {
           if (onGiftCardBalancePayment) onGiftCardBalancePayment(cardId, amount);
+        }}
+        onPartialBalancePayment={(cardId, cardAmount, remainingTotal) => {
+          if (onGiftCardPartialBalance) onGiftCardPartialBalance(cardId, cardAmount, remainingTotal);
         }}
         onCancel={() => setStep('select')}
       />
