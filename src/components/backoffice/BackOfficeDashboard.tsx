@@ -154,6 +154,11 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [promoQtyRequired, setPromoQtyRequired] = useState("");
   const [promoQtyFree, setPromoQtyFree] = useState("");
 
+  const closingReports = externalReports;
+  const categories = ['Higiena', 'Osebna nega', 'Pijače', 'Žvečilni gumi', 'Pisarniški material', 'Kartice', 'Ostalo'];
+  const knownEmployees = employees.map(e => `${e.firstName} ${e.lastName}`);
+  const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
+
   useEffect(() => {
     fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB();
     const channel = supabase
