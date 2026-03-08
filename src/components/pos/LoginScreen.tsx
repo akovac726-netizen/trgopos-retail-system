@@ -9,9 +9,11 @@ interface LoginScreenProps {
   cashiers: Cashier[];
   onLogin: (cashier: Cashier) => void;
   onBackOfficeLogin: (role: 'admin' | 'shop') => void;
+  registerId: number;
+  registerLocked: boolean;
 }
 
-const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin }: LoginScreenProps) => {
+const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registerLocked }: LoginScreenProps) => {
   const [mode, setMode] = useState<AppMode>('trgopos');
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
