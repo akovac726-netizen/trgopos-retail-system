@@ -138,6 +138,10 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   // Zaključevanje
   const [showZakljuciConfirm, setShowZakljuciConfirm] = useState(false);
 
+  // Finančna poročila - filter by register type
+  const [financeFilter, setFinanceFilter] = useState<'all' | 'regular' | 'self'>('all');
+  const [financeClosings, setFinanceClosings] = useState<any[]>([]);
+
   // Artikli sub-tabs
   const [artikliSubTab, setArtikliSubTab] = useState<ArtikliSubTab>('sifrant');
 
