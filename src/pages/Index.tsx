@@ -657,12 +657,13 @@ const Index = () => {
             onCashPayment={handleCashComplete} onCardPayment={handleCardComplete}
             onInvoice={() => setShowPartnerInvoiceDialog(true)} onBack={() => setScreen('main')}
             onBonPayment={handleBonPayment}
+            onGiftCardPayment={handleGiftCardPayment}
             keyboardEnabled={keyboardEnabled}
           />
         )}
 
         {posTab === 'blagajna' && screen === 'complete' && lastTransaction && (
-          <CompletionScreen transaction={lastTransaction} onNewTransaction={handleNewTransaction} onPrintCopy={() => toast.success('Kopija računa se tiska...')} />
+          <CompletionScreen transaction={lastTransaction} onNewTransaction={handleNewTransaction} onPrintCopy={() => toast.success('Kopija računa se tiska...')} onAddLoyaltyPoints={handleAddLoyaltyPoints} />
         )}
 
         {posTab === 'racuni' && (
