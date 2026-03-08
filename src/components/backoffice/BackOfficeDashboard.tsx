@@ -1472,8 +1472,9 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       </div>
     </div>
   );
-};
+;
 
+// eslint-disable-next-line
 const RegisterClosingsTable = () => {
   const [closings, setClosings] = useState<any[]>([]);
   useEffect(() => {
