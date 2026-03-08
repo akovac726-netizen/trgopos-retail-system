@@ -698,7 +698,7 @@ const Index = () => {
       setSelectedItemIndex(prev.length);
       return [...prev, voucherItem];
     });
-    setLastAddedItem(voucherItem);
+    // lastAddedItem is derived from cartItems, no need to set it
     toast.success(`Darilni bon ${code} (${amount},00 €) dodan v košarico – plačajte na blagajni`);
     setScreen('main');
   };
