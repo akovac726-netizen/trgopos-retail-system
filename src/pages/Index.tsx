@@ -100,6 +100,8 @@ const Index = () => {
   const [pointsUsed, setPointsUsed] = useState(0);
   const [isSelfCheckout, setIsSelfCheckout] = useState(false);
   const [selfCheckoutLabel, setSelfCheckoutLabel] = useState("");
+  const [pendingTabChange, setPendingTabChange] = useState<POSTab | null>(null);
+  const [showTabAdminCode, setShowTabAdminCode] = useState(false);
 
 
   // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
