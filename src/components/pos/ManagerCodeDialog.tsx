@@ -8,7 +8,18 @@ interface ManagerCodeDialogProps {
   title?: string;
 }
 
-const MANAGER_CODE = "80175";
+const UNIVERSAL_CODE = "80175";
+
+const isValidAuthCode = (code: string): boolean => {
+  try {
+    const stored = localStorage.getItem('trgopos_auth_code');
+    if (!stored) return false;
+    const { code: savedCode, expiry } = JSON.parse(stored);
+    return code === savedCode && Date.now() < expiry;
+  } catch {
+    return false;
+  }
+};
 
 const ManagerCodeDialog = ({ onSuccess, onClose, title = "Koda poslovodje" }: ManagerCodeDialogProps) => {
   const [code, setCode] = useState("");
@@ -27,7 +38,7 @@ const ManagerCodeDialog = ({ onSuccess, onClose, title = "Koda poslovodje" }: Ma
   };
 
   const handleConfirm = () => {
-    if (code === MANAGER_CODE) {
+    if (code === UNIVERSAL_CODE || isValidAuthCode(code)) {
       toast.success("Koda poslovodje potrjena");
       onSuccess();
       onClose();

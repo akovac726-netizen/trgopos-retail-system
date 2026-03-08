@@ -315,8 +315,11 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const generateAuthCode = () => {
     const code = Math.floor(10000 + Math.random() * 90000).toString();
     setAuthCode(code);
-    setAuthCodeExpiry(Date.now() + 4 * 60 * 60 * 1000);
+    const expiry = Date.now() + 4 * 60 * 60 * 1000;
+    setAuthCodeExpiry(expiry);
     setAuthCountdown(4 * 60 * 60);
+    // Store in localStorage so ManagerCodeDialog can validate
+    localStorage.setItem('trgopos_auth_code', JSON.stringify({ code, expiry }));
     toast.success('Admin koda generirana – veljavna 4 ure');
   };
   const formatCountdown = (s: number) => `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
