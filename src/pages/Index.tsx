@@ -92,6 +92,7 @@ const Index = () => {
   const [pointsDiscount, setPointsDiscount] = useState(0);
   const [pointsCardId, setPointsCardId] = useState<string | null>(null);
   const [pointsUsed, setPointsUsed] = useState(0);
+  const [isSelfCheckout, setIsSelfCheckout] = useState(false);
 
 
   // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
@@ -156,10 +157,20 @@ const Index = () => {
     };
     fetchEmployees();
 
+    // Check self-checkout config for this register
+    const checkSelfCheckout = async () => {
+      if (registerId > 0) {
+        const { data } = await supabase.from('self_checkout_config').select('*').eq('register_id', registerId).eq('enabled', true).maybeSingle();
+        setIsSelfCheckout(!!data);
+      }
+    };
+    checkSelfCheckout();
+
     const channel = supabase.channel('pos-data')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => fetchTransactions())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => fetchEmployees())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'self_checkout_config' }, () => checkSelfCheckout())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -670,12 +681,13 @@ const Index = () => {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={setPosTab} onLogout={handleLogout}
+        isSelfCheckout={isSelfCheckout}
         onInfo={() => setShowInfoDialog(true)}
         onSettings={() => {
-          if (currentCashier?.id === '00087') {
+          if (currentCashier?.id === '00087' || currentCashier?.role === 'admin') {
             setShowSettingsDialog(true);
           } else {
-            toast.error('Nastavitve so dostopne samo profilu PODPORA STANDBUY');
+            toast.error('Nastavitve so dostopne samo profilu PODPORA STANDBUY ali Direktorju');
           }
         }}
       />
@@ -718,6 +730,7 @@ const Index = () => {
             onGiftCardBalancePayment={handleGiftCardBalancePayment}
             onGiftCardPartialBalance={handleGiftCardPartialBalance}
             keyboardEnabled={keyboardEnabled}
+            isSelfCheckout={isSelfCheckout}
           />
         )}
 
@@ -889,6 +902,43 @@ const Index = () => {
                     </button>
                   ))}
                 </div>
+              </div>
+              <div className="border-2 border-orange-400 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-base">🛒 Samoplačniška blagajna</h3>
+                    <p className="text-gray-500 text-xs mt-1">Aktiviraj samoplačniški način za Blagajno {registerId} (samo kartično plačilo, brez gotovine, bonov in točk)</p>
+                  </div>
+                  <button onClick={async () => {
+                    const canActivate = currentCashier?.id === '00087' || currentCashier?.role === 'admin';
+                    if (!canActivate) {
+                      toast.error('Samo PODPORA ali Direktor lahko aktivira samoplačniško blagajno');
+                      return;
+                    }
+                    const newState = !isSelfCheckout;
+                    if (newState) {
+                      await supabase.from('self_checkout_config').upsert({
+                        register_id: registerId, enabled: true,
+                        activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
+                      }, { onConflict: 'register_id' });
+                    } else {
+                      await supabase.from('self_checkout_config').upsert({
+                        register_id: registerId, enabled: false,
+                        activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
+                      }, { onConflict: 'register_id' });
+                    }
+                    setIsSelfCheckout(newState);
+                    toast.success(newState ? `Blagajna ${registerId} nastavljena kot SAMOPLAČNIŠKA` : `Samoplačniški način IZKLOPLJEN za Blagajno ${registerId}`);
+                  }}
+                    className={`w-16 h-8 rounded-full relative transition-colors ${isSelfCheckout ? 'bg-orange-500' : 'bg-gray-300'}`}>
+                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${isSelfCheckout ? 'right-1' : 'left-1'}`} />
+                  </button>
+                </div>
+                {isSelfCheckout && (
+                  <div className="mt-2 bg-orange-50 border border-orange-300 rounded p-2 text-orange-700 text-xs font-bold">
+                    ✅ Blagajna {registerId} deluje kot samoplačniška – samo kartično plačilo in darilna kartica (brez točk)
+                  </div>
+                )}
               </div>
             </div>
             <div className="p-6 pt-3 border-t border-gray-200 shrink-0">

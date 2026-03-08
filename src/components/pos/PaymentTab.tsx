@@ -20,9 +20,10 @@ interface PaymentTabProps {
   onGiftCardBalancePayment?: (cardId: string, amount: number) => void;
   onGiftCardPartialBalance?: (cardId: string, cardAmount: number, remainingTotal: number) => void;
   keyboardEnabled?: boolean;
+  isSelfCheckout?: boolean;
 }
 
-const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, registerId, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, onGiftCardPointsRedeem, onGiftCardBalancePayment, onGiftCardPartialBalance, keyboardEnabled }: PaymentTabProps) => {
+const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, registerId, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, onGiftCardPointsRedeem, onGiftCardBalancePayment, onGiftCardPartialBalance, keyboardEnabled, isSelfCheckout }: PaymentTabProps) => {
   const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon' | 'giftcard'>('select');
   const [cardWaiting, setCardWaiting] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -164,6 +165,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
             <div className="flex-1 px-3 py-2 text-sm font-medium">
               <div>Datum: {new Date().toLocaleDateString('sl-SI')}</div>
               <div>Številka računa:</div>
+              {isSelfCheckout && <div className="text-orange-600 font-bold mt-1">🛒 SAMOPLAČNIŠKA BLAGAJNA</div>}
             </div>
             <div className="p-2 border-l border-gray-400"><span className="text-xl">▲</span></div>
           </div>
@@ -181,39 +183,63 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
           </div>
         </div>
 
-        {/* RIGHT - Payment buttons in 2 rows + invoice + back */}
+        {/* RIGHT - Payment buttons */}
         <div className="flex-[6] flex flex-col gap-4 pt-2">
-          <div className="grid grid-cols-3 gap-3">
-            <button onClick={() => setStep('cash')}
-              className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
-              Gotovina
-            </button>
-            <button onClick={() => setStep('card')}
-              className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
-              Kartica
-            </button>
-            <button onClick={() => { setGiftCardCode(''); setGiftCardPin(''); setGiftCardPinStep(false); setStep('giftcard'); }}
-              className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
-              Darilna<br/>kartica
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => setStep('bon')}
-              className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
-              Darilni bon
-            </button>
-            <button
-              className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
-              Dobropis<br/>podjetja
-            </button>
-          </div>
+          {isSelfCheckout ? (
+            <>
+              {/* Self-checkout: only card + gift card (no points) */}
+              <div className="bg-orange-100 border-2 border-orange-400 rounded-lg p-3 text-center">
+                <span className="font-bold text-orange-700">🛒 Samoplačniška blagajna – samo kartično plačilo</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => setStep('card')}
+                  className="h-24 bg-white border-2 border-gray-500 rounded-xl font-bold text-lg text-gray-800 hover:bg-gray-50 transition-colors">
+                  💳 Kartica
+                </button>
+                <button onClick={() => { setGiftCardCode(''); setGiftCardPin(''); setGiftCardPinStep(false); setStep('giftcard'); }}
+                  className="h-24 bg-white border-2 border-gray-500 rounded-xl font-bold text-lg text-gray-800 hover:bg-gray-50 transition-colors">
+                  🎁 Darilna<br/>kartica
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Normal POS: all payment methods */}
+              <div className="grid grid-cols-3 gap-3">
+                <button onClick={() => setStep('cash')}
+                  className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
+                  Gotovina
+                </button>
+                <button onClick={() => setStep('card')}
+                  className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
+                  Kartica
+                </button>
+                <button onClick={() => { setGiftCardCode(''); setGiftCardPin(''); setGiftCardPinStep(false); setStep('giftcard'); }}
+                  className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
+                  Darilna<br/>kartica
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => setStep('bon')}
+                  className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
+                  Darilni bon
+                </button>
+                <button
+                  className="h-20 bg-white border-2 border-gray-500 rounded-xl font-bold text-base text-gray-800 hover:bg-gray-50 transition-colors">
+                  Dobropis<br/>podjetja
+                </button>
+              </div>
+            </>
+          )}
 
           <div className="flex-1" />
 
-          <button onClick={onInvoice}
-            className="h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-base transition-colors w-48">
-            Izpiši fakturo
-          </button>
+          {!isSelfCheckout && (
+            <button onClick={onInvoice}
+              className="h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-base transition-colors w-48">
+              Izpiši fakturo
+            </button>
+          )}
 
           <button onClick={onBack}
             className="h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xl flex items-center justify-center gap-2 transition-colors w-48 mx-auto">
@@ -366,6 +392,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
       <GiftCardRedeemFlow
         total={total}
         registerId={registerId || 1}
+        isSelfCheckout={isSelfCheckout}
         onApplyDiscount={(pointsUsed, discountAmount, cardId) => {
           if (onGiftCardPointsRedeem) onGiftCardPointsRedeem(cardId, pointsUsed, discountAmount);
           setStep('select');

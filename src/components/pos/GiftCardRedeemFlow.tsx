@@ -10,6 +10,7 @@ interface GiftCardRedeemFlowProps {
   onPayWithBalance: (cardId: string, amount: number) => void;
   onPartialBalancePayment: (cardId: string, cardAmount: number, remainingTotal: number) => void;
   onCancel: () => void;
+  isSelfCheckout?: boolean;
 }
 
 type Step = 'enter_code' | 'loading' | 'waiting_pin' | 'pin_approved' | 'pin_declined' | 'show_points' | 'confirm';
@@ -17,7 +18,7 @@ type Step = 'enter_code' | 'loading' | 'waiting_pin' | 'pin_approved' | 'pin_dec
 const POINT_VALUE = 0.15; // 1 point = 0.15 €
 const MIN_PURCHASE_FOR_POINTS = 5; // min 5€ purchase to use points
 
-const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalance, onPartialBalancePayment, onCancel }: GiftCardRedeemFlowProps) => {
+const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalance, onPartialBalancePayment, onCancel, isSelfCheckout }: GiftCardRedeemFlowProps) => {
   const [step, setStep] = useState<Step>('enter_code');
   const [code, setCode] = useState("");
   const [card, setCard] = useState<any>(null);
@@ -252,7 +253,7 @@ const GiftCardRedeemFlow = ({ total, registerId, onApplyDiscount, onPayWithBalan
 
   // STEP 3: Show points & select redemption
   if (step === 'show_points') {
-    const canUsePoints = total >= MIN_PURCHASE_FOR_POINTS && (card?.points || 0) > 0;
+    const canUsePoints = !isSelfCheckout && total >= MIN_PURCHASE_FOR_POINTS && (card?.points || 0) > 0;
     const cardBalance = card?.balance || 0;
     const canPayFull = cardBalance >= total;
     const canPayPartial = cardBalance > 0 && cardBalance < total;

@@ -607,6 +607,36 @@ export type Database = {
         }
         Relationships: []
       }
+      self_checkout_config: {
+        Row: {
+          activated_at: string | null
+          activated_by: string
+          created_at: string
+          enabled: boolean
+          id: string
+          register_id: number
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          register_id: number
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          register_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       terminal_requests: {
         Row: {
           amount: number
