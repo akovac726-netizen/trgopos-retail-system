@@ -256,15 +256,28 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
             <p className="text-white/50 text-xs font-medium tracking-[0.3em] mt-1">POS TERMINAL</p>
           </div>
 
-          <p className="text-white/70 text-lg font-medium mb-6">Izberi blagajno za povezavo:</p>
+          <p className="text-white/70 text-lg font-medium mb-4">Izberi blagajno za povezavo:</p>
 
-          <div className="flex gap-4">
+          <div className="flex gap-4 mb-6">
             {[1, 2, 3].map(id => (
               <button key={id} onClick={() => handleSelectRegister(id)}
                 className="w-24 h-24 bg-white/10 hover:bg-white/20 active:bg-white/30 border-2 border-sky-400/50 hover:border-sky-400 rounded-xl text-3xl font-black text-sky-400 transition-all">
                 {id}
               </button>
             ))}
+          </div>
+
+          <p className="text-white/40 text-sm font-medium mb-3">🛒 Samoplačniške blagajne:</p>
+          <div className="flex gap-4">
+            {['A1', 'A2', 'A3'].map(label => {
+              const id = 100 + parseInt(label.slice(1));
+              return (
+                <button key={label} onClick={() => handleSelectRegister(id)}
+                  className="w-24 h-24 bg-orange-500/10 hover:bg-orange-500/20 active:bg-orange-500/30 border-2 border-orange-400/50 hover:border-orange-400 rounded-xl text-2xl font-black text-orange-400 transition-all">
+                  🛒 {label}
+                </button>
+              );
+            })}
           </div>
 
           <p className="text-white/30 text-xs mt-6">Terminal bo sprejemal plačila samo za izbrano blagajno</p>
