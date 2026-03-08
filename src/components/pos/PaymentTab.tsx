@@ -9,6 +9,7 @@ interface PaymentTabProps {
   total: number;
   totalDiscount: number;
   receiptNumber?: string;
+  registerId?: number;
   onCashPayment: (amountPaid: number) => void;
   onCardPayment: () => void;
   onInvoice: () => void;
@@ -21,7 +22,7 @@ interface PaymentTabProps {
   keyboardEnabled?: boolean;
 }
 
-const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, onGiftCardPointsRedeem, onGiftCardBalancePayment, onGiftCardPartialBalance, keyboardEnabled }: PaymentTabProps) => {
+const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, registerId, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, onGiftCardPointsRedeem, onGiftCardBalancePayment, onGiftCardPartialBalance, keyboardEnabled }: PaymentTabProps) => {
   const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon' | 'giftcard'>('select');
   const [cardWaiting, setCardWaiting] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -324,6 +325,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
     return (
       <GiftCardRedeemFlow
         total={total}
+        registerId={registerId || 1}
         onApplyDiscount={(pointsUsed, discountAmount, cardId) => {
           if (onGiftCardPointsRedeem) onGiftCardPointsRedeem(cardId, pointsUsed, discountAmount);
           setStep('select');
