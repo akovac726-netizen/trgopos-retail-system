@@ -451,8 +451,21 @@ const Index = () => {
   };
   const handleVoidReceipt = async (t: Transaction) => {
     await supabase.from('transactions').update({ voided: true }).eq('receipt_number', t.id);
+    // Return all items back to stock
+    for (const item of t.items) {
+      if (item.isStornoed) continue; // already stornoed items were never deducted
+      if (item.isReturn) {
+        // Return items had stock added back, so now we need to deduct again
+        const { data } = await supabase.from('products').select('stock').eq('ean', item.ean).single();
+        if (data) await supabase.from('products').update({ stock: Math.max(0, data.stock - item.quantity) }).eq('ean', item.ean);
+      } else {
+        // Normal items had stock deducted, so now we add back
+        const { data } = await supabase.from('products').select('stock').eq('ean', item.ean).single();
+        if (data) await supabase.from('products').update({ stock: data.stock + item.quantity }).eq('ean', item.ean);
+      }
+    }
     setTransactions(prev => prev.filter(tr => tr.id !== t.id));
-    toast.success(`Račun #${t.id} storniran`);
+    toast.success(`Račun #${t.id} storniran – zaloga vrnjena`);
   };
 
   const handleEndShift = async (report: ClosingReport) => {
