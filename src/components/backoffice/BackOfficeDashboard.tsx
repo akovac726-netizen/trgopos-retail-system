@@ -107,13 +107,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [backendSubTab, setBackendSubTab] = useState<'zaposleni' | 'zahtevki' | 'pregled'>('zaposleni');
 
   // Employees
-  const [employees, setEmployees] = useState<Employee[]>([
-    { id: '1', firstName: 'Dženan', lastName: 'Kedić', code: '70001', birthDate: '1990-01-01', birthPlace: '', position: 'Vodja', hireDate: '2024-01-15', username: '70001', password: '70001', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-    { id: '2', firstName: 'Eva', lastName: 'Zakrajšek', code: '70002', birthDate: '1995-05-10', birthPlace: '', position: 'Blagajnik', hireDate: '2024-03-01', username: '70002', password: '70002', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-    { id: '3', firstName: 'Študent', lastName: '1', code: '80001', birthDate: '2003-09-15', birthPlace: '', position: 'Študentsko delo', hireDate: '2025-01-10', username: '80001', password: '80001', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-    { id: '4', firstName: 'Študent', lastName: '2', code: '80002', birthDate: '2004-02-20', birthPlace: '', position: 'Študentsko delo', hireDate: '2025-02-15', username: '80002', password: '80002', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-    { id: '5', firstName: 'PODPORA', lastName: 'STANDBUY', code: '00087', birthDate: '', birthPlace: '', position: 'Podpora', hireDate: '2024-01-01', username: '00087', password: '00087', address: '', postalCode: '', city: '', country: 'Slovenija', phone: '', email: '', emso: '', taxNumber: '', iban: '' },
-  ]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
