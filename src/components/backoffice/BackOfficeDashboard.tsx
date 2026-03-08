@@ -1827,6 +1827,9 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
           </div>
         )}
 
+        {/* BONI IN KARTICE */}
+        {activeTab === 'bonikartice' && <BoniKarticeModule />}
+
         {/* AVTORIZACIJA */}
         {activeTab === 'avtorizacija' && (
           <div>
