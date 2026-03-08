@@ -29,6 +29,20 @@ const FALLBACK_CASHIERS: Cashier[] = [
 
 const EMBALAZA_EAN = "EMB001";
 
+// Get or assign a register ID for this device
+const getRegisterId = (): number => {
+  const stored = localStorage.getItem('trgopos_register_id');
+  if (stored) return parseInt(stored);
+  // Assign a new register ID based on timestamp to make it unique per device
+  const id = Math.floor(Date.now() % 100) + 1;
+  localStorage.setItem('trgopos_register_id', String(id));
+  return id;
+};
+
+const setRegisterId = (id: number) => {
+  localStorage.setItem('trgopos_register_id', String(id));
+};
+
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
   return products.reduce((acc, p) => {
     acc[p.ean] = { name: p.name, price: p.price };
