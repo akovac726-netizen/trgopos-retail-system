@@ -298,7 +298,12 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
           <ArrowLeft className="w-4 h-4" /> Zamenjaj
         </button>
         <div className="flex items-center gap-3">
-          <span className="text-white/40 text-xs">Blagajna <strong className="text-sky-400">{selectedRegister}</strong></span>
+          <span className="text-white/40 text-xs">
+            {selectedRegister > 100
+              ? <>🛒 Samoplačniška <strong className="text-orange-400">A{selectedRegister - 100}</strong></>
+              : <>Blagajna <strong className="text-sky-400">{selectedRegister}</strong></>
+            }
+          </span>
           <div className="flex items-center gap-1">
             <Wifi className="w-3.5 h-3.5 text-green-400" />
             <span className="text-green-400 text-[10px] font-medium">Povezan</span>
