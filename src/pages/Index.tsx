@@ -699,6 +699,7 @@ const Index = () => {
             onGiftCardPayment={handleGiftCardPayment}
             onGiftCardPointsRedeem={handleGiftCardPointsRedeem}
             onGiftCardBalancePayment={handleGiftCardBalancePayment}
+            onGiftCardPartialBalance={handleGiftCardPartialBalance}
             keyboardEnabled={keyboardEnabled}
           />
         )}
