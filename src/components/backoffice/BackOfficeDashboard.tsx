@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Pencil, Plus, Search, X, Check, Trash2, Clock, Printer, Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BoniKarticeModule from "./BoniKarticeModule";
 
 interface DBProduct {
   id: string; ean: string; name: string; price: number; stock: number; min_stock: number; category: string;
