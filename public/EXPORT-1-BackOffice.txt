@@ -1,41 +1,31 @@
 ================================================================
- STANDBUY BACKOFFICE – LOČEN PROJEKT
+ STANDBUY BACKOFFICE – CELOTNA KODA
  Izvoz: 2026-03-08
 ================================================================
 
 OPIS:
 BackOffice je upravljalski modul za vodjo/direktorja trgovine.
-Moduli: Artikli, Naročila, Dokumenti, Nalepke, Urnik, 
-Zaključevanje, Inventura, Finančna poročila, Partnerji,
-Boni in kartice, Avtorizacija, TrgoBackEnd (Zaposleni, Dopusti).
+Moduli: Artikli (Šifrant, Cene, Akcije, Popusti), Naročila, 
+Dokumenti (Fakture, Dobropisi, Prevzemi, Naročilnice), 
+Nalepke/Cenovke, Urnik, Zaključevanje, Inventura, 
+Finančna poročila, Partnerji, Boni in kartice, Avtorizacija,
+TrgoBackEnd (Zaposleni, Dopusti).
 
 POVEZAVA NA BAZO:
-Ta projekt se poveže na ISTO Lovable Cloud bazo kot TrgoPOS.
-V .env novega projekta vnesi:
   VITE_SUPABASE_URL=https://rzcidhfpazukmfypdzqg.supabase.co
-  VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...1L-EDw8z0fFJl9hD5kmlR_NCdiOnjH_6_caQLMonj_A
-
-================================================================
-DATOTEKE ZA NOV PROJEKT:
-================================================================
-
-1. src/components/backoffice/BackOfficeDashboard.tsx  (2222 vrstic)
-   → Celotna BackOffice logika, vsi moduli
-
-2. src/components/backoffice/BoniKarticeModule.tsx     (583 vrstic)
-   → Modul Boni in kartice (darilne kartice, boni, imetniki)
-
-3. src/pages/Index.tsx
-   → Spodaj je login + prikaz BackOfficeDashboard
-
-4. src/integrations/supabase/client.ts
-   → Supabase klient
+  VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y2lkaGZwYXp1a21meXBkenFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTQ0OTQsImV4cCI6MjA4NjkzMDQ5NH0.1L-EDw8z0fFJl9hD5kmlR_NCdiOnjH_6_caQLMonj_A
 
 POTREBNI PAKETI:
   @supabase/supabase-js, sonner, lucide-react, react-router-dom
 
+DATOTEKE:
+  1. src/pages/Index.tsx (BackOffice login)
+  2. src/components/backoffice/BackOfficeDashboard.tsx (2222 vrstic)
+  3. src/components/backoffice/BoniKarticeModule.tsx (583 vrstic)
+  4. src/integrations/supabase/client.ts
+
 ================================================================
-DATOTEKA: src/pages/Index.tsx (login za BackOffice)
+DATOTEKA: src/pages/Index.tsx (BackOffice standalone login)
 ================================================================
 
 import { useState } from "react";
@@ -108,8 +98,12 @@ export default Index;
 
 ================================================================
 OPOMBA:
-BackOfficeDashboard.tsx in BoniKarticeModule.tsx sta preveliki
-za to datoteko. Kopiraj ju iz Code Editor-ja v tem projektu:
+BackOfficeDashboard.tsx (2222 vrstic) in BoniKarticeModule.tsx 
+(583 vrstic) sta preveliki za to tekstovno datoteko.
+
+Kopiraj ju NEPOSREDNO iz Code Editorja v tem projektu:
   src/components/backoffice/BackOfficeDashboard.tsx
   src/components/backoffice/BoniKarticeModule.tsx
+
+Obe datoteki sta CELOTNI in POPOLNI v Code Editorju.
 ================================================================

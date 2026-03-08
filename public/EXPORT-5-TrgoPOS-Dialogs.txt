@@ -1,0 +1,37 @@
+================================================================
+ STANDBUY TrgoPOS – DIALOGI (Part 2/3)
+ Izvoz: 2026-03-08
+================================================================
+
+Naslednje komponente so pop-up dialogi (modali), ki se odprejo
+ob določenih akcijah na blagajni.
+
+1. src/components/pos/DiscountInputDialog.tsx (119 vrstic)
+Vnos popusta (hitri gumbi ali ročni vnos v %).
+
+2. src/components/pos/ReturnDialog.tsx (221 vrstic)
+Iskanje računa in izbor artikla za storno/vračilo.
+
+3. src/components/pos/PriceCheckDialog.tsx (135 vrstic)
+Preverjanje cene artikla po EAN/PLU kodi.
+
+4. src/components/pos/PartnerInvoiceDialog.tsx (183 vrstic)
+Izdaja računa na podjetje (iskanje partnerjev iz baze).
+
+5. src/components/pos/DrawerCodeDialog.tsx (106 vrstic)
+Vnos kode blagajnika za ročno odpiranje predala.
+
+6. src/components/pos/ManagerCodeDialog.tsx (113 vrstic)
+Vnos 5-mestne administratorske kode za avtorizacijo (storno).
+
+7. src/components/pos/ProductSearchDialog.tsx (189 vrstic)
+Iskanje artiklov po imenu/kodi, z gumbom za dodajanje (+).
+
+8. src/components/pos/QuantityInputDialog.tsx (81 vrstic)
+Sprememba količine izbranega artikla.
+
+9. src/components/pos/ShiftEndDialog.tsx (380 vrstic)
+Potrditev zaključka izmene in izpis poročila (X/Z).
+
+Vse datoteke je potrebno kopirati iz izvornega projekta.
+================================================================

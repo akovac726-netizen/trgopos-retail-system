@@ -1,0 +1,33 @@
+================================================================
+ STANDBUY TrgoPOS – PLAČILNI ZASLONI (Part 3/3)
+ Izvoz: 2026-03-08
+================================================================
+
+Komponente za procesiranje plačila (ko blagajnik klikne "Zaključi račun").
+
+1. src/components/pos/PaymentTab.tsx (515 vrstic)
+Glavni plačilni zaslon, ki usmerja na gotovino, kartico, bone.
+
+2. src/components/pos/PaymentScreen.tsx (58 vrstic)
+Izbira načina plačila.
+
+3. src/components/pos/CashPaymentScreen.tsx (150 vrstic)
+Zaslon za gotovinsko plačilo z gumbi za hitri vnos bankovcev.
+
+4. src/components/pos/CardPaymentScreen.tsx (101 vrstic)
+Zaslon za kartično plačilo (čaka na POS terminal).
+
+5. src/components/pos/CompletionScreen.tsx (115 vrstic)
+Zaslon po uspešnem plačilu ("Račun zaključen") z možnostjo vnosa točk.
+
+6. src/components/pos/GiftCardRedeemFlow.tsx (411 vrstic)
+Proces unovčenja darilne kartice in njenih točk.
+
+7. src/components/pos/GiftVoucherDialog.tsx (131 vrstic)
+Vnos kode papirnatega darilnega bona za popust.
+
+8. src/components/pos/NumericKeypad.tsx (47 vrstic)
+Skupna komponenta za številčnico.
+
+Vse datoteke je potrebno kopirati iz izvornega projekta.
+================================================================
