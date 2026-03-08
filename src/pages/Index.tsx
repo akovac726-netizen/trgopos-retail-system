@@ -511,7 +511,7 @@ const Index = () => {
         if (updated.status === 'approved') {
           const transaction = await createTransaction('kartica', total, 0);
           setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-          await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+          await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
           toast.success('Plačilo s kartico potrjeno');
         } else if (updated.status === 'declined') {
           toast.error('Plačilo s kartico zavrnjeno');
