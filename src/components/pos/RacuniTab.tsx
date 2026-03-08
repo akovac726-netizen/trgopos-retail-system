@@ -66,10 +66,11 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
       <div className="flex-1 flex gap-4 mb-3 min-h-0">
         {/* Table */}
         <div className="flex-[6] border-2 border-gray-600 bg-white rounded overflow-hidden flex flex-col">
-          <div className="grid grid-cols-5 gap-2 px-3 py-2 bg-white border-b-2 border-gray-600 text-sm font-bold text-gray-700">
+          <div className={`grid ${isSupport ? 'grid-cols-6' : 'grid-cols-5'} gap-2 px-3 py-2 bg-white border-b-2 border-gray-600 text-sm font-bold text-gray-700`}>
             <div>Števila računa</div>
             <div>Datum in ura</div>
             <div>Blagajnik</div>
+            {isSupport && <div>Blagajna</div>}
             <div>Znesek računa</div>
             <div>FuRS</div>
           </div>
@@ -79,12 +80,13 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
             ) : (
               filteredTransactions.map(t => (
                 <div key={t.id} onClick={() => setSelectedTransaction(t)}
-                  className={`grid grid-cols-5 gap-2 px-3 py-2 text-sm cursor-pointer border-b border-gray-200 transition-colors ${
+                  className={`grid ${isSupport ? 'grid-cols-6' : 'grid-cols-5'} gap-2 px-3 py-2 text-sm cursor-pointer border-b border-gray-200 transition-colors ${
                     selectedTransaction?.id === t.id ? 'bg-sky-100' : 'hover:bg-gray-50'
                   }`}>
                   <div className="font-medium">#{t.id}</div>
                   <div>{formatDate(t.timestamp)} {formatTime(t.timestamp)}</div>
                   <div>{t.cashierName}</div>
+                  {isSupport && <div className="font-medium text-sky-600">BL {t.registerId || '-'}</div>}
                   <div className="font-medium">{formatPrice(t.total)} €</div>
                   <div className="text-gray-400">-</div>
                 </div>
