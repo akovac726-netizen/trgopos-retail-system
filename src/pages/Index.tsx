@@ -436,7 +436,7 @@ const Index = () => {
   const deductStock = async (items: typeof cartItems) => {
     for (const item of items) {
       if (item.isStornoed) continue;
-      // embalaža now tracked in products table, no skip needed
+      if (item.ean.startsWith('BON-')) continue; // gift vouchers are not physical products
       if (item.isReturn) {
         const { data } = await supabase.from('products').select('stock').eq('ean', item.ean).single();
         if (data) await supabase.from('products').update({ stock: data.stock + item.quantity }).eq('ean', item.ean);
