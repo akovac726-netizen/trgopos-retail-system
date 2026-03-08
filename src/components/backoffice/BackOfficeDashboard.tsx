@@ -137,10 +137,22 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   // Zaključevanje
   const [showZakljuciConfirm, setShowZakljuciConfirm] = useState(false);
 
-  const closingReports = externalReports;
-  const categories = ['Higiena', 'Osebna nega', 'Pijače', 'Žvečilni gumi', 'Pisarniški material', 'Kartice', 'Ostalo'];
-  const knownEmployees = employees.map(e => `${e.firstName} ${e.lastName}`);
-  const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
+  // Artikli sub-tabs
+  const [artikliSubTab, setArtikliSubTab] = useState<ArtikliSubTab>('sifrant');
+
+  // Promotions
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [showPromoForm, setShowPromoForm] = useState(false);
+  const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);
+  const [promoType, setPromoType] = useState<PromoType>('akcijska_cena');
+  const [promoEan, setPromoEan] = useState("");
+  const [promoProductName, setPromoProductName] = useState("");
+  const [promoStartDate, setPromoStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [promoEndDate, setPromoEndDate] = useState("");
+  const [promoPrice, setPromoPrice] = useState("");
+  const [promoDiscountPercent, setPromoDiscountPercent] = useState("");
+  const [promoQtyRequired, setPromoQtyRequired] = useState("");
+  const [promoQtyFree, setPromoQtyFree] = useState("");
 
   useEffect(() => {
     fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB();
