@@ -24,13 +24,14 @@ interface BlagajnaTabProps {
   onStorno: () => void;
   onGiftVoucher: () => void;
   onEmbalaza: () => void;
+  isSelfCheckout?: boolean;
 }
 
 const BlagajnaTab = ({
   cartItems, selectedItemIndex, inputValue, subtotal, total, totalDiscount, lastAddedItem,
   onSelectItem, onKeyPress, onDelete, onConfirm, onProceedToPayment,
   onOpenDrawer, onProductSearch, onPriceCheck, onQuantity, onDiscount, onReturn, onStorno,
-  onGiftVoucher, onEmbalaza,
+  onGiftVoucher, onEmbalaza, isSelfCheckout,
 }: BlagajnaTabProps) => {
   const listRef = useRef<HTMLDivElement>(null);
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
