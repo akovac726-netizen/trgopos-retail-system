@@ -1222,17 +1222,25 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                             <td className="border border-gray-300 px-3 py-2 text-sm">{p.end_date}</td>
                             <td className="border border-gray-300 px-3 py-2 text-sm font-bold">{conditions}</td>
                             <td className="border border-gray-300 px-3 py-2 text-center">
-                              <button onClick={() => handleTogglePromo(p)}
-                                className={`px-2 py-0.5 rounded text-xs font-bold ${p.active && !isExpired ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
-                                {isExpired ? 'Potekla' : p.active ? 'Aktivna' : 'Neaktivna'}
-                              </button>
+                              {role === 'admin' ? (
+                                <button onClick={() => handleTogglePromo(p)}
+                                  className={`px-2 py-0.5 rounded text-xs font-bold ${p.active && !isExpired ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                  {isExpired ? 'Potekla' : p.active ? 'Aktivna' : 'Neaktivna'}
+                                </button>
+                              ) : (
+                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${p.active && !isExpired ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                  {isExpired ? 'Potekla' : p.active ? 'Aktivna' : 'Neaktivna'}
+                                </span>
+                              )}
                             </td>
+                            {role === 'admin' && (
                             <td className="border border-gray-300 px-3 py-2 text-center">
                               <div className="flex gap-1 justify-center">
                                 <button onClick={() => handleEditPromo(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
                                 <button onClick={() => handleDeletePromo(p)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>
                               </div>
                             </td>
+                            )}
                           </tr>
                         );
                       })}
