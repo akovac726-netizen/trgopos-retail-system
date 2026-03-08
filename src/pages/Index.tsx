@@ -88,6 +88,8 @@ const Index = () => {
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [pendingStornoIndex, setPendingStornoIndex] = useState<number | null>(null);
   const [managerCodeTitle, setManagerCodeTitle] = useState("Koda poslovodje");
+  const [keyboardEnabled, setKeyboardEnabled] = useState(() => localStorage.getItem('trgopos_keyboard') === 'true');
+
 
   // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
   const fetchTransactions = async (cashierId?: string) => {
@@ -331,6 +333,32 @@ const Index = () => {
     if (activeCartItems.length === 0) { toast.warning('Dodajte artikle pred plačilom'); return; }
     setScreen('payment');
   };
+
+  // Physical keyboard support
+  useEffect(() => {
+    if (!keyboardEnabled || appMode !== 'pos' || posTab !== 'blagajna' || screen !== 'main') return;
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (showSettingsDialog || showManagerCodeDialog || showReturnManagerCode || showProductSearchDialog || showQuantityDialog || showDiscountDialog || showReturnDialog || showPriceCheckDialog || showPartnerInvoiceDialog) return;
+
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        handleKeyPress(e.key);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleConfirm();
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleDelete();
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        handleProceedToPayment();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [keyboardEnabled, appMode, posTab, screen, inputValue, cartItems, selectedItemIndex, showSettingsDialog, showManagerCodeDialog, showReturnManagerCode, showProductSearchDialog, showQuantityDialog, showDiscountDialog, showReturnDialog, showPriceCheckDialog, showPartnerInvoiceDialog]);
 
   const handleOpenDrawer = () => {
     if (currentCashier) setShowDrawerDialog(true);
@@ -658,10 +686,12 @@ const Index = () => {
 
       {/* Settings dialog - only for PODPORA STANDBUY */}
       {showSettingsDialog && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowSettingsDialog(false)}>
-          <div className="bg-white rounded-xl p-8 max-w-lg w-full shadow-2xl border-2 border-gray-300" onClick={e => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold mb-4">⚙ Nastavitve</h2>
-            <div className="space-y-4 text-sm">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowSettingsDialog(false)}>
+          <div className="bg-white rounded-xl shadow-2xl border-2 border-gray-300 max-w-lg w-full max-h-[calc(100vh-2rem)] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-6 pb-3 border-b border-gray-200 shrink-0">
+              <h2 className="text-2xl font-bold">⚙ Nastavitve</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-3 text-sm">
               <div className="border-2 border-gray-300 rounded-lg p-4">
                 <h3 className="font-bold text-base mb-2">Tiskalnik računov</h3>
                 <p className="text-gray-600">Status: <span className="text-green-600 font-bold">Povezan</span></p>
@@ -679,6 +709,23 @@ const Index = () => {
               <div className="border-2 border-gray-300 rounded-lg p-4">
                 <h3 className="font-bold text-base mb-2">Davčne stopnje</h3>
                 <p className="text-gray-600">DDV 22% (standard) | DDV 9.5% (znižana)</p>
+              </div>
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-base">⌨ Tipkovnica</h3>
+                    <p className="text-gray-500 text-xs mt-1">Omogoči fizično tipkovnico za vnos EAN kod (0-9, Enter, Backspace, F2=plačilo)</p>
+                  </div>
+                  <button onClick={() => {
+                    const next = !keyboardEnabled;
+                    setKeyboardEnabled(next);
+                    localStorage.setItem('trgopos_keyboard', String(next));
+                    toast.success(next ? 'Tipkovnica VKLOPLJENA' : 'Tipkovnica IZKLOPLJENA');
+                  }}
+                    className={`w-16 h-8 rounded-full relative transition-colors ${keyboardEnabled ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${keyboardEnabled ? 'right-1' : 'left-1'}`} />
+                  </button>
+                </div>
               </div>
               <div className="border-2 border-gray-300 rounded-lg p-4">
                 <h3 className="font-bold text-base mb-2">Popravek ure in datuma</h3>
@@ -733,10 +780,12 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            <button onClick={() => setShowSettingsDialog(false)}
-              className="mt-4 w-full h-12 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-bold text-base transition-colors">
-              Zapri
-            </button>
+            <div className="p-6 pt-3 border-t border-gray-200 shrink-0">
+              <button onClick={() => setShowSettingsDialog(false)}
+                className="w-full h-12 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-bold text-base transition-colors">
+                Zapri
+              </button>
+            </div>
           </div>
         </div>
       )}
