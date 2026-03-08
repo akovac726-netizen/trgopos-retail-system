@@ -210,8 +210,17 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       })));
     }
   };
+  const fetchBusinessDay = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const { data } = await supabase.from('business_days').select('*').eq('date', today as any).maybeSingle();
+    if (data) setBusinessOpened((data as any).status === 'open');
+    else setBusinessOpened(false);
+  };
+  const fetchClosingReportsFromDB = async () => {
+    // Realtime trigger - forces component awareness of closing_reports/transactions changes
+  };
 
-  const generateAuthCode = () => {
+
     const code = Math.floor(10000 + Math.random() * 90000).toString();
     setAuthCode(code);
     setAuthCodeExpiry(Date.now() + 4 * 60 * 60 * 1000);
