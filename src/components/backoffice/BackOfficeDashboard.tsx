@@ -1890,8 +1890,15 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   );
 };
 
+const SELF_CHECKOUT_IDS = [101, 102, 103];
+const registerLabel = (id: number) => {
+  if (SELF_CHECKOUT_IDS.includes(id)) return `🛒 A${id - 100}`;
+  return `Blagajna ${id}`;
+};
+
 const RegisterClosingsTable = () => {
   const [closings, setClosings] = useState<any[]>([]);
+  const [filter, setFilter] = useState<'all' | 'regular' | 'self'>('all');
   useEffect(() => {
     const fetch = async () => {
       const { data } = await supabase.from('register_closings').select('*').order('closed_at', { ascending: false }).limit(50);
@@ -1904,35 +1911,60 @@ const RegisterClosingsTable = () => {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
+  const filtered = closings.filter(c => {
+    if (filter === 'regular') return !SELF_CHECKOUT_IDS.includes(c.register_id);
+    if (filter === 'self') return SELF_CHECKOUT_IDS.includes(c.register_id);
+    return true;
+  });
+
+  const totalRegular = closings.filter(c => !SELF_CHECKOUT_IDS.includes(c.register_id)).reduce((s, c) => s + Number(c.total), 0);
+  const totalSelf = closings.filter(c => SELF_CHECKOUT_IDS.includes(c.register_id)).reduce((s, c) => s + Number(c.total), 0);
+
   return (
-    <table className="w-full border-collapse bg-white mt-4">
-      <thead><tr className="bg-gray-200">
-        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajna</th>
-        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Tip</th>
-        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajnik</th>
-        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
-        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Gotovina</th>
-        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Kartica</th>
-        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Skupaj</th>
-        <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Računi</th>
-      </tr></thead>
-      <tbody>
-        {closings.length === 0 ? (
-          <tr><td colSpan={8} className="text-center py-4 text-gray-500">Ni zaključkov</td></tr>
-        ) : closings.map((c, i) => (
-          <tr key={c.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
-            <td className="border border-gray-300 px-3 py-2 text-sm font-bold">Blagajna {c.register_id}</td>
-            <td className="border border-gray-300 px-3 py-2 text-sm">{c.type}</td>
-            <td className="border border-gray-300 px-3 py-2 text-sm">{c.cashier_name}</td>
-            <td className="border border-gray-300 px-3 py-2 text-sm">{new Date(c.closed_at).toLocaleString('sl-SI')}</td>
-            <td className="border border-gray-300 px-3 py-2 text-sm text-right">{Number(c.cash).toFixed(2)} €</td>
-            <td className="border border-gray-300 px-3 py-2 text-sm text-right">{Number(c.card).toFixed(2)} €</td>
-            <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{Number(c.total).toFixed(2)} €</td>
-            <td className="border border-gray-300 px-3 py-2 text-sm text-right">{c.transaction_count}</td>
-          </tr>
+    <div>
+      <div className="flex gap-2 mb-3 items-center">
+        {([
+          { id: 'all', label: 'Vse blagajne' },
+          { id: 'regular', label: `Navadne (1–3) · ${totalRegular.toFixed(2)} €` },
+          { id: 'self', label: `🛒 Samoplačniške (A1–A3) · ${totalSelf.toFixed(2)} €` },
+        ] as const).map(f => (
+          <button key={f.id} onClick={() => setFilter(f.id)}
+            className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+              filter === f.id ? (f.id === 'self' ? 'bg-orange-500 text-white' : 'bg-sky-500 text-white') : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}>
+            {f.label}
+          </button>
         ))}
-      </tbody>
-    </table>
+      </div>
+      <table className="w-full border-collapse bg-white">
+        <thead><tr className="bg-gray-200">
+          <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajna</th>
+          <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Tip</th>
+          <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajnik</th>
+          <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
+          <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Gotovina</th>
+          <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Kartica</th>
+          <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Skupaj</th>
+          <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Računi</th>
+        </tr></thead>
+        <tbody>
+          {filtered.length === 0 ? (
+            <tr><td colSpan={8} className="text-center py-4 text-gray-500">Ni zaključkov</td></tr>
+          ) : filtered.map((c, i) => (
+            <tr key={c.id} className={`${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} ${SELF_CHECKOUT_IDS.includes(c.register_id) ? 'border-l-4 border-l-orange-400' : ''}`}>
+              <td className={`border border-gray-300 px-3 py-2 text-sm font-bold ${SELF_CHECKOUT_IDS.includes(c.register_id) ? 'text-orange-600' : ''}`}>{registerLabel(c.register_id)}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{c.type}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{c.cashier_name}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{new Date(c.closed_at).toLocaleString('sl-SI')}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm text-right">{Number(c.cash).toFixed(2)} €</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm text-right">{Number(c.card).toFixed(2)} €</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{Number(c.total).toFixed(2)} €</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm text-right">{c.transaction_count}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
 
