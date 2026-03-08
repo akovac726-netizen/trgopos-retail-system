@@ -318,60 +318,20 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
     );
   }
 
-  // Gift card payment
+  // Gift card payment - full flow with PIN and points
   if (step === 'giftcard') {
     return (
-      <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: bg }}>
-        <div className="flex-[4] border-2 border-gray-600 bg-white rounded-lg p-4 text-sm space-y-2">
-          <div className="font-bold text-lg">Plačilo z darilno kartico</div>
-          <div className="border-t border-dashed border-gray-400 pt-2" />
-          <div>Skupaj za plačilo: <strong>{formatPrice(total)} €</strong></div>
-          <p className="text-gray-500 text-xs mt-4">Vnesite 8-mestno kodo kartice ali skenirajte EAN.</p>
-        </div>
-
-        <div className="flex-[6] flex flex-col gap-3">
-          <div className="border-2 border-gray-600 bg-white rounded-lg p-4">
-            <h3 className="font-bold text-base mb-2">Koda darilne kartice:</h3>
-            <div className="border-2 border-gray-600 bg-gray-50 rounded-lg p-3 font-mono text-xl min-h-[2rem]">{giftCardCode}</div>
-          </div>
-
-          <div className="flex gap-3 flex-1">
-            <div className="flex flex-col gap-2 flex-1">
-              {numKeys.map((row, ri) => (
-                <div key={ri} className="flex gap-2 flex-1">
-                  {row.map(key => (
-                    <button key={key} onClick={() => setGiftCardCode(prev => prev + key)}
-                      className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-                      {key}
-                    </button>
-                  ))}
-                </div>
-              ))}
-              <div className="flex gap-2 flex-1">
-                <button onClick={() => setGiftCardCode(prev => prev + '0')} className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">0</button>
-                <button className="flex-1 bg-gray-200 border border-gray-300 rounded-lg font-bold text-2xl text-gray-400 cursor-default">,</button>
-                <button onClick={() => setGiftCardCode(prev => prev.slice(0, -1))} className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
-                  <Delete className="w-7 h-7 text-white" />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 w-36">
-              <button onClick={() => setStep('select')}
-                className="h-16 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base flex items-center justify-center gap-1 transition-colors">
-                ← Nazaj
-              </button>
-              <button onClick={() => {
-                if (giftCardCode.length >= 8 && onGiftCardPayment) onGiftCardPayment(giftCardCode);
-              }}
-                disabled={giftCardCode.length < 8}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm flex items-center justify-center text-center disabled:opacity-40 transition-colors p-2">
-                Potrdi<br/>kartico
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <GiftCardRedeemFlow
+        total={total}
+        onApplyDiscount={(pointsUsed, discountAmount, cardId) => {
+          if (onGiftCardPointsRedeem) onGiftCardPointsRedeem(cardId, pointsUsed, discountAmount);
+          setStep('select');
+        }}
+        onPayWithBalance={(cardId, amount) => {
+          if (onGiftCardBalancePayment) onGiftCardBalancePayment(cardId, amount);
+        }}
+        onCancel={() => setStep('select')}
+      />
     );
   }
 
