@@ -12,7 +12,7 @@ interface RacuniTabProps {
   isSupport?: boolean;
 }
 
-const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, onVoidReceipt }: RacuniTabProps) => {
+const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, onVoidReceipt, isSupport }: RacuniTabProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showManagerCode, setShowManagerCode] = useState(false);
@@ -53,9 +53,13 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
     <div className="h-full flex flex-col p-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
       {/* Title */}
       <div className="mb-3">
-        <h2 className="text-2xl font-bold text-gray-800">Računi:</h2>
+        <h2 className="text-2xl font-bold text-gray-800">
+          {isSupport ? 'Računi: Vse blagajne (PODPORA)' : 'Računi:'}
+        </h2>
         <div className="h-0.5 bg-gray-400 my-1" />
-        <p className="text-center text-sm text-gray-600">Dnevna evidenca izdanih blagajniških računov</p>
+        <p className="text-center text-sm text-gray-600">
+          {isSupport ? 'Celotna zgodovina računov iz vseh blagajn' : 'Dnevna evidenca izdanih blagajniških računov'}
+        </p>
       </div>
 
       {/* Main content - table + preview */}
