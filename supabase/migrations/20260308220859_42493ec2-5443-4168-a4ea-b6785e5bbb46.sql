@@ -1,0 +1,1 @@
+ALTER TABLE public.self_checkout_config ADD COLUMN label text NOT NULL DEFAULT '';
