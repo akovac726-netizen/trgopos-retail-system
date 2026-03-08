@@ -52,4 +52,5 @@ export interface Transaction {
   cashierId: string;
   cashierName: string;
   invoiceData?: InvoiceData;
+  registerId?: number;
 }

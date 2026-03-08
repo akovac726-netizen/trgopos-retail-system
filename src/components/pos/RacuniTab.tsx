@@ -9,9 +9,10 @@ interface RacuniTabProps {
   onPrintInvoice: (transaction: Transaction) => void;
   onCopyToNew: (transaction: Transaction) => void;
   onVoidReceipt: (transaction: Transaction) => void;
+  isSupport?: boolean;
 }
 
-const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, onVoidReceipt }: RacuniTabProps) => {
+const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, onVoidReceipt, isSupport }: RacuniTabProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showManagerCode, setShowManagerCode] = useState(false);
@@ -52,19 +53,24 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
     <div className="h-full flex flex-col p-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
       {/* Title */}
       <div className="mb-3">
-        <h2 className="text-2xl font-bold text-gray-800">Računi:</h2>
+        <h2 className="text-2xl font-bold text-gray-800">
+          {isSupport ? 'Računi: Vse blagajne (PODPORA)' : 'Računi:'}
+        </h2>
         <div className="h-0.5 bg-gray-400 my-1" />
-        <p className="text-center text-sm text-gray-600">Dnevna evidenca izdanih blagajniških računov</p>
+        <p className="text-center text-sm text-gray-600">
+          {isSupport ? 'Celotna zgodovina računov iz vseh blagajn' : 'Dnevna evidenca izdanih blagajniških računov'}
+        </p>
       </div>
 
       {/* Main content - table + preview */}
       <div className="flex-1 flex gap-4 mb-3 min-h-0">
         {/* Table */}
         <div className="flex-[6] border-2 border-gray-600 bg-white rounded overflow-hidden flex flex-col">
-          <div className="grid grid-cols-5 gap-2 px-3 py-2 bg-white border-b-2 border-gray-600 text-sm font-bold text-gray-700">
+          <div className={`grid ${isSupport ? 'grid-cols-6' : 'grid-cols-5'} gap-2 px-3 py-2 bg-white border-b-2 border-gray-600 text-sm font-bold text-gray-700`}>
             <div>Števila računa</div>
             <div>Datum in ura</div>
             <div>Blagajnik</div>
+            {isSupport && <div>Blagajna</div>}
             <div>Znesek računa</div>
             <div>FuRS</div>
           </div>
@@ -74,12 +80,13 @@ const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, 
             ) : (
               filteredTransactions.map(t => (
                 <div key={t.id} onClick={() => setSelectedTransaction(t)}
-                  className={`grid grid-cols-5 gap-2 px-3 py-2 text-sm cursor-pointer border-b border-gray-200 transition-colors ${
+                  className={`grid ${isSupport ? 'grid-cols-6' : 'grid-cols-5'} gap-2 px-3 py-2 text-sm cursor-pointer border-b border-gray-200 transition-colors ${
                     selectedTransaction?.id === t.id ? 'bg-sky-100' : 'hover:bg-gray-50'
                   }`}>
                   <div className="font-medium">#{t.id}</div>
                   <div>{formatDate(t.timestamp)} {formatTime(t.timestamp)}</div>
                   <div>{t.cashierName}</div>
+                  {isSupport && <div className="font-medium text-sky-600">BL {t.registerId || '-'}</div>}
                   <div className="font-medium">{formatPrice(t.total)} €</div>
                   <div className="text-gray-400">-</div>
                 </div>
