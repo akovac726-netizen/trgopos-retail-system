@@ -9,6 +9,7 @@ interface RacuniTabProps {
   onPrintInvoice: (transaction: Transaction) => void;
   onCopyToNew: (transaction: Transaction) => void;
   onVoidReceipt: (transaction: Transaction) => void;
+  isSupport?: boolean;
 }
 
 const RacuniTab = ({ transactions, onPrintReceipt, onPrintInvoice, onCopyToNew, onVoidReceipt }: RacuniTabProps) => {
