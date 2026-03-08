@@ -527,6 +527,16 @@ const Index = () => {
     toast.success(`Plačilo z darilno kartico uspešno (novo stanje: ${((card.balance || 0) - amount).toFixed(2)} €)`);
   };
 
+  const handleGiftCardPartialBalance = async (cardId: string, cardAmount: number, remainingTotal: number) => {
+    // Deduct full card balance
+    const { data: card } = await supabase.from('gift_cards').select('balance').eq('id', cardId).single();
+    if (!card || (card.balance || 0) < cardAmount) { toast.error('Kartica nima dovolj sredstev'); return; }
+    await supabase.from('gift_cards').update({ balance: 0 } as any).eq('id', cardId);
+    // Apply partial payment as discount, user pays remainder
+    setPointsDiscount(prev => prev + cardAmount);
+    toast.success(`${cardAmount.toFixed(2)} € plačano s kartice. Izberite način plačila za preostanek ${remainingTotal.toFixed(2)} €.`);
+  };
+
   const handleAddLoyaltyPoints = async (code: string) => {
     const { data: card } = await supabase.from('gift_cards').select('*').eq('code', code).eq('active', true).single() as any;
     if (!card) {
