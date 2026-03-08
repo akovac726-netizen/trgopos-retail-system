@@ -45,8 +45,16 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
         .order('created_at', { ascending: false })
         .limit(1);
       if (data && data.length > 0) {
-        setCurrentRequest(data[0] as TerminalRequest);
-        setScreen('card-detected');
+        const req = data[0] as any;
+        setCurrentRequest(req as TerminalRequest);
+        if (req.type === 'pin_verify') {
+          setScreen('gift-pin-entry');
+          setGiftPinValue("");
+          setGiftPinError(false);
+          setGiftPinAttempts(0);
+        } else {
+          setScreen('card-detected');
+        }
       }
     };
     fetchPending();
@@ -58,12 +66,19 @@ const POSTerminalApp = ({ onBack }: POSTerminalAppProps) => {
         schema: 'public',
         table: 'terminal_requests',
       }, (payload) => {
-        const req = payload.new as TerminalRequest;
+        const req = payload.new as any;
         if (req.status === 'pending' && req.register_id === selectedRegister) {
-          setCurrentRequest(req);
-          setScreen('card-detected');
-          setPinValue("");
-          setPinError(false);
+          setCurrentRequest(req as TerminalRequest);
+          if (req.type === 'pin_verify') {
+            setScreen('gift-pin-entry');
+            setGiftPinValue("");
+            setGiftPinError(false);
+            setGiftPinAttempts(0);
+          } else {
+            setScreen('card-detected');
+            setPinValue("");
+            setPinError(false);
+          }
         }
       })
       .on('postgres_changes', {
