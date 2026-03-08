@@ -13,15 +13,19 @@ interface PaymentTabProps {
   onInvoice: () => void;
   onBack: () => void;
   onBonPayment?: (code: string, amount: number) => void;
+  onGiftCardPayment?: (code: string) => void;
   keyboardEnabled?: boolean;
 }
 
-const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, keyboardEnabled }: PaymentTabProps) => {
-  const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon'>('select');
+const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, onCashPayment, onCardPayment, onInvoice, onBack, onBonPayment, onGiftCardPayment, keyboardEnabled }: PaymentTabProps) => {
+  const [step, setStep] = useState<'select' | 'cash' | 'card' | 'bon' | 'giftcard'>('select');
   const [cardWaiting, setCardWaiting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [bonCode, setBonCode] = useState("");
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [giftCardPin, setGiftCardPin] = useState("");
+  const [giftCardPinStep, setGiftCardPinStep] = useState(false);
   const lastEnterRef = useRef<number>(0);
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
