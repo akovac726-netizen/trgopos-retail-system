@@ -479,7 +479,7 @@ const Index = () => {
   const handleCashComplete = async (amountPaid: number) => {
     const transaction = await createTransaction('gotovina', amountPaid, amountPaid - total);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
-    await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
+    await deductStock(cartItems); await createGiftVouchersFromCart(); setScreen('complete'); setPendingInvoiceData(undefined);
     toast.success('Račun zaključen');
   };
 
