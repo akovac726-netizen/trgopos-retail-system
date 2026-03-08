@@ -313,21 +313,21 @@ const Index = () => {
       if (item.isStornoed) continue;
       // embalaža now tracked in products table, no skip needed
       if (item.isReturn) {
-        const { data } = await supabase.from('products').select('stock').eq('ean', item.ean as any).single();
-        if (data) await supabase.from('products').update({ stock: (data as any).stock + item.quantity } as any).eq('ean', item.ean as any);
+        const { data } = await supabase.from('products').select('stock').eq('ean', item.ean).single();
+        if (data) await supabase.from('products').update({ stock: data.stock + item.quantity }).eq('ean', item.ean);
       } else {
-        const { data } = await supabase.from('products').select('stock, name, min_stock').eq('ean', item.ean as any).single();
+        const { data } = await supabase.from('products').select('stock, name, min_stock').eq('ean', item.ean).single();
         if (data) {
-          const d = data as any; const newStock = Math.max(0, (d.stock || 0) - item.quantity);
-          await supabase.from('products').update({ stock: newStock } as any).eq('ean', item.ean as any);
-          if (newStock <= (d.min_stock || 0)) toast.warning(`⚠ Nizka zaloga: ${d.name} (${newStock} kosov)`);
+          const newStock = Math.max(0, (data.stock || 0) - item.quantity);
+          await supabase.from('products').update({ stock: newStock }).eq('ean', item.ean);
+          if (newStock <= (data.min_stock || 0)) toast.warning(`⚠ Nizka zaloga: ${data.name} (${newStock} kosov)`);
         }
       }
     }
   };
 
   const getNextReceiptNumber = async (): Promise<string> => {
-    const { data, error } = await supabase.rpc('get_next_receipt_number' as any);
+    const { data, error } = await supabase.rpc('get_next_receipt_number');
     if (error || !data) {
       const next = receiptCounter + 1;
       setReceiptCounter(next);
@@ -366,15 +366,14 @@ const Index = () => {
   };
 
   const handleBonPayment = async (code: string, amount: number) => {
-    const { data: voucher } = await supabase.from('gift_vouchers').select('*').eq('code', code as any).single();
+    const { data: voucher } = await supabase.from('gift_vouchers').select('*').eq('code', code).single();
     if (!voucher) { toast.error('Bon ni najden'); return; }
-    const v = voucher as any;
-    if (v.is_used || v.remaining_amount <= 0) { toast.error('Bon je že porabljen'); return; }
-    if (v.remaining_amount < total) { toast.error(`Bon nima dovolj sredstev (${v.remaining_amount} €)`); return; }
+    if (voucher.is_used || voucher.remaining_amount <= 0) { toast.error('Bon je že porabljen'); return; }
+    if (voucher.remaining_amount < total) { toast.error(`Bon nima dovolj sredstev (${voucher.remaining_amount} €)`); return; }
     await supabase.from('gift_vouchers').update({
-      remaining_amount: v.remaining_amount - total, is_used: v.remaining_amount - total <= 0,
+      remaining_amount: voucher.remaining_amount - total, is_used: voucher.remaining_amount - total <= 0,
       used_by: currentCashier?.id, used_at: new Date().toISOString(),
-    } as any).eq('id', v.id as any);
+    }).eq('id', voucher.id);
     const transaction = await createTransaction('darilni bon', total, 0);
     setLastTransaction(transaction); setTransactions(prev => [transaction, ...prev]);
     await deductStock(cartItems); setScreen('complete'); setPendingInvoiceData(undefined);
@@ -443,7 +442,7 @@ const Index = () => {
   const handleCreateGiftVoucher = async (code: string, amount: number) => {
     await supabase.from('gift_vouchers').insert({
       code, amount, remaining_amount: amount, created_by: currentCashier?.id || '',
-    } as any);
+    });
     toast.success(`Darilni bon ${code} ustvarjen (${amount} EUR)`);
     setScreen('main');
   };
