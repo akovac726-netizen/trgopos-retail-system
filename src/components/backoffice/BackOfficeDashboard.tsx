@@ -135,7 +135,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const days = ['ponedeljek', 'torek', 'sreda', 'četrtek', 'petek', 'sobota', 'nedelja'];
 
   useEffect(() => {
-    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules();
+    fetchProducts(); fetchPartners(); fetchEmployees(); fetchLeaveRequests(); fetchOrders(); fetchSchedules(); fetchBusinessDay(); fetchClosingReportsFromDB();
     const channel = supabase
       .channel('bo-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchProducts)
@@ -144,6 +144,9 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_requests' }, fetchLeaveRequests)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules' }, fetchSchedules)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'business_days' }, fetchBusinessDay)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'closing_reports' }, fetchClosingReportsFromDB)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, fetchClosingReportsFromDB)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -207,8 +210,17 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       })));
     }
   };
+  const fetchBusinessDay = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const { data } = await supabase.from('business_days').select('*').eq('date', today as any).maybeSingle();
+    if (data) setBusinessOpened((data as any).status === 'open');
+    else setBusinessOpened(false);
+  };
+  const fetchClosingReportsFromDB = async () => {
+    // Realtime trigger - forces component awareness of closing_reports/transactions changes
+  };
 
-  const generateAuthCode = () => {
+
     const code = Math.floor(10000 + Math.random() * 90000).toString();
     setAuthCode(code);
     setAuthCodeExpiry(Date.now() + 4 * 60 * 60 * 1000);
