@@ -89,6 +89,39 @@ const Index = () => {
   const [pendingStornoIndex, setPendingStornoIndex] = useState<number | null>(null);
   const [managerCodeTitle, setManagerCodeTitle] = useState("Koda poslovodje");
 
+  // Fetch transactions - PODPORA (00087) sees ALL registers' full history, others see only their register today
+  const fetchTransactions = async (cashierId?: string) => {
+    const isSupport = cashierId === '00087';
+    let query = supabase.from('transactions').select('*').order('created_at', { ascending: false });
+    if (isSupport) {
+      // PODPORA sees everything across all registers
+      query = query.limit(500);
+    } else {
+      // Regular cashiers see only their register, today only
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      query = query.eq('register_id', registerId).gte('created_at', todayStart.toISOString()).limit(100);
+    }
+    const { data } = await query;
+    if (data) {
+      setTransactions((data as any[]).map(t => ({
+        id: t.receipt_number,
+        items: t.items as CartItem[],
+        subtotal: Number(t.subtotal),
+        discount: Number(t.discount),
+        total: Number(t.total),
+        paymentMethod: t.payment_method,
+        amountPaid: Number(t.amount_paid),
+        change: Number(t.change_amount),
+        timestamp: new Date(t.created_at),
+        cashierId: t.cashier_id,
+        cashierName: t.cashier_name,
+        invoiceData: t.invoice_data as InvoiceData | undefined,
+        registerId: t.register_id,
+      })));
+    }
+  };
+
   useEffect(() => {
     const fetchProducts = async () => {
       const { data, error } = await supabase.from('products').select('*').order('name');
@@ -99,26 +132,6 @@ const Index = () => {
       }
     };
     fetchProducts();
-
-    const fetchTransactions = async () => {
-      const { data } = await supabase.from('transactions').select('*').eq('register_id', registerId).order('created_at', { ascending: false }).limit(100);
-      if (data) {
-        setTransactions((data as any[]).map(t => ({
-          id: t.receipt_number,
-          items: t.items as CartItem[],
-          subtotal: Number(t.subtotal),
-          discount: Number(t.discount),
-          total: Number(t.total),
-          paymentMethod: t.payment_method,
-          amountPaid: Number(t.amount_paid),
-          change: Number(t.change_amount),
-          timestamp: new Date(t.created_at),
-          cashierId: t.cashier_id,
-          cashierName: t.cashier_name,
-          invoiceData: t.invoice_data as InvoiceData | undefined,
-        })));
-      }
-    };
     fetchTransactions();
 
     const fetchEmployees = async () => {
