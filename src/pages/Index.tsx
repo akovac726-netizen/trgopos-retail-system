@@ -27,8 +27,6 @@ const FALLBACK_CASHIERS: Cashier[] = [
   { id: '00087', name: 'PODPORA STANDBUY', password: '00087', role: 'admin', drawerCode: '1359' },
 ];
 
-const EMBALAZA_PRICE = 0.50;
-const EMBALAZA_NAME = "Vrečka (embalaža)";
 const EMBALAZA_EAN = "EMB001";
 
 const getProductsLookup = (products: Product[]): Record<string, { name: string; price: number }> => {
