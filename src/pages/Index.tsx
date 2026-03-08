@@ -451,7 +451,8 @@ const Index = () => {
 
   // Login
   if (appMode === 'login') {
-    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={handleBackOfficeLogin} registerId={registerId} registerLocked={registerLocked} />;
+    return <LoginScreen cashiers={cashiers} onLogin={handleLogin} onBackOfficeLogin={handleBackOfficeLogin} registerId={registerId} registerLocked={registerLocked}
+      onSelectRegister={(id: number) => { localStorage.setItem('trgopos_register_id', String(id)); setRegisterIdState(id); }} />;
   }
 
   // BackOffice

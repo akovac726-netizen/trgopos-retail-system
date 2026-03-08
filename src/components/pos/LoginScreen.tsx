@@ -11,9 +11,10 @@ interface LoginScreenProps {
   onBackOfficeLogin: (role: 'admin' | 'shop') => void;
   registerId: number;
   registerLocked: boolean;
+  onSelectRegister: (id: number) => void;
 }
 
-const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registerLocked }: LoginScreenProps) => {
+const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registerLocked, onSelectRegister }: LoginScreenProps) => {
   const [mode, setMode] = useState<AppMode>('trgopos');
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -169,7 +170,29 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
         </div>
       </div>
 
-      {/* Centered content */}
+      {/* Register selection screen */}
+      {registerId === 0 ? (
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center -mt-8">
+          <div className="mb-6">
+            <h2 className="text-5xl font-black tracking-wide">
+              <span className="text-sky-500">Stand</span><span className="text-sky-600">Buy</span>
+              <span className="text-orange-400 text-4xl ml-1">★</span>
+            </h2>
+            <p className="text-center text-gray-700 font-bold text-sm mt-1 tracking-[0.3em]">TrgoPOS</p>
+          </div>
+          <p className="text-lg font-bold text-gray-700 mb-4">Izberite blagajno za to napravo:</p>
+          <div className="flex gap-4">
+            {[1, 2, 3].map(id => (
+              <button key={id} onClick={() => onSelectRegister(id)}
+                className="w-28 h-28 bg-white border-4 border-sky-400 rounded-xl text-3xl font-black text-sky-600 hover:bg-sky-50 hover:border-sky-500 transition-all shadow-lg">
+                {id}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-gray-500 mt-4">Ta izbira se shrani na napravo.</p>
+        </div>
+      ) : (
+      /* Centered content */
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center -mt-8">
         {/* StandBuy Logo */}
         <div className="mb-4">
