@@ -67,6 +67,8 @@ const Index = () => {
   const [showReturnDialog, setShowReturnDialog] = useState(false);
   const [showPriceCheckDialog, setShowPriceCheckDialog] = useState(false);
   const [showPartnerInvoiceDialog, setShowPartnerInvoiceDialog] = useState(false);
+  const [showInfoDialog, setShowInfoDialog] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [pendingStornoIndex, setPendingStornoIndex] = useState<number | null>(null);
   const [managerCodeTitle, setManagerCodeTitle] = useState("Koda poslovodje");
 
@@ -392,7 +394,16 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <POSHeader cashier={currentCashier} activeTab={posTab} onTabChange={setPosTab} onLogout={handleLogout} />
+      <POSHeader cashier={currentCashier} activeTab={posTab} onTabChange={setPosTab} onLogout={handleLogout}
+        onInfo={() => setShowInfoDialog(true)}
+        onSettings={() => {
+          if (currentCashier?.id === '00087') {
+            setShowSettingsDialog(true);
+          } else {
+            toast.error('Nastavitve so dostopne samo profilu PODPORA STANDBUY');
+          }
+        }}
+      />
 
       <main className="flex-1 overflow-hidden">
         {posTab === 'blagajna' && screen === 'main' && (
