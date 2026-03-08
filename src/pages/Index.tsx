@@ -28,6 +28,7 @@ const cashiers: Cashier[] = [
   { id: '80001', name: 'Študent 1', password: '80001', role: 'cashier', drawerCode: '2468' },
   { id: '80002', name: 'Študent 2', password: '80002', role: 'cashier', drawerCode: '2468' },
   { id: '00087', name: 'PODPORA STANDBUY', password: '00087', role: 'admin', drawerCode: '1359' },
+  { id: '03157', name: 'Melisa Kedić', password: '03157', role: 'cashier', drawerCode: '2015' },
 ];
 
 const EMBALAZA_PRICE = 0.50;
