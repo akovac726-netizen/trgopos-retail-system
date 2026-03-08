@@ -153,6 +153,8 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [promoDiscountPercent, setPromoDiscountPercent] = useState("");
   const [promoQtyRequired, setPromoQtyRequired] = useState("");
   const [promoQtyFree, setPromoQtyFree] = useState("");
+  const [nalepkeSubTab, setNalepkeSubTab] = useState<'cenovke' | 'akcijske'>('cenovke');
+  const [selectedForPromoLabel, setSelectedForPromoLabel] = useState<string[]>([]);
 
   const closingReports = externalReports;
   const categories = ['Higiena', 'Osebna nega', 'Pijače', 'Žvečilni gumi', 'Pisarniški material', 'Kartice', 'Ostalo'];
@@ -309,7 +311,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   };
 
   const promoTypeLabel = (t: PromoType) => t === 'akcijska_cena' ? 'Akcijska cena' : t === 'popust_percent' ? '% Popust' : 'Količinska akcija';
-
 
   const generateAuthCode = () => {
     const code = Math.floor(10000 + Math.random() * 90000).toString();
@@ -977,14 +978,14 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               ))}
             </div>
 
-            {/* Add button - top right */}
-            {artikliSubTab === 'sifrant' && (
+            {/* Add button - top right - ADMIN ONLY */}
+            {artikliSubTab === 'sifrant' && role === 'admin' && (
               <div className="flex justify-end px-6 mt-3">
                 <button onClick={() => { resetProductForm(); setShowAddForm(true); }}
                   className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Dodaj</button>
               </div>
             )}
-            {artikliSubTab === 'akcije' && (
+            {artikliSubTab === 'akcije' && role === 'admin' && (
               <div className="flex justify-end px-6 mt-3">
                 <button onClick={() => { resetPromoForm(); setShowPromoForm(true); }}
                   className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Nova akcija</button>
@@ -1001,7 +1002,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                       className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
                   </div>
 
-                  {showAddForm && (
+                  {showAddForm && role === 'admin' && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                       <div className="bg-gray-200 rounded-xl p-6 w-[500px] border border-gray-400">
                         <div className="flex justify-end gap-2 mb-4">
@@ -1041,7 +1042,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kategorija</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Zaloga</th>
-                        <th className="border border-gray-400 px-3 py-2 w-10"></th>
+                        {role === 'admin' && <th className="border border-gray-400 px-3 py-2 w-10"></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -1057,9 +1058,11 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           <td className="border border-gray-300 px-3 py-2 text-sm">{p.category}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.stock}</td>
+                          {role === 'admin' && (
                           <td className="border border-gray-300 px-3 py-2 text-center">
                             <button onClick={() => handleEditStart(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
                           </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -1102,7 +1105,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               {artikliSubTab === 'akcije' && (
                 <>
                   {/* Promo form dialog */}
-                  {showPromoForm && (
+                  {showPromoForm && role === 'admin' && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                       <div className="bg-gray-200 rounded-xl p-6 w-[520px] border border-gray-400">
                         <h3 className="font-bold text-lg mb-4">{editingPromo ? 'Uredi akcijo' : 'Nova akcija'}</h3>
@@ -1200,12 +1203,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Do</th>
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Pogoji</th>
                         <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Status</th>
-                        <th className="border border-gray-400 px-3 py-2 w-24"></th>
+                        {role === 'admin' && <th className="border border-gray-400 px-3 py-2 w-24"></th>}
                       </tr>
                     </thead>
                     <tbody>
                       {promotions.length === 0 ? (
-                        <tr><td colSpan={8} className="text-center py-4 text-gray-500">Ni akcij</td></tr>
+                        <tr><td colSpan={role === 'admin' ? 8 : 7} className="text-center py-4 text-gray-500">Ni akcij</td></tr>
                       ) : promotions.map((p, i) => {
                         const isExpired = new Date(p.end_date) < new Date();
                         const conditions = p.type === 'akcijska_cena' ? `${p.promo_price?.toFixed(2)} €`
@@ -1220,17 +1223,25 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                             <td className="border border-gray-300 px-3 py-2 text-sm">{p.end_date}</td>
                             <td className="border border-gray-300 px-3 py-2 text-sm font-bold">{conditions}</td>
                             <td className="border border-gray-300 px-3 py-2 text-center">
-                              <button onClick={() => handleTogglePromo(p)}
-                                className={`px-2 py-0.5 rounded text-xs font-bold ${p.active && !isExpired ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
-                                {isExpired ? 'Potekla' : p.active ? 'Aktivna' : 'Neaktivna'}
-                              </button>
+                              {role === 'admin' ? (
+                                <button onClick={() => handleTogglePromo(p)}
+                                  className={`px-2 py-0.5 rounded text-xs font-bold ${p.active && !isExpired ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                  {isExpired ? 'Potekla' : p.active ? 'Aktivna' : 'Neaktivna'}
+                                </button>
+                              ) : (
+                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${p.active && !isExpired ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                  {isExpired ? 'Potekla' : p.active ? 'Aktivna' : 'Neaktivna'}
+                                </span>
+                              )}
                             </td>
+                            {role === 'admin' && (
                             <td className="border border-gray-300 px-3 py-2 text-center">
                               <div className="flex gap-1 justify-center">
                                 <button onClick={() => handleEditPromo(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
                                 <button onClick={() => handleDeletePromo(p)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>
                               </div>
                             </td>
+                            )}
                           </tr>
                         );
                       })}
@@ -1369,37 +1380,121 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         {/* NALEPKE / CENOVKE */}
         {activeTab === 'nalepke' && (
           <div>
-            <div className="bg-gray-600/80 px-6 py-3 flex items-center justify-between">
+            <div className="bg-gray-400/60 px-6 py-3 inline-block min-w-[500px]">
               <h2 className="text-white font-bold text-xl">Nalepke / Cenovke</h2>
-              <button onClick={() => {
-                const selected = products.filter(p => selectedForLabel.includes(p.id));
-                if (selected.length === 0) { toast.error('Izberite artikle'); return; }
-                toast.success(`${selected.length} cenovk pripravljenih`);
-              }} className="px-5 py-2 bg-purple-600 text-white font-bold rounded text-sm">Natisni ({selectedForLabel.length})</button>
             </div>
+
+            {/* Sub-tabs */}
+            <div className="flex gap-1 px-6 mt-3">
+              <button onClick={() => setNalepkeSubTab('cenovke')}
+                className={`px-5 py-2 text-sm font-medium border border-gray-400 transition-colors ${
+                  nalepkeSubTab === 'cenovke' ? 'bg-green-400 text-gray-900 font-bold' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}>
+                Cenovke
+              </button>
+              <button onClick={() => setNalepkeSubTab('akcijske')}
+                className={`px-5 py-2 text-sm font-medium border border-gray-400 transition-colors ${
+                  nalepkeSubTab === 'akcijske' ? 'bg-green-400 text-gray-900 font-bold' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}>
+                Akcijske cenovke
+              </button>
+            </div>
+
             <div className="px-6 py-4">
-              <table className="w-full border-collapse bg-white">
-                <thead><tr className="bg-gray-200">
-                  <th className="border border-gray-400 px-3 py-2 w-10"></th>
-                  <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
-                  <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Artikel</th>
-                  <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
-                </tr></thead>
-                <tbody>
-                  {products.map((p, i) => (
-                    <tr key={p.id} className={`cursor-pointer ${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`} onClick={() => setSelectedForLabel(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])}>
-                      <td className="border border-gray-300 px-3 py-2 text-center">
-                        <div className={`w-4 h-4 rounded border-2 mx-auto flex items-center justify-center ${selectedForLabel.includes(p.id) ? 'bg-purple-600 border-purple-600' : 'border-gray-400'}`}>
-                          {selectedForLabel.includes(p.id) && <Check className="w-3 h-3 text-white" />}
-                        </div>
-                      </td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{p.ean}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{p.name}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* Standard CENOVKE */}
+              {nalepkeSubTab === 'cenovke' && (
+                <>
+                  <div className="flex justify-end mb-3">
+                    <button onClick={() => {
+                      const selected = products.filter(p => selectedForLabel.includes(p.id));
+                      if (selected.length === 0) { toast.error('Izberite artikle'); return; }
+                      toast.success(`${selected.length} cenovk pripravljenih za tisk`);
+                    }} className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">
+                      🖨 Natisni ({selectedForLabel.length})
+                    </button>
+                  </div>
+                  <table className="w-full border-collapse bg-white">
+                    <thead><tr className="bg-gray-200">
+                      <th className="border border-gray-400 px-3 py-2 w-10"></th>
+                      <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
+                      <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Artikel</th>
+                      <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
+                    </tr></thead>
+                    <tbody>
+                      {products.map((p, i) => (
+                        <tr key={p.id} className={`cursor-pointer ${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`} onClick={() => setSelectedForLabel(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])}>
+                          <td className="border border-gray-300 px-3 py-2 text-center">
+                            <div className={`w-4 h-4 rounded border-2 mx-auto flex items-center justify-center ${selectedForLabel.includes(p.id) ? 'bg-purple-600 border-purple-600' : 'border-gray-400'}`}>
+                              {selectedForLabel.includes(p.id) && <Check className="w-3 h-3 text-white" />}
+                            </div>
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{p.ean}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm">{p.name}</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+              {/* AKCIJSKE CENOVKE */}
+              {nalepkeSubTab === 'akcijske' && (() => {
+                const activePromos = promotions.filter(p => p.active && new Date(p.end_date) >= new Date());
+                return (
+                  <>
+                    <div className="flex justify-end mb-3">
+                      <button onClick={() => {
+                        const selected = activePromos.filter(p => selectedForPromoLabel.includes(p.id));
+                        if (selected.length === 0) { toast.error('Izberite akcije za tisk'); return; }
+                        toast.success(`${selected.length} akcijskih cenovk pripravljenih za tisk`);
+                      }} className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded text-sm">
+                        🖨 Natisni akcijske ({selectedForPromoLabel.length})
+                      </button>
+                    </div>
+                    {activePromos.length === 0 ? (
+                      <div className="text-gray-400 text-center py-12 text-lg">Ni aktivnih akcij za tisk cenovk</div>
+                    ) : (
+                      <table className="w-full border-collapse bg-white">
+                        <thead><tr className="bg-orange-100">
+                          <th className="border border-gray-400 px-3 py-2 w-10"></th>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Artikel</th>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Tip akcije</th>
+                          <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Redna cena</th>
+                          <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Akcijska cena</th>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Veljavnost</th>
+                        </tr></thead>
+                        <tbody>
+                          {activePromos.map((promo, i) => {
+                            const product = products.find(p => p.ean === promo.product_ean);
+                            const regularPrice = product?.price || 0;
+                            const promoDisplay = promo.type === 'akcijska_cena' ? `${promo.promo_price?.toFixed(2)} €`
+                              : promo.type === 'popust_percent' ? `${(regularPrice * (1 - (promo.discount_percent || 0) / 100)).toFixed(2)} € (-${promo.discount_percent}%)`
+                              : `Kupi ${promo.qty_required}, +${promo.qty_free} gratis`;
+                            return (
+                              <tr key={promo.id} className={`cursor-pointer ${i % 2 === 1 ? 'bg-orange-50' : 'bg-white'}`}
+                                onClick={() => setSelectedForPromoLabel(prev => prev.includes(promo.id) ? prev.filter(id => id !== promo.id) : [...prev, promo.id])}>
+                                <td className="border border-gray-300 px-3 py-2 text-center">
+                                  <div className={`w-4 h-4 rounded border-2 mx-auto flex items-center justify-center ${selectedForPromoLabel.includes(promo.id) ? 'bg-orange-500 border-orange-600' : 'border-gray-400'}`}>
+                                    {selectedForPromoLabel.includes(promo.id) && <Check className="w-3 h-3 text-white" />}
+                                  </div>
+                                </td>
+                                <td className="border border-gray-300 px-3 py-2 text-sm font-medium">{promo.product_name}</td>
+                                <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{promo.product_ean}</td>
+                                <td className="border border-gray-300 px-3 py-2 text-sm">{promoTypeLabel(promo.type)}</td>
+                                <td className="border border-gray-300 px-3 py-2 text-sm text-right line-through text-gray-400">{regularPrice.toFixed(2)} €</td>
+                                <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold text-red-600">{promoDisplay}</td>
+                                <td className="border border-gray-300 px-3 py-2 text-sm">{promo.start_date} – {promo.end_date}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}
