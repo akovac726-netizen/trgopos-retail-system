@@ -1,4 +1,4 @@
-import { Banknote, CreditCard, FileText, SplitSquareHorizontal, ArrowLeft } from "lucide-react";
+import { Banknote, CreditCard, FileText, ArrowLeft } from "lucide-react";
 
 interface PaymentScreenProps {
   total: number;
@@ -11,44 +11,80 @@ const PaymentScreen = ({ total, onPaymentMethod, onBack }: PaymentScreenProps) =
     return price.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const paymentMethods = [
-    { id: 'cash', label: 'Gotovina', icon: Banknote, className: 'bg-green-500/20 hover:bg-green-500/30 text-green-700' },
-    { id: 'card', label: 'Kartica', icon: CreditCard, className: 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-700' },
-    { id: 'partial', label: 'Kombinirano plačilo', icon: SplitSquareHorizontal, className: 'bg-violet-500/20 hover:bg-violet-500/30 text-violet-700' },
-    { id: 'invoice', label: 'Plačilo na fakturo', icon: FileText, className: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-700' },
-  ];
-
   return (
-    <div className="h-full flex flex-col animate-fade-in">
-      {/* Header with back button */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={onBack}
-          className="pos-btn-secondary p-3"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <h2 className="text-2xl font-bold">Izbira načina plačila</h2>
+    <div className="h-full flex overflow-hidden" style={{ background: '#e8f4f8' }}>
+      {/* LEFT panel - Receipt info */}
+      <div className="flex-[4] flex flex-col p-4 border-r-2 border-sky-300">
+        <div className="border-2 border-gray-800 bg-white p-4 mb-3">
+          <h2 className="text-2xl font-bold mb-4">Račun:</h2>
+          <div className="space-y-2">
+            <div className="flex justify-between border-2 border-gray-800 px-3 py-2">
+              <span className="font-medium">Plačano:</span>
+              <span className="font-bold">{formatPrice(0)}</span>
+            </div>
+            <div className="flex justify-between border-2 border-gray-800 px-3 py-2">
+              <span className="font-medium">Za plačati:</span>
+              <span className="font-bold">{formatPrice(total)} €</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1" />
       </div>
 
-      {/* Total amount display */}
-      <div className="pos-panel p-8 text-center mb-8">
-        <p className="text-muted-foreground text-lg mb-2">Za plačilo</p>
-        <p className="pos-amount-display text-primary">{formatPrice(total)} €</p>
-      </div>
+      {/* RIGHT panel - Payment methods */}
+      <div className="flex-[6] flex flex-col p-4">
+        {/* Header: Plačilna sredstva */}
+        <div className="flex items-center justify-between border-2 border-gray-800 bg-white px-4 py-3 mb-4">
+          <span className="text-2xl font-bold">←</span>
+          <h2 className="text-xl font-bold">Plačilna sredstva</h2>
+          <span className="text-2xl font-bold">→</span>
+        </div>
 
-      {/* Payment method buttons */}
-      <div className="grid grid-cols-2 gap-4 flex-1">
-        {paymentMethods.map((method) => (
-          <button
-            key={method.id}
-            onClick={() => onPaymentMethod(method.id)}
-            className={`h-24 flex items-center justify-center gap-4 text-xl font-semibold rounded-xl transition-colors ${method.className}`}
-          >
-            <method.icon className="w-8 h-8" />
-            <span>{method.label}</span>
+        {/* Payment buttons - red gradient matching PDF */}
+        <div className="space-y-3 mb-4">
+          <button onClick={() => onPaymentMethod('cash')}
+            className="w-full h-16 rounded-lg flex items-center gap-4 px-6 text-white font-bold text-xl transition-all hover:brightness-110 border-2 border-red-700"
+            style={{ background: 'linear-gradient(180deg, #e05050, #a03030)' }}>
+            <span className="text-3xl">€</span>
+            <span>Plačilo z gotovino</span>
           </button>
-        ))}
+          <button onClick={() => onPaymentMethod('card')}
+            className="w-full h-16 rounded-lg flex items-center gap-4 px-6 text-white font-bold text-xl transition-all hover:brightness-110 border-2 border-red-700"
+            style={{ background: 'linear-gradient(180deg, #d04545, #902828)' }}>
+            <span className="text-3xl">▭</span>
+            <span>Plačilo s kartico</span>
+          </button>
+          <button onClick={() => onPaymentMethod('invoice')}
+            className="w-full h-16 rounded-lg flex items-center gap-4 px-6 text-white font-bold text-xl transition-all hover:brightness-110 border-2 border-red-700"
+            style={{ background: 'linear-gradient(180deg, #c03535, #802020)' }}>
+            <span className="text-3xl">📃</span>
+            <span>Drugi način plačila</span>
+          </button>
+        </div>
+
+        {/* Bottom row: Zurück + Polovično plačilo */}
+        <div className="flex items-center gap-4 mb-4">
+          <button onClick={onBack}
+            className="px-6 py-3 border-2 border-gray-800 bg-white hover:bg-gray-100 font-bold text-base transition-colors rounded">
+            &lt; Zurück
+          </button>
+          <div className="flex-1" />
+          <button onClick={() => onPaymentMethod('partial')}
+            className="px-6 py-3 rounded-lg font-bold text-base text-white border-2 border-orange-600 transition-colors"
+            style={{ background: 'linear-gradient(180deg, #f0a050, #e08030)' }}>
+            Polovično<br/>plačilo
+          </button>
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Pomoč button bottom-right */}
+        <div className="flex justify-end">
+          <button className="px-4 py-2 border-2 border-orange-500 rounded-lg font-bold text-sm transition-colors"
+            style={{ background: 'linear-gradient(180deg, #f0a050, #e08030)', color: 'white' }}>
+            😊 Pomoč
+          </button>
+        </div>
       </div>
     </div>
   );
