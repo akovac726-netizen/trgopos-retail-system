@@ -46,25 +46,21 @@ const BlagajnaTab = ({
   ];
 
   return (
-    <div className="h-full flex gap-3 p-3 overflow-hidden" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
-      {/* LEFT - Receipt list */}
-      <div className="flex-[4] flex flex-col min-h-0">
-        {/* Header with scroll arrows */}
-        <div className="flex items-center border-2 border-gray-600 bg-white rounded-t">
-          <button onClick={scrollDown} className="p-2 hover:bg-gray-100 border-r border-gray-400">
-            <ChevronDown className="w-7 h-7 text-gray-800" />
-          </button>
-          <div className="flex-1 px-3 py-2 text-sm font-medium">
-            <div>Datum: {new Date().toLocaleDateString('sl-SI')}</div>
-            <div>Številka računa:</div>
+    <div className="h-full flex gap-0 overflow-hidden" style={{ background: '#e8f4f8' }}>
+      {/* LEFT panel - Article list */}
+      <div className="flex-[5] flex flex-col min-h-0 p-3 pr-0">
+        {/* Column headers */}
+        <div className="flex items-center border-2 border-gray-800 bg-white">
+          <div className="flex-[3] px-3 py-2 font-bold text-sm border-r border-gray-400">Artikel</div>
+          <div className="flex-[2] px-3 py-2 font-bold text-sm text-center border-r border-gray-400">Količina</div>
+          <div className="flex-[2] px-3 py-2 font-bold text-sm text-right">Cena</div>
+          <div className="flex flex-col border-l-2 border-gray-800">
+            <button onClick={scrollUp} className="px-2 py-1 bg-sky-400 hover:bg-sky-500 text-white font-bold text-lg">∧</button>
           </div>
-          <button onClick={scrollUp} className="p-2 hover:bg-gray-100 border-l border-gray-400">
-            <ChevronUp className="w-7 h-7 text-gray-800" />
-          </button>
         </div>
 
         {/* Cart items */}
-        <div ref={listRef} className="flex-1 border-2 border-t-0 border-gray-600 bg-white overflow-y-auto">
+        <div ref={listRef} className="flex-1 border-2 border-t-0 border-gray-800 bg-white overflow-y-auto relative">
           {cartItems.length === 0 ? (
             <div className="flex items-center justify-center h-full text-gray-400 text-sm">
               Skenirajte artikel ali vnesite EAN kodo
@@ -72,127 +68,136 @@ const BlagajnaTab = ({
           ) : (
             cartItems.map((item, idx) => (
               <div key={item.id} onClick={() => onSelectItem(idx)}
-                className={`px-3 py-2 border-b border-gray-200 cursor-pointer text-sm flex justify-between transition-colors ${
+                className={`px-3 py-2 border-b border-gray-200 cursor-pointer text-sm flex items-center transition-colors ${
                   item.isStornoed ? 'bg-red-50 line-through text-red-400' :
                   selectedItemIndex === idx ? 'bg-sky-100' : 'hover:bg-gray-50'
                 }`}>
-                <div className="flex-1">
+                <div className="flex-[3]">
                   {item.isStornoed && <span className="text-red-500 font-bold mr-1">–</span>}
                   <span className={`font-medium ${item.isStornoed ? 'text-red-400' : ''}`}>{item.name}</span>
                   {item.isStornoed && <span className="ml-2 text-red-500 text-xs font-bold">STORNO</span>}
                   {!item.isStornoed && item.discount && <span className="ml-2 text-red-500 text-xs">-{item.discount.toFixed(0)}%</span>}
                 </div>
-                <div className="flex gap-4 text-right">
-                  <span>{item.isStornoed ? '-' : ''}{item.quantity}x</span>
-                  <span className={`font-medium w-20 text-right ${item.isStornoed ? 'text-red-400' : ''}`}>{item.isStornoed ? '-' : ''}{formatPrice(item.price * item.quantity)} €</span>
+                <div className="flex-[2] text-center">{item.isStornoed ? '-' : ''}{item.quantity}x</div>
+                <div className={`flex-[2] text-right font-medium ${item.isStornoed ? 'text-red-400' : ''}`}>
+                  {item.isStornoed ? '-' : ''}{formatPrice(item.price * item.quantity)} €
                 </div>
               </div>
             ))
           )}
+          {/* Scroll down button at bottom-right of list */}
+          <button onClick={scrollDown}
+            className="absolute bottom-1 right-1 w-8 h-8 bg-sky-400 hover:bg-sky-500 text-white font-bold text-lg flex items-center justify-center">
+            ∨
+          </button>
         </div>
 
-        {/* Total bar */}
-        <div className="border-2 border-t-0 border-gray-600 bg-white rounded-b px-3 py-2 flex justify-between items-center">
-          <span className="font-bold text-sm">Skupini znesek v EUR:</span>
-          <span className="font-bold text-lg font-mono">{formatPrice(total)}</span>
+        {/* Total */}
+        <div className="border-2 border-t-0 border-gray-800 bg-gray-100 px-3 py-2 flex justify-between items-center">
+          <span className="font-bold text-base">Vsota:</span>
+          <span className="font-bold text-xl font-mono">{formatPrice(total)} EUR</span>
         </div>
+
+        {/* Na plačilo button - yellow, wide */}
+        <button onClick={onProceedToPayment} disabled={cartItems.length === 0}
+          className="mt-1 w-full h-14 font-bold text-2xl text-gray-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors border-2 border-yellow-600"
+          style={{ background: 'linear-gradient(180deg, #ffe066, #ffc800)' }}>
+          Na plačilo
+        </button>
       </div>
 
-      {/* RIGHT side */}
-      <div className="flex-[6] flex flex-col gap-2 min-h-0">
-        {/* Last added item info */}
-        <div className="border-2 border-gray-600 bg-white rounded p-3">
-          <h3 className="font-bold text-lg mb-1">Zadnji dodani artikel:</h3>
-          <div className="border-t border-gray-400 pt-2">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
-              <div>EAN koda: <span className="font-medium">{lastAddedItem?.ean || ''}</span></div>
-              <div>Količina: <span className="font-medium">{lastAddedItem?.quantity || ''}</span></div>
-              <div>Prodajna cena: <span className="font-medium">{lastAddedItem ? formatPrice(lastAddedItem.price) : ''}</span></div>
-              <div>Vrednost: <span className="font-medium">{lastAddedItem ? formatPrice(lastAddedItem.price * lastAddedItem.quantity) : ''}</span></div>
-            </div>
-          </div>
-        </div>
+      {/* RIGHT panel */}
+      <div className="flex-[5] flex flex-col gap-2 p-3 min-h-0">
+        {/* Top action buttons - 3x3 grid matching PDF */}
+        <div className="grid grid-cols-3 gap-2">
+          {/* Row 1: Vračilo + 2 empty */}
+          <button onClick={isSelfCheckout ? undefined : onReturn} disabled={isSelfCheckout}
+            className={`h-12 rounded-lg font-bold text-sm border-2 transition-colors ${isSelfCheckout ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed' : 'text-white border-red-600'}`}
+            style={!isSelfCheckout ? { background: 'linear-gradient(180deg, #f08080, #e05050)' } : {}}>
+            Vračilo
+          </button>
+          <button className="h-12 rounded-lg font-bold text-sm border-2 border-sky-300 bg-sky-100/50" disabled />
+          <button className="h-12 rounded-lg font-bold text-sm border-2 border-sky-300 bg-sky-100/50" disabled />
 
-        {/* Top action row */}
-        <div className="flex gap-2">
-          <button onClick={isSelfCheckout ? undefined : onOpenDrawer} disabled={isSelfCheckout}
-            className={`flex-1 h-14 rounded-lg font-bold text-sm transition-colors border-2 ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 border-gray-400/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-700'}`}>
-            ODPRI<br/>BL. PREDAL
+          {/* Row 2: 2 empty + empty */}
+          <button className="h-12 rounded-lg font-bold text-sm border-2 border-sky-300 bg-sky-100/50" disabled />
+          <button className="h-12 rounded-lg font-bold text-sm border-2 border-sky-300 bg-sky-100/50" disabled />
+          <button className="h-12 rounded-lg font-bold text-sm border-2 border-sky-300 bg-sky-100/50" disabled />
+
+          {/* Row 3: empty + Popust + Vrečka(embalaža) */}
+          <button className="h-12 rounded-lg font-bold text-sm border-2 border-sky-300 bg-sky-100/50" disabled />
+          <button onClick={isSelfCheckout ? undefined : onDiscount} disabled={isSelfCheckout}
+            className={`h-12 rounded-lg font-bold text-sm border-2 transition-colors ${isSelfCheckout ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed' : 'text-white border-purple-600'}`}
+            style={!isSelfCheckout ? { background: 'linear-gradient(180deg, #b090d0, #8060b0)' } : {}}>
+            Popust
           </button>
-          <button onClick={isSelfCheckout ? undefined : onPriceCheck} disabled={isSelfCheckout}
-            className={`flex-1 h-14 rounded-lg font-bold text-sm transition-colors border-2 ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 border-gray-400/50 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-gray-900 border-yellow-600'}`}>
-            Preveri<br/>ceno
-          </button>
-          <button onClick={isSelfCheckout ? undefined : onGiftVoucher} disabled={isSelfCheckout}
-            className={`flex-1 h-14 rounded-lg font-bold text-sm transition-colors border-2 ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 border-gray-400/50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700 text-white border-purple-700'}`}>
-            DARILNI<br/>BONI
-          </button>
-          <button onClick={onProceedToPayment} disabled={cartItems.length === 0}
-            className="flex-1 h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-            Zaključi<br/>račun
+          <button onClick={onEmbalaza}
+            className="h-12 rounded-lg font-bold text-xs border-2 border-sky-400 bg-white text-gray-800 hover:bg-sky-50 transition-colors">
+            Vrečka<br/>(embalaža)
           </button>
         </div>
 
-        {/* Bottom section: left buttons + numpad + right buttons */}
-        <div className="flex gap-2 flex-1 min-h-0">
-          {/* Left action buttons */}
-          <div className="flex flex-col gap-2 w-28">
-            <button onClick={onProductSearch}
-              className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
-              EAN koda
-            </button>
-            <button onClick={onEmbalaza}
-              className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
-              Embalaža
-            </button>
-            <button onClick={isSelfCheckout ? undefined : onReturn} disabled={isSelfCheckout}
-              className={`flex-1 rounded-lg font-bold text-sm transition-colors flex items-center justify-center ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'}`}>
-              Vračilo
-            </button>
+        {/* Numpad section with EAN input */}
+        <div className="flex-1 flex flex-col border-2 border-gray-600 rounded-lg p-2 bg-white min-h-0">
+          {/* EAN input row */}
+          <div className="flex gap-1 mb-2">
+            <input type="text" value={inputValue} readOnly placeholder="Vnesite EAN šifro izdelka"
+              className="flex-1 h-9 px-3 border-2 border-gray-800 text-sm font-medium bg-white" />
+            <button onClick={onDelete} className="w-10 h-9 border-2 border-gray-800 bg-white hover:bg-gray-100 flex items-center justify-center font-bold text-lg">←</button>
+            <button onClick={() => { /* clear all input */ }} className="w-10 h-9 border-2 border-gray-800 bg-white hover:bg-gray-100 flex items-center justify-center font-bold text-lg">C</button>
           </div>
 
-          {/* Numpad */}
-          <div className="flex-1 flex flex-col gap-1.5 border-2 border-gray-400 rounded-lg p-2 bg-gray-100">
-            {numKeys.map((row, ri) => (
-              <div key={ri} className="flex gap-1.5 flex-1">
-                {row.map(key => (
-                  <button key={key} onClick={() => onKeyPress(key)}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-                    {key}
-                  </button>
-                ))}
+          {/* Numpad + right action column */}
+          <div className="flex-1 flex gap-1 min-h-0">
+            {/* 3x4 numpad */}
+            <div className="flex-[3] flex flex-col gap-1">
+              {numKeys.map((row, ri) => (
+                <div key={ri} className="flex gap-1 flex-1">
+                  {row.map(key => (
+                    <button key={key} onClick={() => onKeyPress(key)}
+                      className="flex-1 rounded-lg font-bold text-xl text-gray-800 border-2 border-sky-400 transition-colors"
+                      style={{ background: 'linear-gradient(180deg, #b3e0f2, #87ceeb)' }}>
+                      {key}
+                    </button>
+                  ))}
+                </div>
+              ))}
+              <div className="flex gap-1 flex-1">
+                <button onClick={() => onKeyPress('0')}
+                  className="flex-1 rounded-lg font-bold text-xl text-gray-800 border-2 border-sky-400 transition-colors"
+                  style={{ background: 'linear-gradient(180deg, #b3e0f2, #87ceeb)' }}>
+                  0
+                </button>
+                <button onClick={() => onKeyPress('00')}
+                  className="flex-1 rounded-lg font-bold text-xl text-gray-800 border-2 border-sky-400 transition-colors"
+                  style={{ background: 'linear-gradient(180deg, #b3e0f2, #87ceeb)' }}>
+                  00
+                </button>
+                <button onClick={() => onKeyPress(',')}
+                  className="flex-1 rounded-lg font-bold text-xl text-gray-800 border-2 border-sky-300 bg-sky-50 transition-colors">
+                  ,
+                </button>
               </div>
-            ))}
-            <div className="flex gap-1.5 flex-1">
-              <button onClick={() => onKeyPress('0')}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-                0
+            </div>
+
+            {/* Right column: Storno, Količina, Potrdi */}
+            <div className="flex-[1] flex flex-col gap-1">
+              <button onClick={onStorno}
+                className="flex-1 rounded-lg font-bold text-sm text-white border-2 border-red-600 transition-colors"
+                style={{ background: 'linear-gradient(180deg, #f06060, #d03030)' }}>
+                Storno
               </button>
-              <button onClick={() => onKeyPress('.')}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 border border-gray-400 rounded-lg font-bold text-2xl text-gray-700 transition-colors">
-                ,
+              <button onClick={onQuantity}
+                className="flex-1 rounded-lg font-bold text-sm text-white border-2 border-orange-500 transition-colors"
+                style={{ background: 'linear-gradient(180deg, #f0a050, #e08030)' }}>
+                Količina
               </button>
-              <button onClick={onDelete}
-                className="flex-1 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg flex items-center justify-center transition-colors">
-                <Delete className="w-7 h-7 text-white" />
+              <button onClick={onConfirm}
+                className="flex-[2] rounded-lg font-bold text-sm text-gray-800 border-2 border-green-400 transition-colors"
+                style={{ background: 'linear-gradient(180deg, #c5e8a0, #a8d86e)' }}>
+                Potrdi
               </button>
             </div>
-          </div>
-
-          {/* Right action buttons */}
-          <div className="flex flex-col gap-2 w-28">
-            <button onClick={onQuantity}
-              className="flex-1 bg-white border-2 border-gray-600 rounded-lg font-bold text-sm text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center">
-              Količina
-            </button>
-            <button onClick={isSelfCheckout ? undefined : onDiscount} disabled={isSelfCheckout}
-              className={`flex-1 rounded-lg font-bold text-sm transition-colors flex items-center justify-center border-2 ${isSelfCheckout ? 'bg-gray-400/50 text-gray-500 border-gray-400/50 cursor-not-allowed' : 'bg-white border-gray-600 text-gray-800 hover:bg-gray-50'}`}>
-              Popust
-            </button>
-            <button onClick={onStorno}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center">
-              Storno
-            </button>
           </div>
         </div>
       </div>
