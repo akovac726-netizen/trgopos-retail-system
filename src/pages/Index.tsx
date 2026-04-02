@@ -768,6 +768,13 @@ const Index = () => {
             onGiftVoucher={() => setScreen('giftvoucher')}
             onEmbalaza={handleEmbalaza}
             isSelfCheckout={isSelfCheckout}
+            quantityMode={showQuantityDialog}
+            discountMode={showDiscountDialog}
+            selectedItem={selectedItemIndex !== null ? cartItems[selectedItemIndex] : null}
+            onQuantityConfirm={(qty) => { handleQuantityConfirm(qty); setShowQuantityDialog(false); }}
+            onQuantityCancel={() => setShowQuantityDialog(false)}
+            onDiscountConfirm={(d, isP) => { handleApplyDiscount(d, isP); setShowDiscountDialog(false); }}
+            onDiscountCancel={() => setShowDiscountDialog(false)}
           />
         )}
 
