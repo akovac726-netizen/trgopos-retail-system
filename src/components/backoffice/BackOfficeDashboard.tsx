@@ -393,9 +393,19 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   };
 
   const handleBackendLogin = () => {
-    if ((backendUsername === 'StandBuyAdmin' && backendPassword === 'Admin12273') || (backendUsername === 'StandBuy.si' && backendPassword === 'TR122732207')) {
-      setBackendLoggedIn(true); toast.success('Prijava uspešna');
-    } else toast.error('Napačni podatki');
+    // Admin/Direktor credentials
+    if ((backendUsername === 'SB-admin' && backendPassword === 'StB@71X!') || (backendUsername === 'BB.admin' && backendPassword === 'S!RQB!XX!')) {
+      setBackendLoggedIn(true); toast.success('Prijava uspešna (Direktor)');
+    }
+    // Poslovodje login with their POS credentials (from employees table)
+    else {
+      const emp = employees.find(e => (e.username === backendUsername || e.code === backendUsername) && (e.password === backendPassword));
+      if (emp) {
+        setBackendLoggedIn(true); toast.success(`Prijava uspešna (${emp.firstName} ${emp.lastName})`);
+      } else {
+        toast.error('Napačni podatki');
+      }
+    }
   };
 
   const handleSaveEmployee = async () => {
