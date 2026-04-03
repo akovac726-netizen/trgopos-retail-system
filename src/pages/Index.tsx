@@ -259,14 +259,9 @@ const Index = () => {
     if (!inputValue) return;
     const product = productsLookup[inputValue];
     if (product) {
-      const existingIndex = cartItems.findIndex(item => item.ean === inputValue && !item.isReturn && !item.isStornoed);
-      if (existingIndex >= 0) {
-        const newItems = [...cartItems]; newItems[existingIndex].quantity += 1;
-        setCartItems(newItems); setSelectedItemIndex(existingIndex);
-      } else {
-        const newItem: CartItem = { id: Date.now().toString(), ean: inputValue, name: product.name, price: product.price, quantity: 1 };
-        setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
-      }
+      // Always add as new line - no aggregation
+      const newItem: CartItem = { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), ean: inputValue, name: product.name, price: product.price, quantity: 1 };
+      setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
       toast.success(`${product.name} dodan`);
     } else { toast.error('Artikel ni najden'); }
     setInputValue("");
