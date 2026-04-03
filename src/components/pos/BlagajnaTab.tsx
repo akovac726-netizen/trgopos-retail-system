@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { CartItem } from "@/types/pos";
+import { Product } from "@/types/inventory";
 
 interface BlagajnaTabProps {
   cartItems: CartItem[];
