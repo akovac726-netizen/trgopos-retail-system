@@ -267,30 +267,23 @@ const Index = () => {
     setInputValue("");
   };
 
-  // Embalaža - add a bag from products DB
-  const handleEmbalaza = () => {
+  // Embalaža - add a bag S/M/L from products DB
+  const handleEmbalaza = (ean: string) => {
     const lookup = getProductsLookup(products);
-    const emb = lookup[EMBALAZA_EAN];
+    const emb = lookup[ean];
     if (!emb) {
-      toast.error('Artikel embalaže (EMB001) ni najden v bazi. Dodajte ga v BackOffice.');
+      toast.error(`Artikel embalaže (${ean}) ni najden v bazi. Dodajte ga v BackOffice.`);
       return;
     }
-    const existingIndex = cartItems.findIndex(item => item.ean === EMBALAZA_EAN && !item.isStornoed);
-    if (existingIndex >= 0) {
-      const newItems = [...cartItems];
-      newItems[existingIndex].quantity += 1;
-      setCartItems(newItems);
-      setSelectedItemIndex(existingIndex);
-    } else {
-      const newItem: CartItem = {
-        id: Date.now().toString(),
-        ean: EMBALAZA_EAN,
-        name: emb.name,
-        price: emb.price,
-        quantity: 1,
-      };
-      setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
-    }
+    // Always add as new line
+    const newItem: CartItem = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      ean: ean,
+      name: emb.name,
+      price: emb.price,
+      quantity: 1,
+    };
+    setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
     toast.success(`${emb.name} dodana (${emb.price.toFixed(2)} €)`);
   };
 
