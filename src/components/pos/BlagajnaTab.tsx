@@ -330,7 +330,7 @@ const BlagajnaTab = ({
                 style={!isSelfCheckout ? { background: 'linear-gradient(180deg, #b090d0, #8060b0)' } : {}}>
                 Popust
               </button>
-              <button onClick={onEmbalaza}
+              <button onClick={() => setShowEmbalaza(true)}
                 className="h-12 rounded-lg font-bold text-xs border-2 border-sky-400 bg-white text-gray-800 hover:bg-sky-50 transition-colors">
                 Vrečka<br/>(embalaža)
               </button>
