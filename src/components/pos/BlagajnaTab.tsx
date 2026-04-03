@@ -63,7 +63,7 @@ const BlagajnaTab = ({
     ['1', '2', '3'],
   ];
 
-  const inlineMode = quantityMode || discountMode;
+  const inlineMode = quantityMode || discountMode || showEmbalaza;
 
   // Quantity handlers
   const handleQtyKey = (key: string) => {
