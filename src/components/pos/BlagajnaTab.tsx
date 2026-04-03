@@ -49,6 +49,8 @@ const BlagajnaTab = ({
   const [qtyValue, setQtyValue] = useState("");
   // Inline discount state
   const [discountValue, setDiscountValue] = useState("");
+  // Embalaža mode state
+  const [showEmbalaza, setShowEmbalaza] = useState(false);
 
   const scrollUp = () => listRef.current?.scrollBy({ top: -100, behavior: 'smooth' });
   const scrollDown = () => listRef.current?.scrollBy({ top: 100, behavior: 'smooth' });
