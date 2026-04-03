@@ -28,8 +28,7 @@ const FALLBACK_CASHIERS: Cashier[] = [
   { id: '00087', name: 'PODPORA STANDBUY', password: '00087', role: 'admin', drawerCode: '1359' },
 ];
 
-const EMBALAZA_EAN = "EMB001";
-
+const EMBALAZA_EANS = ["EMB-S", "EMB-M", "EMB-L"];
 // Get or assign a register ID for this device (max 3 registers + self-checkout 101-103)
 const MAX_REGISTERS = 3;
 const SELF_CHECKOUT_LABELS: Record<string, number> = { 'A1': 101, 'A2': 102, 'A3': 103 };
