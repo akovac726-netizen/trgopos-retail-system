@@ -14,11 +14,16 @@ interface ZakljucekTabProps {
   onEndShift: (report: ClosingReport) => void;
   onEndDay: (report: ClosingReport) => void;
   onOpenDrawer: () => void;
+  activeSubTab?: 'zakljucek' | 'informacije';
+  onSubTabChange?: (tab: 'zakljucek' | 'informacije') => void;
 }
 
-const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registerId, onEndShift, onEndDay, onOpenDrawer }: ZakljucekTabProps) => {
+const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registerId, onEndShift, onEndDay, onOpenDrawer, activeSubTab = 'zakljucek', onSubTabChange }: ZakljucekTabProps) => {
   const [showDrawerDialog, setShowDrawerDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<'shift' | 'day' | null>(null);
+  const [localSubTab, setLocalSubTab] = useState<'zakljucek' | 'informacije'>(activeSubTab);
+  const subTab = activeSubTab || localSubTab;
+  const setSubTab = onSubTabChange || setLocalSubTab;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -60,58 +65,100 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registe
   }
 
   return (
-    <div className="h-full flex items-center justify-center gap-8 p-6 overflow-hidden" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 30%, #fff 60%, #d4eaf7 80%, #4aa3df 100%)' }}>
-      {/* Left - Today's summary */}
-      <div className="flex flex-col w-80">
-        <div className="border-2 border-gray-600 rounded-t-lg bg-amber-300 text-center py-3">
-          <h3 className="font-bold text-lg">Dnevni pregled<br />Blagajna {registerId}</h3>
-        </div>
-        <div className="border-2 border-t-0 border-gray-600 bg-white rounded-b-lg p-4 min-h-[250px] space-y-2">
-          <div className="flex justify-between text-sm"><span>Gotovina:</span><strong>{totalCash.toFixed(2)} €</strong></div>
-          <div className="flex justify-between text-sm"><span>Kartica:</span><strong>{totalCard.toFixed(2)} €</strong></div>
-          {totalOther > 0 && <div className="flex justify-between text-sm"><span>Ostalo:</span><strong>{totalOther.toFixed(2)} €</strong></div>}
-          <div className="border-t border-gray-300 pt-2 flex justify-between text-sm"><span>Št. računov:</span><strong>{todayTransactions.length}</strong></div>
-          <div className="flex justify-between text-sm"><span>Št. artiklov:</span><strong>{totalItems}</strong></div>
-          <div className="border-t border-gray-300 pt-2 flex justify-between text-base font-bold"><span>SKUPAJ:</span><span>{totalRevenue.toFixed(2)} €</span></div>
+    <div className="h-full flex flex-col overflow-hidden" style={{ background: '#e8f4f8' }}>
+      {/* Top tabs: Zaključek | Informacije - matches Diapozitiv 12 */}
+      <div className="border-2 border-gray-800 bg-white mx-3 mt-3">
+        <div className="px-4 py-2 font-bold text-lg border-b border-gray-400">Glavni meni:</div>
+        <div className="flex">
+          <button onClick={() => setSubTab('zakljucek')}
+            className={`px-6 py-2 font-bold text-base border-r border-gray-400 transition-colors ${subTab === 'zakljucek' ? 'bg-sky-200' : 'bg-white hover:bg-gray-100'}`}>
+            Zaključek
+          </button>
+          <div className="flex-1" />
+          <button onClick={() => setSubTab('informacije')}
+            className={`px-6 py-2 font-bold text-base transition-colors ${subTab === 'informacije' ? 'bg-sky-200' : 'bg-white hover:bg-gray-100'}`}>
+            Informacije
+          </button>
         </div>
       </div>
 
-      {/* Right - Closing info and actions */}
-      <div className="flex flex-col gap-4 w-80">
-        {/* Closing info */}
-        <div className="border-2 border-gray-600 rounded-lg bg-white p-4">
-          <h3 className="font-bold text-xl mb-3">Zaključek blagajne</h3>
-          <div className="space-y-1 text-sm">
-            <p><strong>Številka blagajne:</strong> {registerId}</p>
-            <p><strong>Blagajnik:</strong> {cashier.name}</p>
-            <p><strong>Status blagajne:</strong> <span className="text-green-600 font-bold">Aktivna</span></p>
-            <p><strong>Datum:</strong> {formatDateStr} <span className="ml-4"><strong>Ura:</strong> {formatTimeStr}</span></p>
+      {/* Content */}
+      <div className="flex-1 p-3 overflow-auto">
+        {subTab === 'zakljucek' ? (
+          <div className="flex gap-6 items-start justify-center h-full pt-4">
+            {/* Left column - Today's summary + empty box */}
+            <div className="flex flex-col gap-4 w-80">
+              <div className="border-2 border-gray-600 rounded-lg bg-amber-300 text-center py-3">
+                <h3 className="font-bold text-lg">Zgodovina aktivnih<br />blagajnikov</h3>
+              </div>
+              <div className="border-2 border-gray-600 bg-white rounded-lg min-h-[200px]">
+                {/* Empty per PDF mockup */}
+              </div>
+            </div>
+
+            {/* Right column - Closing info + actions */}
+            <div className="flex flex-col gap-4 w-80">
+              {/* Closing info */}
+              <div className="border-2 border-gray-600 rounded-lg bg-white p-4">
+                <h3 className="font-bold text-xl mb-3">Zaključek blagajne</h3>
+                <div className="space-y-1 text-sm">
+                  <p><strong>Številka blagajne:</strong> {registerId}</p>
+                  <p><strong>Status blagajne:</strong> <span className="text-green-600 font-bold">Aktivna</span></p>
+                  <p><strong>Datum:</strong> {formatDateStr} <span className="ml-4"><strong>Ura:</strong> {formatTimeStr}</span></p>
+                </div>
+              </div>
+
+              {/* Open drawer */}
+              <button onClick={onOpenDrawer}
+                className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-lg text-gray-800 hover:bg-gray-50 transition-colors">
+                ODPRI BL. PREDAL
+              </button>
+
+              {/* Action buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => handleClosingAction('shift')}
+                  className="h-24 bg-amber-400 hover:bg-amber-500 rounded-lg font-bold text-sm text-gray-800 flex flex-col items-center justify-center gap-2 transition-colors border-2 border-amber-500">
+                  <Receipt className="w-8 h-8" />
+                  <span>Izkupiček<br />blagajnika</span>
+                </button>
+                <button onClick={() => handleClosingAction('day')}
+                  className="h-24 bg-red-600 hover:bg-red-700 rounded-lg font-bold text-sm text-white flex flex-col items-center justify-center gap-2 transition-colors border-2 border-red-700">
+                  <BookOpen className="w-8 h-8" />
+                  <span>Zaključi<br />blagajno</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-
-        {/* Open drawer */}
-        <button onClick={onOpenDrawer}
-          className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-lg text-gray-800 hover:bg-gray-50 transition-colors">
-          ODPRI BL. PREDAL
-        </button>
-
-        {/* Action buttons - Izkupiček (amber, no logout) + Zaključi (red, logout + lock) */}
-        <div className="grid grid-cols-2 gap-3">
-          <button onClick={() => handleClosingAction('shift')}
-            className="h-24 bg-amber-400 hover:bg-amber-500 rounded-lg font-bold text-sm text-gray-800 flex flex-col items-center justify-center gap-2 transition-colors border-2 border-amber-500">
-            <Receipt className="w-8 h-8" />
-            <span>Izkupiček<br />blagajnika</span>
-          </button>
-          <button onClick={() => handleClosingAction('day')}
-            className="h-24 bg-red-600 hover:bg-red-700 rounded-lg font-bold text-sm text-white flex flex-col items-center justify-center gap-2 transition-colors border-2 border-red-700">
-            <BookOpen className="w-8 h-8" />
-            <span>Zaključi<br />blagajno</span>
-          </button>
-        </div>
-        <p className="text-xs text-gray-500 text-center">
-          Izkupiček = tisk poročila (brez odjave)<br />
-          Zaključi = zaklene blagajno za danes
-        </p>
+        ) : (
+          /* Informacije tab - matches Diapozitiv 13 */
+          <div className="border-2 border-gray-800 bg-white rounded-lg p-6 max-w-2xl mx-auto mt-4">
+            <h3 className="text-xl font-bold mb-4 border-b-2 border-gray-800 pb-2">Informacije (zakonsko zaščiteni moduli):</h3>
+            <table className="w-full text-base">
+              <tbody>
+                <tr className="border-b border-gray-200">
+                  <td className="py-3 font-bold w-48">Tip programa:</td>
+                  <td className="py-3">TrgoPOS</td>
+                </tr>
+                <tr className="border-b border-gray-200">
+                  <td className="py-3 font-bold align-top">Proizvajalec:</td>
+                  <td className="py-3">
+                    StandBuy CMP s.p.<br />
+                    Spodnja Draga 36<br />
+                    1295 Ivančna Gorica
+                  </td>
+                </tr>
+                <tr className="border-b border-gray-200">
+                  <td className="py-3 font-bold">Verzija programa:</td>
+                  <td className="py-3">1. 01. 001</td>
+                </tr>
+                <tr>
+                  <td className="py-3 font-bold">Funkcija programa:</td>
+                  <td className="py-3">POS davčna blagajna</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

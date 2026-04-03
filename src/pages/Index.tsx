@@ -28,8 +28,7 @@ const FALLBACK_CASHIERS: Cashier[] = [
   { id: '00087', name: 'PODPORA STANDBUY', password: '00087', role: 'admin', drawerCode: '1359' },
 ];
 
-const EMBALAZA_EAN = "EMB001";
-
+const EMBALAZA_EANS = ["EMB-S", "EMB-M", "EMB-L"];
 // Get or assign a register ID for this device (max 3 registers + self-checkout 101-103)
 const MAX_REGISTERS = 3;
 const SELF_CHECKOUT_LABELS: Record<string, number> = { 'A1': 101, 'A2': 102, 'A3': 103 };
@@ -260,43 +259,31 @@ const Index = () => {
     if (!inputValue) return;
     const product = productsLookup[inputValue];
     if (product) {
-      const existingIndex = cartItems.findIndex(item => item.ean === inputValue && !item.isReturn && !item.isStornoed);
-      if (existingIndex >= 0) {
-        const newItems = [...cartItems]; newItems[existingIndex].quantity += 1;
-        setCartItems(newItems); setSelectedItemIndex(existingIndex);
-      } else {
-        const newItem: CartItem = { id: Date.now().toString(), ean: inputValue, name: product.name, price: product.price, quantity: 1 };
-        setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
-      }
+      // Always add as new line - no aggregation
+      const newItem: CartItem = { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), ean: inputValue, name: product.name, price: product.price, quantity: 1 };
+      setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
       toast.success(`${product.name} dodan`);
     } else { toast.error('Artikel ni najden'); }
     setInputValue("");
   };
 
-  // Embalaža - add a bag from products DB
-  const handleEmbalaza = () => {
+  // Embalaža - add a bag S/M/L from products DB
+  const handleEmbalaza = (ean: string) => {
     const lookup = getProductsLookup(products);
-    const emb = lookup[EMBALAZA_EAN];
+    const emb = lookup[ean];
     if (!emb) {
-      toast.error('Artikel embalaže (EMB001) ni najden v bazi. Dodajte ga v BackOffice.');
+      toast.error(`Artikel embalaže (${ean}) ni najden v bazi. Dodajte ga v BackOffice.`);
       return;
     }
-    const existingIndex = cartItems.findIndex(item => item.ean === EMBALAZA_EAN && !item.isStornoed);
-    if (existingIndex >= 0) {
-      const newItems = [...cartItems];
-      newItems[existingIndex].quantity += 1;
-      setCartItems(newItems);
-      setSelectedItemIndex(existingIndex);
-    } else {
-      const newItem: CartItem = {
-        id: Date.now().toString(),
-        ean: EMBALAZA_EAN,
-        name: emb.name,
-        price: emb.price,
-        quantity: 1,
-      };
-      setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
-    }
+    // Always add as new line
+    const newItem: CartItem = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      ean: ean,
+      name: emb.name,
+      price: emb.price,
+      quantity: 1,
+    };
+    setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
     toast.success(`${emb.name} dodana (${emb.price.toFixed(2)} €)`);
   };
 
@@ -369,14 +356,9 @@ const Index = () => {
   };
 
   const handleSelectProduct = (product: Product) => {
-    const existingIndex = cartItems.findIndex(item => item.ean === product.ean && !item.isReturn && !item.isStornoed);
-    if (existingIndex >= 0) {
-      const newItems = [...cartItems]; newItems[existingIndex].quantity += 1;
-      setCartItems(newItems); setSelectedItemIndex(existingIndex);
-    } else {
-      const newItem: CartItem = { id: Date.now().toString(), ean: product.ean, name: product.name, price: product.price, quantity: 1 };
-      setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
-    }
+    // Always add as new line - no aggregation
+    const newItem: CartItem = { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), ean: product.ean, name: product.name, price: product.price, quantity: 1 };
+    setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
     toast.success(`${product.name} dodan`);
   };
 
@@ -743,6 +725,7 @@ const Index = () => {
           }
         }} onLogout={handleLogout}
         isSelfCheckout={isSelfCheckout} selfCheckoutLabel={selfCheckoutLabel}
+        onProductSearch={() => setShowProductSearchDialog(true)}
         onInfo={() => setShowInfoDialog(true)}
         onSettings={() => {
           if (currentCashier?.id === '00087' || currentCashier?.role === 'admin') {
@@ -754,7 +737,12 @@ const Index = () => {
       />
 
       <main className="flex-1 overflow-hidden">
-        {posTab === 'blagajna' && screen === 'main' && (
+        {/* Artikelsuche - full screen product list */}
+        {showProductSearchDialog && (
+          <ProductSearchDialog products={products} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
+        )}
+
+        {!showProductSearchDialog && posTab === 'blagajna' && screen === 'main' && (
           <BlagajnaTab
             cartItems={cartItems} selectedItemIndex={selectedItemIndex} inputValue={inputValue}
             subtotal={subtotal} total={total} totalDiscount={totalDiscount} lastAddedItem={lastAddedItem}
@@ -832,9 +820,7 @@ const Index = () => {
       {showTabAdminCode && (
         <ManagerCodeDialog title={`ADMIN KODA za ${pendingTabChange === 'racuni' ? 'Račune' : 'Zaključek'}`} onSuccess={() => { setShowTabAdminCode(false); if (pendingTabChange) setPosTab(pendingTabChange); setPendingTabChange(null); }} onClose={() => { setShowTabAdminCode(false); setPendingTabChange(null); }} />
       )}
-      {showProductSearchDialog && (
-        <ProductSearchDialog products={products} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
-      )}
+      {/* ProductSearchDialog is now inline in main, not a dialog */}
       {/* Quantity and Discount are now inline in BlagajnaTab, no separate dialogs */}
       {showReturnDialog && (
         <ReturnDialog onConfirm={handleReturnConfirm} onClose={() => setShowReturnDialog(false)} />

@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { CartItem } from "@/types/pos";
+import { Product } from "@/types/inventory";
 
 interface BlagajnaTabProps {
   cartItems: CartItem[];
@@ -22,7 +23,8 @@ interface BlagajnaTabProps {
   onReturn: () => void;
   onStorno: () => void;
   onGiftVoucher: () => void;
-  onEmbalaza: () => void;
+  onEmbalaza: (ean: string) => void;
+  products?: Product[];
   isSelfCheckout?: boolean;
   // Inline mode props
   quantityMode?: boolean;
@@ -49,6 +51,8 @@ const BlagajnaTab = ({
   const [qtyValue, setQtyValue] = useState("");
   // Inline discount state
   const [discountValue, setDiscountValue] = useState("");
+  // Embalaža mode state
+  const [showEmbalaza, setShowEmbalaza] = useState(false);
 
   const scrollUp = () => listRef.current?.scrollBy({ top: -100, behavior: 'smooth' });
   const scrollDown = () => listRef.current?.scrollBy({ top: 100, behavior: 'smooth' });
@@ -59,7 +63,7 @@ const BlagajnaTab = ({
     ['1', '2', '3'],
   ];
 
-  const inlineMode = quantityMode || discountMode;
+  const inlineMode = quantityMode || discountMode || showEmbalaza;
 
   // Quantity handlers
   const handleQtyKey = (key: string) => {
@@ -303,6 +307,70 @@ const BlagajnaTab = ({
           </>
         )}
 
+        {/* ====== EMBALAŽA MODE ====== */}
+        {showEmbalaza && (
+          <>
+            <div className="border-2 border-gray-600 rounded-lg bg-white p-3">
+              <div className="text-center font-bold text-xl border-2 border-gray-600 bg-white px-4 py-3 mb-3">
+                Vrečka (embalaža)
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {(["EMB-S", "EMB-M", "EMB-L"] as const).map(ean => {
+                  const label = ean === "EMB-S" ? "Vrečka\nS" : ean === "EMB-M" ? "Vrečka\nM" : "Vrečka\nL";
+                  return (
+                    <button
+                      key={ean}
+                      onClick={() => { onEmbalaza(ean); setShowEmbalaza(false); }}
+                      className="h-16 rounded-lg font-bold text-lg text-gray-800 border-2 border-sky-400 transition-colors hover:brightness-95 whitespace-pre-line"
+                      style={{ background: 'linear-gradient(180deg, #b3e0f2, #87ceeb)' }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={() => setShowEmbalaza(false)}
+                className="mt-3 w-full h-10 rounded-lg font-bold text-sm text-white border-2 border-red-600 transition-colors"
+                style={{ background: 'linear-gradient(180deg, #e06060, #c03030)' }}>
+                Prekliči
+              </button>
+            </div>
+
+            {/* Numpad for EAN input even in embalaža mode */}
+            <div className="flex-1 flex flex-col border-2 border-gray-600 rounded-lg p-2 bg-white min-h-0">
+              <div className="flex gap-1 mb-2">
+                <input type="text" value={inputValue} readOnly placeholder="Vnesite EAN šifro izdelka"
+                  className="flex-1 h-9 px-3 border-2 border-gray-800 text-sm font-medium bg-white" />
+                <button onClick={onDelete} className="w-10 h-9 border-2 border-gray-800 bg-white hover:bg-gray-100 flex items-center justify-center font-bold text-lg">←</button>
+                <button onClick={() => {}} className="w-10 h-9 border-2 border-gray-800 bg-white hover:bg-gray-100 flex items-center justify-center font-bold text-lg">C</button>
+              </div>
+              <div className="flex-1 flex flex-col gap-1">
+                {numKeys.map((row, ri) => (
+                  <div key={ri} className="flex gap-1 flex-1">
+                    {row.map(key => (
+                      <button key={key} onClick={() => onKeyPress(key)}
+                        className="flex-1 rounded-lg font-bold text-xl text-gray-800 border-2 border-sky-400 transition-colors"
+                        style={{ background: 'linear-gradient(180deg, #b3e0f2, #87ceeb)' }}>
+                        {key}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+                <div className="flex gap-1 flex-1">
+                  <button onClick={() => onKeyPress('0')}
+                    className="flex-1 rounded-lg font-bold text-xl text-gray-800 border-2 border-sky-400 transition-colors"
+                    style={{ background: 'linear-gradient(180deg, #b3e0f2, #87ceeb)' }}>0</button>
+                  <button onClick={() => onKeyPress('00')}
+                    className="flex-1 rounded-lg font-bold text-xl text-gray-800 border-2 border-sky-400 transition-colors"
+                    style={{ background: 'linear-gradient(180deg, #b3e0f2, #87ceeb)' }}>00</button>
+                  <button onClick={() => onKeyPress(',')}
+                    className="flex-1 rounded-lg font-bold text-xl text-gray-800 border-2 border-sky-300 bg-sky-50 transition-colors">,</button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* ====== NORMAL MODE ====== */}
         {!inlineMode && (
           <>
@@ -326,7 +394,7 @@ const BlagajnaTab = ({
                 style={!isSelfCheckout ? { background: 'linear-gradient(180deg, #b090d0, #8060b0)' } : {}}>
                 Popust
               </button>
-              <button onClick={onEmbalaza}
+              <button onClick={() => setShowEmbalaza(true)}
                 className="h-12 rounded-lg font-bold text-xs border-2 border-sky-400 bg-white text-gray-800 hover:bg-sky-50 transition-colors">
                 Vrečka<br/>(embalaža)
               </button>
