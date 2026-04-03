@@ -819,9 +819,7 @@ const Index = () => {
       {showTabAdminCode && (
         <ManagerCodeDialog title={`ADMIN KODA za ${pendingTabChange === 'racuni' ? 'Račune' : 'Zaključek'}`} onSuccess={() => { setShowTabAdminCode(false); if (pendingTabChange) setPosTab(pendingTabChange); setPendingTabChange(null); }} onClose={() => { setShowTabAdminCode(false); setPendingTabChange(null); }} />
       )}
-      {showProductSearchDialog && (
-        <ProductSearchDialog products={products} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
-      )}
+      {/* ProductSearchDialog is now inline in main, not a dialog */}
       {/* Quantity and Discount are now inline in BlagajnaTab, no separate dialogs */}
       {showReturnDialog && (
         <ReturnDialog onConfirm={handleReturnConfirm} onClose={() => setShowReturnDialog(false)} />
