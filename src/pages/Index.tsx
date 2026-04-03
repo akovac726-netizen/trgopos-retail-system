@@ -736,7 +736,12 @@ const Index = () => {
       />
 
       <main className="flex-1 overflow-hidden">
-        {posTab === 'blagajna' && screen === 'main' && (
+        {/* Artikelsuche - full screen product list */}
+        {showProductSearchDialog && (
+          <ProductSearchDialog products={products} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
+        )}
+
+        {!showProductSearchDialog && posTab === 'blagajna' && screen === 'main' && (
           <BlagajnaTab
             cartItems={cartItems} selectedItemIndex={selectedItemIndex} inputValue={inputValue}
             subtotal={subtotal} total={total} totalDiscount={totalDiscount} lastAddedItem={lastAddedItem}
