@@ -1,8 +1,4 @@
 import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Plus, Edit2 } from "lucide-react";
 import { Product } from "@/types/inventory";
 
 interface ProductSearchDialogProps {
@@ -21,167 +17,72 @@ const ProductSearchDialog = ({
   onClose 
 }: ProductSearchDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newProduct, setNewProduct] = useState({
-    ean: "",
-    name: "",
-    price: "",
-    category: ""
-  });
 
   const filteredProducts = useMemo(() => {
-    if (!searchQuery) return products.slice(0, 20);
+    if (!searchQuery) return products;
     const query = searchQuery.toLowerCase();
     return products.filter(p => 
       p.ean.includes(query) || 
       p.name.toLowerCase().includes(query)
-    ).slice(0, 20);
+    );
   }, [products, searchQuery]);
 
-  const handleAddProduct = () => {
-    if (!newProduct.ean || !newProduct.name || !newProduct.price) return;
-    
-    onAddProduct?.({
-      ean: newProduct.ean,
-      name: newProduct.name,
-      price: parseFloat(newProduct.price),
-      category: newProduct.category || "Ostalo"
-    });
-    onClose();
-  };
+  const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Iskanje artiklov</DialogTitle>
-        </DialogHeader>
-        
-        {!showAddForm ? (
-          <>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                placeholder="Vnesite EAN kodo ali ime artikla..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-12 text-lg"
-                autoFocus
-              />
+    <div className="h-full flex flex-col overflow-hidden" style={{ background: '#e8f4f8' }}>
+      {/* Search bar */}
+      <div className="p-3 pb-0">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Vnesite ime ali EAN kodo artikla..."
+            className="flex-1 h-12 px-4 border-2 border-gray-600 text-lg font-medium bg-white"
+            autoFocus
+          />
+          <button onClick={onClose}
+            className="px-6 h-12 font-bold text-base text-white border-2 border-red-600 transition-colors"
+            style={{ background: 'linear-gradient(180deg, #e06060, #c03030)' }}>
+            Zapri
+          </button>
+        </div>
+      </div>
+
+      {/* Table header */}
+      <div className="px-3 pt-2">
+        <div className="flex items-center border-2 border-gray-800 bg-white">
+          <div className="flex-[1] px-3 py-2 font-bold text-sm border-r border-gray-400">EAN</div>
+          <div className="flex-[3] px-3 py-2 font-bold text-sm border-r border-gray-400">Naziv artikla</div>
+          <div className="flex-[1] px-3 py-2 font-bold text-sm text-right">Cena</div>
+        </div>
+      </div>
+
+      {/* Product list */}
+      <div className="flex-1 px-3 pb-3 overflow-hidden">
+        <div className="h-full border-2 border-t-0 border-gray-800 bg-white overflow-y-auto">
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => (
+              <div key={product.ean}
+                onClick={() => {
+                  onSelectProduct(product);
+                  onClose();
+                }}
+                className="px-3 py-2 border-b border-gray-200 cursor-pointer text-sm flex items-center hover:bg-sky-100 transition-colors">
+                <div className="flex-[1] font-mono text-gray-600">{product.ean}</div>
+                <div className="flex-[3] font-medium">{product.name}</div>
+                <div className="flex-[1] text-right font-bold">{formatPrice(product.price)} €</div>
+              </div>
+            ))
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+              Ni najdenih artiklov
             </div>
-            
-            <div className="flex-1 overflow-y-auto min-h-[300px]">
-              {filteredProducts.length > 0 ? (
-                <div className="space-y-2">
-                  {filteredProducts.map((product) => (
-                    <button
-                      key={product.ean}
-                      onClick={() => {
-                        onSelectProduct(product);
-                        onClose();
-                      }}
-                      className="w-full p-4 text-left rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-sm text-muted-foreground">EAN: {product.ean}</div>
-                        </div>
-                        <div className="text-lg font-bold text-primary">
-                          {product.price.toFixed(2)} €
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <p>Ni najdenih artiklov</p>
-                  {isAdmin && searchQuery && (
-                    <Button 
-                      variant="outline" 
-                      className="mt-4"
-                      onClick={() => {
-                        setShowAddForm(true);
-                        setNewProduct(prev => ({ ...prev, ean: searchQuery }));
-                      }}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Dodaj nov artikel
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {isAdmin && (
-              <Button 
-                variant="secondary" 
-                className="w-full"
-                onClick={() => setShowAddForm(true)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Dodaj nov artikel
-              </Button>
-            )}
-          </>
-        ) : (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">EAN koda *</label>
-              <Input
-                value={newProduct.ean}
-                onChange={(e) => setNewProduct(prev => ({ ...prev, ean: e.target.value }))}
-                placeholder="13-mestna EAN koda"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Ime artikla *</label>
-              <Input
-                value={newProduct.name}
-                onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Npr. Mleko 1L"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Cena (€) *</label>
-              <Input
-                type="number"
-                step="0.01"
-                value={newProduct.price}
-                onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
-                placeholder="0.00"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Kategorija</label>
-              <Input
-                value={newProduct.category}
-                onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}
-                placeholder="Npr. Mlečni izdelki"
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setShowAddForm(false)}
-              >
-                Nazaj
-              </Button>
-              <Button 
-                className="flex-1"
-                onClick={handleAddProduct}
-                disabled={!newProduct.ean || !newProduct.name || !newProduct.price}
-              >
-                Shrani artikel
-              </Button>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
