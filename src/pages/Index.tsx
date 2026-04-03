@@ -725,6 +725,7 @@ const Index = () => {
           }
         }} onLogout={handleLogout}
         isSelfCheckout={isSelfCheckout} selfCheckoutLabel={selfCheckoutLabel}
+        onProductSearch={() => setShowProductSearchDialog(true)}
         onInfo={() => setShowInfoDialog(true)}
         onSettings={() => {
           if (currentCashier?.id === '00087' || currentCashier?.role === 'admin') {
