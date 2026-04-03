@@ -23,7 +23,8 @@ interface BlagajnaTabProps {
   onReturn: () => void;
   onStorno: () => void;
   onGiftVoucher: () => void;
-  onEmbalaza: () => void;
+  onEmbalaza: (ean: string) => void;
+  products?: Product[];
   isSelfCheckout?: boolean;
   // Inline mode props
   quantityMode?: boolean;
