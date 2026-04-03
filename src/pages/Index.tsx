@@ -356,14 +356,9 @@ const Index = () => {
   };
 
   const handleSelectProduct = (product: Product) => {
-    const existingIndex = cartItems.findIndex(item => item.ean === product.ean && !item.isReturn && !item.isStornoed);
-    if (existingIndex >= 0) {
-      const newItems = [...cartItems]; newItems[existingIndex].quantity += 1;
-      setCartItems(newItems); setSelectedItemIndex(existingIndex);
-    } else {
-      const newItem: CartItem = { id: Date.now().toString(), ean: product.ean, name: product.name, price: product.price, quantity: 1 };
-      setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
-    }
+    // Always add as new line - no aggregation
+    const newItem: CartItem = { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), ean: product.ean, name: product.name, price: product.price, quantity: 1 };
+    setCartItems(prev => { setSelectedItemIndex(prev.length); return [...prev, newItem]; });
     toast.success(`${product.name} dodan`);
   };
 
