@@ -53,11 +53,18 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
   };
 
   const handleConfirm = () => {
-    if (amountPaid > 0) {
-      setConfirmed(true);
-      if (amountPaid >= total) {
-        setShowChangeDialog(true);
+    const paid = parseFloat(inputValue.replace(',', '.')) || 0;
+    if (paid > 0) {
+      if (paid < total) {
+        // Insufficient funds - show warning and go back to payment selection
+        toast.warning(`Premalo gotovine! Vnesli ste ${formatPrice(paid)} €, račun znaša ${formatPrice(total)} €. Izberite dodatno plačilno sredstvo.`);
+        setStep('select');
+        setInputValue("");
+        setConfirmed(false);
+        return;
       }
+      setConfirmed(true);
+      setShowChangeDialog(true);
     }
   };
 

@@ -4,6 +4,30 @@
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
+/* Century Gothic for POS */
+@font-face {
+  font-family: 'Century Gothic';
+  src: local('Century Gothic'), local('CenturyGothic');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Tw Cen MT for BackOffice */
+@font-face {
+  font-family: 'Tw Cen MT';
+  src: local('Tw Cen MT'), local('TwCenMT');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-pos {
+  font-family: 'Century Gothic', 'Segoe UI', sans-serif;
+}
+
+.font-backoffice {
+  font-family: 'Tw Cen MT', 'Segoe UI', sans-serif;
+}
+
 @layer base {
   :root {
     /* Core palette - Clean retail aesthetic */
