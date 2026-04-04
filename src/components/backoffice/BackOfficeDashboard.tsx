@@ -38,7 +38,7 @@ interface BackOfficeDashboardProps {
 }
 
 type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice' | 'avtorizacija';
-type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti';
+type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti' | 'trgovina';
 type PromoType = 'akcijska_cena' | 'popust_percent' | 'kolicinska';
 interface Promotion {
   id: string; type: PromoType; product_ean: string; product_name: string;
@@ -1000,10 +1000,13 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 { id: 'cene' as ArtikliSubTab, label: 'Cene artiklov' },
                 { id: 'akcije' as ArtikliSubTab, label: 'Akcijske ponudbe' },
                 { id: 'popusti' as ArtikliSubTab, label: 'Popusti / Znižanja' },
+                { id: 'trgovina' as ArtikliSubTab, label: 'Trgovina: artikli' },
               ]).map(st => (
                 <button key={st.id} onClick={() => setArtikliSubTab(st.id)}
                   className={`px-5 py-2 text-sm font-medium border border-gray-400 transition-colors ${
-                    artikliSubTab === st.id ? 'bg-green-400 text-gray-900 font-bold' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                    artikliSubTab === st.id
+                      ? st.id === 'trgovina' ? 'bg-purple-400 text-white font-bold' : 'bg-green-400 text-gray-900 font-bold'
+                      : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                   }`}>
                   {st.label}
                 </button>
@@ -1021,6 +1024,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               <div className="flex justify-end px-6 mt-3">
                 <button onClick={() => { resetPromoForm(); setShowPromoForm(true); }}
                   className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Nova akcija</button>
+              </div>
+            )}
+            {artikliSubTab === 'trgovina' && role === 'admin' && (
+              <div className="flex justify-end px-6 mt-3">
+                <button onClick={() => { resetProductForm(); setFormCategory('Trgovina'); setShowAddForm(true); }}
+                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Dodaj</button>
               </div>
             )}
 
@@ -1287,6 +1296,56 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 <div className="text-gray-400 text-center py-12 text-lg">
                   Modul Popusti / Znižanja – v pripravi
                 </div>
+              )}
+
+              {/* TRGOVINA: ARTIKLI - internal store items (not shown on POS) */}
+              {artikliSubTab === 'trgovina' && (
+                <>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Išči artikle trgovine..."
+                      className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
+                  </div>
+                  <div className="bg-purple-100 border border-purple-400 rounded p-3 mb-3 text-sm text-purple-800">
+                    ℹ️ Artikli v tem oddelku so namenjeni <strong>interni uporabi poslovalnice</strong> (npr. pisarniški material, čistila). Ti artikli <strong>niso vidni na blagajni</strong>.
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-400 bg-gray-100">
+                        <th className="text-left py-2 px-3 font-semibold">EAN</th>
+                        <th className="text-left py-2 px-3 font-semibold">Naziv</th>
+                        <th className="text-right py-2 px-3 font-semibold">Cena</th>
+                        <th className="text-right py-2 px-3 font-semibold">Zaloga</th>
+                        <th className="text-right py-2 px-3 font-semibold">Kategorija</th>
+                        {role === 'admin' && <th className="text-center py-2 px-3 font-semibold w-20">Akcije</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.filter(p => p.category === 'Trgovina').filter(p =>
+                        !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.ean.includes(searchQuery)
+                      ).map(p => (
+                        <tr key={p.id} className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="py-2 px-3 font-mono text-xs">{p.ean}</td>
+                          <td className="py-2 px-3">{p.name}</td>
+                          <td className="py-2 px-3 text-right font-medium">{Number(p.price).toFixed(2)} €</td>
+                          <td className="py-2 px-3 text-right">{p.stock}</td>
+                          <td className="py-2 px-3 text-right text-purple-600 font-medium">{p.category}</td>
+                          {role === 'admin' && (
+                            <td className="py-2 px-3 text-center">
+                              <button onClick={() => { setEditingProduct(p); setFormEan(p.ean); setFormName(p.name); setFormPrice(String(p.price)); setFormStock(String(p.stock)); setFormMinStock(String(p.min_stock)); setFormCategory(p.category); setShowAddForm(true); }}
+                                className="text-blue-500 hover:text-blue-700 mr-2"><Pencil className="w-4 h-4 inline" /></button>
+                              <button onClick={async () => { await supabase.from('products').delete().eq('id', p.id); fetchProducts(); toast.success('Artikel izbrisan'); }}
+                                className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4 inline" /></button>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                      {products.filter(p => p.category === 'Trgovina').length === 0 && (
+                        <tr><td colSpan={role === 'admin' ? 6 : 5} className="text-center py-8 text-gray-400">Ni artiklov trgovine</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </>
               )}
             </div>
           </div>

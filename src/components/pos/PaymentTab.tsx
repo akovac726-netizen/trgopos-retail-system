@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Delete, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { CartItem } from "@/types/pos";
 import GiftCardRedeemFlow from "./GiftCardRedeemFlow";
-import bargeldImg from "@/assets/bargeld-rueckgabe.jpg";
+import bargeldImg from "@/assets/bargeld-rueckgabe.png";
 
 interface PaymentTabProps {
   cartItems: CartItem[];
@@ -40,8 +41,8 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
   const lastEnterRef = useRef<number>(0);
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const amountPaid = parseFloat(inputValue) || 0;
-  const change = amountPaid - total;
+  const amountPaid = parseFloat(inputValue.replace(',', '.')) || 0;
+  const change = Math.round((amountPaid - total) * 100) / 100;
 
   const handleKeyPress = (key: string) => {
     if (step === 'bon') setBonCode(prev => prev + key);
@@ -53,11 +54,18 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
   };
 
   const handleConfirm = () => {
-    if (amountPaid > 0) {
-      setConfirmed(true);
-      if (amountPaid >= total) {
-        setShowChangeDialog(true);
+    const paid = parseFloat(inputValue.replace(',', '.')) || 0;
+    if (paid > 0) {
+      if (paid < total) {
+        // Insufficient funds - show warning and go back to payment selection
+        toast.warning(`Premalo gotovine! Vnesli ste ${formatPrice(paid)} €, račun znaša ${formatPrice(total)} €. Izberite dodatno plačilno sredstvo.`);
+        setStep('select');
+        setInputValue("");
+        setConfirmed(false);
+        return;
       }
+      setConfirmed(true);
+      setShowChangeDialog(true);
     }
   };
 
@@ -105,10 +113,10 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
         else if (e.key === 'Enter') {
           e.preventDefault();
           const now = Date.now();
-          const currentAmountPaid = parseFloat(inputValue) || 0;
+          const currentAmountPaid = parseFloat(inputValue.replace(',', '.')) || 0;
           if (confirmed && currentAmountPaid >= total && (now - lastEnterRef.current) < 800) {
             onCashPayment(currentAmountPaid);
-          } else if (currentAmountPaid > 0) { setConfirmed(true); }
+          } else if (currentAmountPaid > 0) { handleConfirm(); }
           lastEnterRef.current = now;
         } else if (e.key === 'Escape') { e.preventDefault(); setStep('select'); }
         return;
@@ -279,7 +287,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
                   PREKLIČI
                 </button>
                 <button onClick={handleConfirm}
-                  disabled={amountPaid <= 0 || amountPaid < total}
+                  disabled={amountPaid <= 0}
                   className="flex-[2] rounded-lg font-bold text-sm text-gray-800 border-2 border-green-400 transition-colors disabled:opacity-40 flex flex-col items-center justify-center gap-1"
                   style={{ background: 'linear-gradient(180deg, #d4e8c0, #b0c898)' }}>
                   <span>Zaključi,</span>

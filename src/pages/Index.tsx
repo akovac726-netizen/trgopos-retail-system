@@ -211,7 +211,9 @@ const Index = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const productsLookup = getProductsLookup(products);
+  // Filter out "Trgovina" (internal store) products from POS
+  const posProducts = products.filter(p => p.category !== 'Trgovina');
+  const productsLookup = getProductsLookup(posProducts);
   const isAdmin = currentCashier?.role === 'admin';
 
   const activeCartItems = cartItems.filter(item => !item.isStornoed);
@@ -711,11 +713,11 @@ const Index = () => {
 
   // BackOffice
   if (appMode === 'backoffice') {
-    return <BackOfficeDashboard onLogout={handleLogout} closingReports={closingHistory} role={backofficeRole} />;
+    return <div className="font-backoffice"><BackOfficeDashboard onLogout={handleLogout} closingReports={closingHistory} role={backofficeRole} /></div>;
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden font-pos">
       <POSHeader cashier={currentCashier} activeTab={posTab} registerId={registerId} onTabChange={(tab) => {
           if (isSelfCheckout && (tab === 'racuni' || tab === 'zakljucek')) {
             setPendingTabChange(tab);
@@ -739,7 +741,7 @@ const Index = () => {
       <main className="flex-1 overflow-hidden">
         {/* Artikelsuche - full screen product list */}
         {showProductSearchDialog && (
-          <ProductSearchDialog products={products} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
+          <ProductSearchDialog products={posProducts} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
         )}
 
         {!showProductSearchDialog && posTab === 'blagajna' && screen === 'main' && (
