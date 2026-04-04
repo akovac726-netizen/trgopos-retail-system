@@ -741,7 +741,7 @@ const Index = () => {
       <main className="flex-1 overflow-hidden">
         {/* Artikelsuche - full screen product list */}
         {showProductSearchDialog && (
-          <ProductSearchDialog products={products} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
+          <ProductSearchDialog products={posProducts} isAdmin={isAdmin} onSelectProduct={handleSelectProduct} onClose={() => setShowProductSearchDialog(false)} />
         )}
 
         {!showProductSearchDialog && posTab === 'blagajna' && screen === 'main' && (
