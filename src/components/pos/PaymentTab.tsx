@@ -40,8 +40,8 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
   const lastEnterRef = useRef<number>(0);
   const formatPrice = (p: number) => p.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const amountPaid = parseFloat(inputValue) || 0;
-  const change = amountPaid - total;
+  const amountPaid = parseFloat(inputValue.replace(',', '.')) || 0;
+  const change = Math.round((amountPaid - total) * 100) / 100;
 
   const handleKeyPress = (key: string) => {
     if (step === 'bon') setBonCode(prev => prev + key);
