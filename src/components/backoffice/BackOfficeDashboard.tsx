@@ -38,7 +38,7 @@ interface BackOfficeDashboardProps {
 }
 
 type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice' | 'avtorizacija';
-type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti';
+type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti' | 'trgovina';
 type PromoType = 'akcijska_cena' | 'popust_percent' | 'kolicinska';
 interface Promotion {
   id: string; type: PromoType; product_ean: string; product_name: string;
