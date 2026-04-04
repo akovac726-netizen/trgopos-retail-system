@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Delete, Loader2 } from "lucide-react";
 import { CartItem } from "@/types/pos";
 import GiftCardRedeemFlow from "./GiftCardRedeemFlow";
-import bargeldImg from "@/assets/bargeld-rueckgabe.jpg";
+import bargeldImg from "@/assets/bargeld-rueckgabe.png";
 
 interface PaymentTabProps {
   cartItems: CartItem[];
