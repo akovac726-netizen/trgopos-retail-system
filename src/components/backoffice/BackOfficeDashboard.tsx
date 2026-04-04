@@ -1297,6 +1297,56 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   Modul Popusti / Znižanja – v pripravi
                 </div>
               )}
+
+              {/* TRGOVINA: ARTIKLI - internal store items (not shown on POS) */}
+              {artikliSubTab === 'trgovina' && (
+                <>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Išči artikle trgovine..."
+                      className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
+                  </div>
+                  <div className="bg-purple-100 border border-purple-400 rounded p-3 mb-3 text-sm text-purple-800">
+                    ℹ️ Artikli v tem oddelku so namenjeni <strong>interni uporabi poslovalnice</strong> (npr. pisarniški material, čistila). Ti artikli <strong>niso vidni na blagajni</strong>.
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-400 bg-gray-100">
+                        <th className="text-left py-2 px-3 font-semibold">EAN</th>
+                        <th className="text-left py-2 px-3 font-semibold">Naziv</th>
+                        <th className="text-right py-2 px-3 font-semibold">Cena</th>
+                        <th className="text-right py-2 px-3 font-semibold">Zaloga</th>
+                        <th className="text-right py-2 px-3 font-semibold">Kategorija</th>
+                        {role === 'admin' && <th className="text-center py-2 px-3 font-semibold w-20">Akcije</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.filter(p => p.category === 'Trgovina').filter(p =>
+                        !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.ean.includes(searchQuery)
+                      ).map(p => (
+                        <tr key={p.id} className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="py-2 px-3 font-mono text-xs">{p.ean}</td>
+                          <td className="py-2 px-3">{p.name}</td>
+                          <td className="py-2 px-3 text-right font-medium">{Number(p.price).toFixed(2)} €</td>
+                          <td className="py-2 px-3 text-right">{p.stock}</td>
+                          <td className="py-2 px-3 text-right text-purple-600 font-medium">{p.category}</td>
+                          {role === 'admin' && (
+                            <td className="py-2 px-3 text-center">
+                              <button onClick={() => { setEditingProduct(p); setFormEan(p.ean); setFormName(p.name); setFormPrice(String(p.price)); setFormStock(String(p.stock)); setFormMinStock(String(p.min_stock)); setFormCategory(p.category); setShowAddForm(true); }}
+                                className="text-blue-500 hover:text-blue-700 mr-2"><Pencil className="w-4 h-4 inline" /></button>
+                              <button onClick={async () => { await supabase.from('products').delete().eq('id', p.id); fetchProducts(); toast.success('Artikel izbrisan'); }}
+                                className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4 inline" /></button>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                      {products.filter(p => p.category === 'Trgovina').length === 0 && (
+                        <tr><td colSpan={role === 'admin' ? 6 : 5} className="text-center py-8 text-gray-400">Ni artiklov trgovine</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </>
+              )}
             </div>
           </div>
         )}
