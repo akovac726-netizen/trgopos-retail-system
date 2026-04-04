@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Delete, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { CartItem } from "@/types/pos";
 import GiftCardRedeemFlow from "./GiftCardRedeemFlow";
 import bargeldImg from "@/assets/bargeld-rueckgabe.png";
