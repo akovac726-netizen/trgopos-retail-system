@@ -287,7 +287,7 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
                   PREKLIČI
                 </button>
                 <button onClick={handleConfirm}
-                  disabled={amountPaid <= 0 || amountPaid < total}
+                  disabled={amountPaid <= 0}
                   className="flex-[2] rounded-lg font-bold text-sm text-gray-800 border-2 border-green-400 transition-colors disabled:opacity-40 flex flex-col items-center justify-center gap-1"
                   style={{ background: 'linear-gradient(180deg, #d4e8c0, #b0c898)' }}>
                   <span>Zaključi,</span>
