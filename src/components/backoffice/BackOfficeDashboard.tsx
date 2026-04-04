@@ -1000,10 +1000,13 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 { id: 'cene' as ArtikliSubTab, label: 'Cene artiklov' },
                 { id: 'akcije' as ArtikliSubTab, label: 'Akcijske ponudbe' },
                 { id: 'popusti' as ArtikliSubTab, label: 'Popusti / Znižanja' },
+                { id: 'trgovina' as ArtikliSubTab, label: 'Trgovina: artikli' },
               ]).map(st => (
                 <button key={st.id} onClick={() => setArtikliSubTab(st.id)}
                   className={`px-5 py-2 text-sm font-medium border border-gray-400 transition-colors ${
-                    artikliSubTab === st.id ? 'bg-green-400 text-gray-900 font-bold' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                    artikliSubTab === st.id
+                      ? st.id === 'trgovina' ? 'bg-purple-400 text-white font-bold' : 'bg-green-400 text-gray-900 font-bold'
+                      : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                   }`}>
                   {st.label}
                 </button>
