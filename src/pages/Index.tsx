@@ -713,7 +713,7 @@ const Index = () => {
 
   // BackOffice
   if (appMode === 'backoffice') {
-    return <BackOfficeDashboard onLogout={handleLogout} closingReports={closingHistory} role={backofficeRole} />;
+    return <div className="font-backoffice"><BackOfficeDashboard onLogout={handleLogout} closingReports={closingHistory} role={backofficeRole} /></div>;
   }
 
   return (
