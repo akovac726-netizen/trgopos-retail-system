@@ -211,7 +211,9 @@ const Index = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const productsLookup = getProductsLookup(products);
+  // Filter out "Trgovina" (internal store) products from POS
+  const posProducts = products.filter(p => p.category !== 'Trgovina');
+  const productsLookup = getProductsLookup(posProducts);
   const isAdmin = currentCashier?.role === 'admin';
 
   const activeCartItems = cartItems.filter(item => !item.isStornoed);
