@@ -113,10 +113,10 @@ const PaymentTab = ({ cartItems, subtotal, total, totalDiscount, receiptNumber, 
         else if (e.key === 'Enter') {
           e.preventDefault();
           const now = Date.now();
-          const currentAmountPaid = parseFloat(inputValue) || 0;
+          const currentAmountPaid = parseFloat(inputValue.replace(',', '.')) || 0;
           if (confirmed && currentAmountPaid >= total && (now - lastEnterRef.current) < 800) {
             onCashPayment(currentAmountPaid);
-          } else if (currentAmountPaid > 0) { setConfirmed(true); }
+          } else if (currentAmountPaid > 0) { handleConfirm(); }
           lastEnterRef.current = now;
         } else if (e.key === 'Escape') { e.preventDefault(); setStep('select'); }
         return;
