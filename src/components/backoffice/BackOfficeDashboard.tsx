@@ -1026,6 +1026,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Nova akcija</button>
               </div>
             )}
+            {artikliSubTab === 'trgovina' && role === 'admin' && (
+              <div className="flex justify-end px-6 mt-3">
+                <button onClick={() => { resetProductForm(); setFormCategory('Trgovina'); setShowAddForm(true); }}
+                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Dodaj</button>
+              </div>
+            )}
 
             <div className="px-6 py-3">
               {/* ŠIFRANT ARTIKLOV */}
