@@ -624,6 +624,59 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         </div>
 
         <div className="flex-1 overflow-y-auto relative z-10">
+          {/* BLAGAJNE (Avtorizacija) */}
+          {backendSubTab === 'blagajne' && (
+            <div>
+              <div className="bg-gray-600 px-6 py-3">
+                <h2 className="text-white font-bold text-xl">Blagajne – Avtorizacija</h2>
+              </div>
+              <div className="px-6 py-4">
+                <div className="bg-gray-700/60 border border-gray-500 rounded-lg p-6 max-w-2xl text-gray-200">
+                  <p className="text-sm mb-6">
+                    Ta funkcija omogoča generiranje enkratne administratorske kode za izvajanje varnostnih operacij v sistemu.
+                  </p>
+                  <h4 className="font-bold text-white text-sm mb-3">OPERACIJE, KI ZAHTEVAJO AVTORIZACIJO:</h4>
+                  <ul className="list-disc list-inside space-y-1 mb-6 text-sm ml-4">
+                    <li>storniranje računa</li>
+                    <li>vračilo artiklov</li>
+                    <li>sprememba cene</li>
+                  </ul>
+                  <h4 className="font-bold text-white text-sm mb-2">VELJAVNOST KODE:</h4>
+                  <p className="text-sm mb-6">Administratorska koda velja 4 ure od generiranja.</p>
+                  <h4 className="font-bold text-white text-sm mb-3">AKCIJA:</h4>
+                  <div className="flex justify-center mb-6">
+                    {authCode && authCountdown > 0 ? (
+                      <div className="text-center space-y-3">
+                        <div className="bg-gray-300 text-gray-900 px-8 py-4 rounded-lg">
+                          <p className="text-xs text-gray-600 mb-1">ADMIN KODA</p>
+                          <p className="font-mono text-4xl font-black tracking-[0.3em]">{authCode}</p>
+                        </div>
+                        <p className="text-sm text-gray-300">
+                          <Clock className="w-4 h-4 inline mr-1" />
+                          {formatCountdown(authCountdown)} preostane
+                        </p>
+                        <button onClick={generateAuthCode} className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm">Nova koda</button>
+                      </div>
+                    ) : (
+                      <button onClick={generateAuthCode}
+                        className="px-8 py-4 bg-sky-200 hover:bg-sky-300 text-gray-800 font-bold rounded-lg text-sm transition-colors">
+                        GENERIRAJ 5-mestno<br />ADMIN KODO
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-sm">
+                    <span className="font-bold text-white">STATUS: </span>
+                    {authCode && authCountdown > 0 ? (
+                      <span className="text-green-400 font-bold">AKTIVNA</span>
+                    ) : (
+                      <span className="text-red-400 font-bold">NEAKTIVNA</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ZAPOSLENI */}
           {backendSubTab === 'zaposleni' && (
             <div>
