@@ -37,8 +37,9 @@ interface BackOfficeDashboardProps {
   role: 'admin' | 'shop';
 }
 
-type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice' | 'avtorizacija';
+type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice';
 type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti' | 'trgovina';
+type BackendTab = 'zaposleni' | 'zahtevki' | 'pregled' | 'blagajne';
 type PromoType = 'akcijska_cena' | 'popust_percent' | 'kolicinska';
 interface Promotion {
   id: string; type: PromoType; product_ean: string; product_name: string;
@@ -113,7 +114,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [backendLoggedIn, setBackendLoggedIn] = useState(false);
   const [backendUsername, setBackendUsername] = useState("");
   const [backendPassword, setBackendPassword] = useState("");
-  const [backendSubTab, setBackendSubTab] = useState<'zaposleni' | 'zahtevki' | 'pregled'>('zaposleni');
+  const [backendSubTab, setBackendSubTab] = useState<BackendTab>('zaposleni');
 
   // Employees
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -134,6 +135,17 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [businessOpened, setBusinessOpened] = useState(false);
   const [showOpenConfirm, setShowOpenConfirm] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showOpenChecklist, setShowOpenChecklist] = useState(false);
+  const [openChecklistItems, setOpenChecklistItems] = useState([
+    { label: 'Preveri konec ponudbe', checked: false },
+    { label: 'Prevzemi začetek ponudbe', checked: false },
+    { label: 'Izvleček prodajnih cen', checked: false },
+    { label: 'Natisni etikete', checked: false },
+    { label: 'Izvleček sprememb', checked: false },
+    { label: 'Širjenje blagajne', checked: false },
+    { label: 'Posodobitev blagajne', checked: false },
+  ]);
+  const [showUpravljanje, setShowUpravljanje] = useState(false);
 
   // Zaključevanje
   const [showZakljuciConfirm, setShowZakljuciConfirm] = useState(false);
@@ -517,8 +529,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     { id: 'inventura', label: 'Inventura' },
     { id: 'financna', label: 'Finančna poročila' },
     { id: 'partnerji', label: 'Partnerji' },
-    { id: 'bonikartice', label: 'Boni in kartice' },
-    { id: 'avtorizacija', label: 'Avtorizacija' },
   ];
 
   // ===== TrgoBackEnd LOGIN =====
@@ -597,10 +607,10 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         <div className="w-[230px] flex flex-col shrink-0 z-10">
           <div className="bg-purple-600 text-white font-bold text-center py-3 text-lg">TrgoBackEnd</div>
           <div className="bg-gray-300 flex-1 flex flex-col">
-            {(['zaposleni', 'zahtevki', 'pregled'] as const).map(tab => (
+            {(['blagajne', 'zaposleni', 'zahtevki', 'pregled'] as const).map(tab => (
               <button key={tab} onClick={() => setBackendSubTab(tab)}
                 className={`text-left px-4 py-2.5 text-sm font-medium border-b border-gray-400 transition-colors ${backendSubTab === tab ? 'bg-sky-400 text-white' : 'text-gray-800 hover:bg-gray-200'}`}>
-                {tab === 'zaposleni' ? 'Zaposleni' : tab === 'zahtevki' ? 'Zahtevki za dopust' : 'Pregled dopustov'}
+                {tab === 'blagajne' ? 'Blagajne' : tab === 'zaposleni' ? 'Zaposleni' : tab === 'zahtevki' ? 'Zahtevki za dopust' : 'Pregled dopustov'}
               </button>
             ))}
             <div className="flex-1" />
@@ -614,6 +624,59 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         </div>
 
         <div className="flex-1 overflow-y-auto relative z-10">
+          {/* BLAGAJNE (Avtorizacija) */}
+          {backendSubTab === 'blagajne' && (
+            <div>
+              <div className="bg-gray-600 px-6 py-3">
+                <h2 className="text-white font-bold text-xl">Blagajne – Avtorizacija</h2>
+              </div>
+              <div className="px-6 py-4">
+                <div className="bg-gray-700/60 border border-gray-500 rounded-lg p-6 max-w-2xl text-gray-200">
+                  <p className="text-sm mb-6">
+                    Ta funkcija omogoča generiranje enkratne administratorske kode za izvajanje varnostnih operacij v sistemu.
+                  </p>
+                  <h4 className="font-bold text-white text-sm mb-3">OPERACIJE, KI ZAHTEVAJO AVTORIZACIJO:</h4>
+                  <ul className="list-disc list-inside space-y-1 mb-6 text-sm ml-4">
+                    <li>storniranje računa</li>
+                    <li>vračilo artiklov</li>
+                    <li>sprememba cene</li>
+                  </ul>
+                  <h4 className="font-bold text-white text-sm mb-2">VELJAVNOST KODE:</h4>
+                  <p className="text-sm mb-6">Administratorska koda velja 4 ure od generiranja.</p>
+                  <h4 className="font-bold text-white text-sm mb-3">AKCIJA:</h4>
+                  <div className="flex justify-center mb-6">
+                    {authCode && authCountdown > 0 ? (
+                      <div className="text-center space-y-3">
+                        <div className="bg-gray-300 text-gray-900 px-8 py-4 rounded-lg">
+                          <p className="text-xs text-gray-600 mb-1">ADMIN KODA</p>
+                          <p className="font-mono text-4xl font-black tracking-[0.3em]">{authCode}</p>
+                        </div>
+                        <p className="text-sm text-gray-300">
+                          <Clock className="w-4 h-4 inline mr-1" />
+                          {formatCountdown(authCountdown)} preostane
+                        </p>
+                        <button onClick={generateAuthCode} className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm">Nova koda</button>
+                      </div>
+                    ) : (
+                      <button onClick={generateAuthCode}
+                        className="px-8 py-4 bg-sky-200 hover:bg-sky-300 text-gray-800 font-bold rounded-lg text-sm transition-colors">
+                        GENERIRAJ 5-mestno<br />ADMIN KODO
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-sm">
+                    <span className="font-bold text-white">STATUS: </span>
+                    {authCode && authCountdown > 0 ? (
+                      <span className="text-green-400 font-bold">AKTIVNA</span>
+                    ) : (
+                      <span className="text-red-400 font-bold">NEAKTIVNA</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ZAPOSLENI */}
           {backendSubTab === 'zaposleni' && (
             <div>
@@ -927,47 +990,126 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 overflow-y-auto z-10 relative">
+      <div className="flex-1 flex flex-col overflow-hidden z-10 relative">
+        {/* Top bar: Uporabnik + Upravljanje */}
+        <div className="flex items-center gap-4 px-2 py-1">
+          <div className="border border-gray-500 bg-gray-200/80 px-3 py-1 text-sm text-gray-800 min-w-[180px]">
+            Uporabnik: {role === 'admin' ? 'Direktor' : 'Trgovina'}
+          </div>
+          <div className="relative">
+            <button onClick={() => setShowUpravljanje(!showUpravljanje)}
+              className="border border-gray-500 bg-gray-300/80 px-4 py-1 text-sm font-medium text-gray-800 hover:bg-gray-400/80 transition-colors">
+              Upravljanje
+            </button>
+            {showUpravljanje && (
+              <div className="absolute top-full left-0 mt-1 flex gap-1 z-50">
+                <div className="bg-white border-2 border-gray-700 min-w-[200px]">
+                  {['Nastavitve', 'Upravljanje uporabnikov', 'Pregled dnevnika', 'Polog denarja'].map(item => (
+                    <button key={item} onClick={() => { setShowUpravljanje(false); toast.info(`${item} – v pripravi`); }}
+                      className="block w-full text-left px-4 py-2 text-sm border-b border-gray-200 hover:bg-gray-100 transition-colors">
+                      {item}
+                    </button>
+                  ))}
+                </div>
+                <div className="bg-white border-2 border-gray-700 min-w-[180px]">
+                  {['Spremeni geslo', 'Dodaj uporabnika'].map(item => (
+                    <button key={item} onClick={() => { setShowUpravljanje(false); toast.info(`${item} – v pripravi`); }}
+                      className="block w-full text-left px-4 py-2 text-sm border-b border-gray-200 hover:bg-gray-100 transition-colors">
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
-        {/* POSLOVANJE - matches Diapozitiv2-4 exactly */}
+        <div className="flex-1 overflow-y-auto">
+
+        {/* POSLOVANJE */}
         {activeTab === 'poslovanje' && (
           <div className="relative h-full">
-            {/* Title bar */}
-            <div className="bg-gray-400/60 px-6 py-3 inline-block min-w-[500px]">
+            {/* Poslovanje header bar */}
+            <div className="bg-gray-400/60 px-6 py-3">
               <h2 className="text-white font-bold text-xl">Poslovanje</h2>
             </div>
 
             {/* OTVORITEV and ZAPIRANJE buttons */}
-            <div className="flex gap-4 mt-6 ml-8">
-              <button onClick={() => setShowOpenConfirm(true)}
+            <div className="flex gap-6 mt-6 ml-8">
+              <button onClick={() => { if (!businessOpened) setShowOpenConfirm(true); }}
                 className={`px-12 py-5 font-bold text-xl rounded-xl transition-colors border-2 ${
-                  businessOpened 
-                    ? 'bg-gray-300 border-gray-400 text-gray-700' 
-                    : 'bg-green-600 hover:bg-green-700 border-green-700 text-white'
+                  businessOpened
+                    ? 'bg-gray-300 border-gray-400 text-gray-600 cursor-default'
+                    : 'border-gray-600 text-white hover:brightness-110'
                 }`}
-                style={!businessOpened ? {} : {}}>
+                style={!businessOpened ? { background: 'linear-gradient(180deg, #8a9a4a, #6a7a3a)' } : {}}>
                 OTVORITEV
               </button>
-              <button onClick={() => setShowCloseConfirm(true)}
+              <button onClick={() => { if (businessOpened) setShowCloseConfirm(true); }}
                 className={`px-12 py-5 font-bold text-xl rounded-xl transition-colors border-2 ${
                   !businessOpened
-                    ? 'bg-gray-300 border-gray-400 text-gray-700'
-                    : 'bg-red-600 hover:bg-red-700 border-red-700 text-white'
-                }`}>
+                    ? 'bg-gray-300 border-gray-400 text-gray-600 cursor-default'
+                    : 'border-gray-600 text-white hover:brightness-110'
+                }`}
+                style={businessOpened ? { background: 'linear-gradient(180deg, #c03030, #901818)' } : {}}>
                 ZAPIRANJE
               </button>
             </div>
 
             {/* Confirmation dialog for OTVORITEV */}
-            {showOpenConfirm && (
+            {showOpenConfirm && !showOpenChecklist && (
               <div className="mt-6 ml-8 bg-white border-4 border-gray-800 rounded-lg p-8 max-w-[500px]">
                 <p className="text-center text-lg mb-1">Ali ste prepričani, da želite</p>
                 <p className="text-center text-lg mb-6"><span className="text-green-600 font-bold">OTVORITI</span> poslovni dan?</p>
                 <div className="flex justify-center gap-6">
-                  <button onClick={handleOpenBusiness} className="text-xl font-bold hover:underline">Da</button>
+                  <button onClick={() => {
+                    handleOpenBusiness();
+                    setShowOpenConfirm(false);
+                    setShowOpenChecklist(true);
+                    setOpenChecklistItems(prev => prev.map(i => ({ ...i, checked: false })));
+                  }} className="text-xl font-bold hover:underline">Da</button>
                   <span className="text-xl">/</span>
                   <button onClick={() => setShowOpenConfirm(false)} className="text-xl font-bold hover:underline">Ne</button>
                 </div>
+              </div>
+            )}
+
+            {/* Otvoritev poslovanja checklist - Diapozitiv 6/7 */}
+            {showOpenChecklist && (
+              <div className="mt-6 ml-8 bg-white border-4 border-gray-800 max-w-[650px]">
+                <div className="border-b-2 border-gray-800 px-4 py-3">
+                  <h3 className="text-xl font-bold">Otvoritev poslovanja</h3>
+                </div>
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-gray-400">
+                      <th className="px-4 py-2 text-left font-bold text-sm w-16 border-r border-gray-400">Št.</th>
+                      <th className="px-4 py-2 text-left font-bold text-sm border-r border-gray-400">Funkcije</th>
+                      <th className="px-4 py-2 text-center font-bold text-sm w-24">Izveden</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {openChecklistItems.map((item, i) => (
+                      <tr key={i} className="border-b border-gray-200">
+                        <td className="px-4 py-3 text-center font-medium border-r border-gray-300">{i + 1}.</td>
+                        <td className="px-4 py-3 font-medium border-r border-gray-300">{item.label}</td>
+                        <td className="px-4 py-3 text-center">
+                          <input type="checkbox" checked={item.checked}
+                            onChange={() => setOpenChecklistItems(prev => prev.map((it, idx) => idx === i ? { ...it, checked: !it.checked } : it))}
+                            className="w-5 h-5 cursor-pointer" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {openChecklistItems.every(i => i.checked) && (
+                  <div className="p-3 flex justify-end">
+                    <button onClick={() => setShowOpenChecklist(false)}
+                      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded text-sm">
+                      Zaključi otvoritev
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -989,12 +1131,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         {/* ARTIKLI */}
         {activeTab === 'artikli' && (
           <div>
-            <div className="bg-gray-400/60 px-6 py-3 inline-block min-w-[500px]">
+            <div className="bg-gray-400/60 px-6 py-3">
               <h2 className="text-white font-bold text-xl">Artikli</h2>
             </div>
 
-            {/* Sub-tabs matching reference images */}
-            <div className="flex gap-1 px-6 mt-3">
+            {/* Sub-tabs with + Dodaj at right - matches Diapozitiv 9 */}
+            <div className="flex items-center gap-1 px-6 mt-3">
               {([
                 { id: 'sifrant' as ArtikliSubTab, label: 'Šifrant artiklov' },
                 { id: 'cene' as ArtikliSubTab, label: 'Cene artiklov' },
@@ -1011,27 +1153,18 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   {st.label}
                 </button>
               ))}
+              <div className="flex-1" />
+              {role === 'admin' && (
+                <button onClick={() => {
+                  if (artikliSubTab === 'akcije') { resetPromoForm(); setShowPromoForm(true); }
+                  else if (artikliSubTab === 'trgovina') { resetProductForm(); setFormCategory('Trgovina'); setShowAddForm(true); }
+                  else { resetProductForm(); setShowAddForm(true); }
+                }}
+                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">
+                  + Dodaj
+                </button>
+              )}
             </div>
-
-            {/* Add button - top right - ADMIN ONLY */}
-            {artikliSubTab === 'sifrant' && role === 'admin' && (
-              <div className="flex justify-end px-6 mt-3">
-                <button onClick={() => { resetProductForm(); setShowAddForm(true); }}
-                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Dodaj</button>
-              </div>
-            )}
-            {artikliSubTab === 'akcije' && role === 'admin' && (
-              <div className="flex justify-end px-6 mt-3">
-                <button onClick={() => { resetPromoForm(); setShowPromoForm(true); }}
-                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Nova akcija</button>
-              </div>
-            )}
-            {artikliSubTab === 'trgovina' && role === 'admin' && (
-              <div className="flex justify-end px-6 mt-3">
-                <button onClick={() => { resetProductForm(); setFormCategory('Trgovina'); setShowAddForm(true); }}
-                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Dodaj</button>
-              </div>
-            )}
 
             <div className="px-6 py-3">
               {/* ŠIFRANT ARTIKLOV */}
@@ -1936,62 +2069,8 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         {/* BONI IN KARTICE */}
         {activeTab === 'bonikartice' && <BoniKarticeModule />}
 
-        {/* AVTORIZACIJA */}
-        {activeTab === 'avtorizacija' && (
-          <div>
-            <div className="bg-gray-600/80 px-6 py-3"><h2 className="text-white font-bold text-xl">Avtorizacija</h2></div>
-            <div className="px-6 py-4">
-              <div className="bg-gray-700/60 border border-gray-500 rounded-lg p-6 max-w-2xl text-gray-200">
-                <p className="text-sm mb-6">
-                  Ta funkcija omogoča generiranje enkratne administratorske kode za izvajanje varnostnih operacij v sistemu.
-                </p>
-
-                <h4 className="font-bold text-white text-sm mb-3">OPERACIJE, KI ZAHTEVAJO AVTORIZACIJO:</h4>
-                <ul className="list-disc list-inside space-y-1 mb-6 text-sm ml-4">
-                  <li>storniranje računa</li>
-                  <li>vračilo artiklov</li>
-                  <li>sprememba cene</li>
-                </ul>
-
-                <h4 className="font-bold text-white text-sm mb-2">VELJAVNOST KODE:</h4>
-                <p className="text-sm mb-6">Administratorska koda velja 4 ure od generiranja.</p>
-
-                <h4 className="font-bold text-white text-sm mb-3">AKCIJA:</h4>
-                <div className="flex justify-center mb-6">
-                  {authCode && authCountdown > 0 ? (
-                    <div className="text-center space-y-3">
-                      <div className="bg-gray-300 text-gray-900 px-8 py-4 rounded-lg">
-                        <p className="text-xs text-gray-600 mb-1">ADMIN KODA</p>
-                        <p className="font-mono text-4xl font-black tracking-[0.3em]">{authCode}</p>
-                      </div>
-                      <p className="text-sm text-gray-300">
-                        <Clock className="w-4 h-4 inline mr-1" />
-                        {formatCountdown(authCountdown)} preostane
-                      </p>
-                      <button onClick={generateAuthCode} className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm">Nova koda</button>
-                    </div>
-                  ) : (
-                    <button onClick={generateAuthCode}
-                      className="px-8 py-4 bg-sky-200 hover:bg-sky-300 text-gray-800 font-bold rounded-lg text-sm transition-colors">
-                      GENERIRAJ 5-mestno<br />ADMIN KODO
-                    </button>
-                  )}
-                </div>
-
-                <p className="text-sm">
-                  <span className="font-bold text-white">STATUS: </span>
-                  {authCode && authCountdown > 0 ? (
-                    <span className="text-green-400 font-bold">AKTIVNA</span>
-                  ) : (
-                    <span className="text-red-400 font-bold">NEAKTIVNA</span>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-      </div>
+        </div>{/* end inner scrollable div */}
+      </div>{/* end main content flex col */}
     </div>
   );
 };
