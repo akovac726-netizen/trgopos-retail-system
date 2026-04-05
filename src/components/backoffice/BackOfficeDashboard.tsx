@@ -1165,7 +1165,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 </button>
               )}
             </div>
-            )}
 
             <div className="px-6 py-3">
               {/* ŠIFRANT ARTIKLOV */}
