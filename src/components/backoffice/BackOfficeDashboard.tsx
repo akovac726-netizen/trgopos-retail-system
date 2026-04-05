@@ -990,47 +990,126 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 overflow-y-auto z-10 relative">
+      <div className="flex-1 flex flex-col overflow-hidden z-10 relative">
+        {/* Top bar: Uporabnik + Upravljanje */}
+        <div className="flex items-center gap-4 px-2 py-1">
+          <div className="border border-gray-500 bg-gray-200/80 px-3 py-1 text-sm text-gray-800 min-w-[180px]">
+            Uporabnik: {role === 'admin' ? 'Direktor' : 'Trgovina'}
+          </div>
+          <div className="relative">
+            <button onClick={() => setShowUpravljanje(!showUpravljanje)}
+              className="border border-gray-500 bg-gray-300/80 px-4 py-1 text-sm font-medium text-gray-800 hover:bg-gray-400/80 transition-colors">
+              Upravljanje
+            </button>
+            {showUpravljanje && (
+              <div className="absolute top-full left-0 mt-1 flex gap-1 z-50">
+                <div className="bg-white border-2 border-gray-700 min-w-[200px]">
+                  {['Nastavitve', 'Upravljanje uporabnikov', 'Pregled dnevnika', 'Polog denarja'].map(item => (
+                    <button key={item} onClick={() => { setShowUpravljanje(false); toast.info(`${item} – v pripravi`); }}
+                      className="block w-full text-left px-4 py-2 text-sm border-b border-gray-200 hover:bg-gray-100 transition-colors">
+                      {item}
+                    </button>
+                  ))}
+                </div>
+                <div className="bg-white border-2 border-gray-700 min-w-[180px]">
+                  {['Spremeni geslo', 'Dodaj uporabnika'].map(item => (
+                    <button key={item} onClick={() => { setShowUpravljanje(false); toast.info(`${item} – v pripravi`); }}
+                      className="block w-full text-left px-4 py-2 text-sm border-b border-gray-200 hover:bg-gray-100 transition-colors">
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
-        {/* POSLOVANJE - matches Diapozitiv2-4 exactly */}
+        <div className="flex-1 overflow-y-auto">
+
+        {/* POSLOVANJE */}
         {activeTab === 'poslovanje' && (
           <div className="relative h-full">
-            {/* Title bar */}
-            <div className="bg-gray-400/60 px-6 py-3 inline-block min-w-[500px]">
+            {/* Poslovanje header bar */}
+            <div className="bg-gray-400/60 px-6 py-3">
               <h2 className="text-white font-bold text-xl">Poslovanje</h2>
             </div>
 
             {/* OTVORITEV and ZAPIRANJE buttons */}
-            <div className="flex gap-4 mt-6 ml-8">
-              <button onClick={() => setShowOpenConfirm(true)}
+            <div className="flex gap-6 mt-6 ml-8">
+              <button onClick={() => { if (!businessOpened) setShowOpenConfirm(true); }}
                 className={`px-12 py-5 font-bold text-xl rounded-xl transition-colors border-2 ${
-                  businessOpened 
-                    ? 'bg-gray-300 border-gray-400 text-gray-700' 
-                    : 'bg-green-600 hover:bg-green-700 border-green-700 text-white'
+                  businessOpened
+                    ? 'bg-gray-300 border-gray-400 text-gray-600 cursor-default'
+                    : 'border-gray-600 text-white hover:brightness-110'
                 }`}
-                style={!businessOpened ? {} : {}}>
+                style={!businessOpened ? { background: 'linear-gradient(180deg, #8a9a4a, #6a7a3a)' } : {}}>
                 OTVORITEV
               </button>
-              <button onClick={() => setShowCloseConfirm(true)}
+              <button onClick={() => { if (businessOpened) setShowCloseConfirm(true); }}
                 className={`px-12 py-5 font-bold text-xl rounded-xl transition-colors border-2 ${
                   !businessOpened
-                    ? 'bg-gray-300 border-gray-400 text-gray-700'
-                    : 'bg-red-600 hover:bg-red-700 border-red-700 text-white'
-                }`}>
+                    ? 'bg-gray-300 border-gray-400 text-gray-600 cursor-default'
+                    : 'border-gray-600 text-white hover:brightness-110'
+                }`}
+                style={businessOpened ? { background: 'linear-gradient(180deg, #c03030, #901818)' } : {}}>
                 ZAPIRANJE
               </button>
             </div>
 
             {/* Confirmation dialog for OTVORITEV */}
-            {showOpenConfirm && (
+            {showOpenConfirm && !showOpenChecklist && (
               <div className="mt-6 ml-8 bg-white border-4 border-gray-800 rounded-lg p-8 max-w-[500px]">
                 <p className="text-center text-lg mb-1">Ali ste prepričani, da želite</p>
                 <p className="text-center text-lg mb-6"><span className="text-green-600 font-bold">OTVORITI</span> poslovni dan?</p>
                 <div className="flex justify-center gap-6">
-                  <button onClick={handleOpenBusiness} className="text-xl font-bold hover:underline">Da</button>
+                  <button onClick={() => {
+                    handleOpenBusiness();
+                    setShowOpenConfirm(false);
+                    setShowOpenChecklist(true);
+                    setOpenChecklistItems(prev => prev.map(i => ({ ...i, checked: false })));
+                  }} className="text-xl font-bold hover:underline">Da</button>
                   <span className="text-xl">/</span>
                   <button onClick={() => setShowOpenConfirm(false)} className="text-xl font-bold hover:underline">Ne</button>
                 </div>
+              </div>
+            )}
+
+            {/* Otvoritev poslovanja checklist - Diapozitiv 6/7 */}
+            {showOpenChecklist && (
+              <div className="mt-6 ml-8 bg-white border-4 border-gray-800 max-w-[650px]">
+                <div className="border-b-2 border-gray-800 px-4 py-3">
+                  <h3 className="text-xl font-bold">Otvoritev poslovanja</h3>
+                </div>
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-gray-400">
+                      <th className="px-4 py-2 text-left font-bold text-sm w-16 border-r border-gray-400">Št.</th>
+                      <th className="px-4 py-2 text-left font-bold text-sm border-r border-gray-400">Funkcije</th>
+                      <th className="px-4 py-2 text-center font-bold text-sm w-24">Izveden</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {openChecklistItems.map((item, i) => (
+                      <tr key={i} className="border-b border-gray-200">
+                        <td className="px-4 py-3 text-center font-medium border-r border-gray-300">{i + 1}.</td>
+                        <td className="px-4 py-3 font-medium border-r border-gray-300">{item.label}</td>
+                        <td className="px-4 py-3 text-center">
+                          <input type="checkbox" checked={item.checked}
+                            onChange={() => setOpenChecklistItems(prev => prev.map((it, idx) => idx === i ? { ...it, checked: !it.checked } : it))}
+                            className="w-5 h-5 cursor-pointer" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {openChecklistItems.every(i => i.checked) && (
+                  <div className="p-3 flex justify-end">
+                    <button onClick={() => setShowOpenChecklist(false)}
+                      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded text-sm">
+                      Zaključi otvoritev
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
