@@ -607,10 +607,10 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         <div className="w-[230px] flex flex-col shrink-0 z-10">
           <div className="bg-purple-600 text-white font-bold text-center py-3 text-lg">TrgoBackEnd</div>
           <div className="bg-gray-300 flex-1 flex flex-col">
-            {(['zaposleni', 'zahtevki', 'pregled'] as const).map(tab => (
+            {(['blagajne', 'zaposleni', 'zahtevki', 'pregled'] as const).map(tab => (
               <button key={tab} onClick={() => setBackendSubTab(tab)}
                 className={`text-left px-4 py-2.5 text-sm font-medium border-b border-gray-400 transition-colors ${backendSubTab === tab ? 'bg-sky-400 text-white' : 'text-gray-800 hover:bg-gray-200'}`}>
-                {tab === 'zaposleni' ? 'Zaposleni' : tab === 'zahtevki' ? 'Zahtevki za dopust' : 'Pregled dopustov'}
+                {tab === 'blagajne' ? 'Blagajne' : tab === 'zaposleni' ? 'Zaposleni' : tab === 'zahtevki' ? 'Zahtevki za dopust' : 'Pregled dopustov'}
               </button>
             ))}
             <div className="flex-1" />
