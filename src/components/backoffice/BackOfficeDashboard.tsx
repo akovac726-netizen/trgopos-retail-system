@@ -529,8 +529,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     { id: 'inventura', label: 'Inventura' },
     { id: 'financna', label: 'Finančna poročila' },
     { id: 'partnerji', label: 'Partnerji' },
-    { id: 'bonikartice', label: 'Boni in kartice' },
-    { id: 'avtorizacija', label: 'Avtorizacija' },
   ];
 
   // ===== TrgoBackEnd LOGIN =====
