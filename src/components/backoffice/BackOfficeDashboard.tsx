@@ -114,7 +114,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [backendLoggedIn, setBackendLoggedIn] = useState(false);
   const [backendUsername, setBackendUsername] = useState("");
   const [backendPassword, setBackendPassword] = useState("");
-  const [backendSubTab, setBackendSubTab] = useState<'zaposleni' | 'zahtevki' | 'pregled'>('zaposleni');
+  const [backendSubTab, setBackendSubTab] = useState<BackendTab>('zaposleni');
 
   // Employees
   const [employees, setEmployees] = useState<Employee[]>([]);
