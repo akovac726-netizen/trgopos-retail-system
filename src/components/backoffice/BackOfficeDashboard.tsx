@@ -2078,8 +2078,8 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         {/* BONI IN KARTICE */}
         {activeTab === 'bonikartice' && <BoniKarticeModule />}
 
-
-      </div>
+        </div>{/* end inner scrollable div */}
+      </div>{/* end main content flex col */}
     </div>
   );
 };
