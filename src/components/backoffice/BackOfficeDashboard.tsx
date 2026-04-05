@@ -1131,12 +1131,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         {/* ARTIKLI */}
         {activeTab === 'artikli' && (
           <div>
-            <div className="bg-gray-400/60 px-6 py-3 inline-block min-w-[500px]">
+            <div className="bg-gray-400/60 px-6 py-3">
               <h2 className="text-white font-bold text-xl">Artikli</h2>
             </div>
 
-            {/* Sub-tabs matching reference images */}
-            <div className="flex gap-1 px-6 mt-3">
+            {/* Sub-tabs with + Dodaj at right - matches Diapozitiv 9 */}
+            <div className="flex items-center gap-1 px-6 mt-3">
               {([
                 { id: 'sifrant' as ArtikliSubTab, label: 'Šifrant artiklov' },
                 { id: 'cene' as ArtikliSubTab, label: 'Cene artiklov' },
@@ -1153,26 +1153,18 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   {st.label}
                 </button>
               ))}
+              <div className="flex-1" />
+              {role === 'admin' && (
+                <button onClick={() => {
+                  if (artikliSubTab === 'akcije') { resetPromoForm(); setShowPromoForm(true); }
+                  else if (artikliSubTab === 'trgovina') { resetProductForm(); setFormCategory('Trgovina'); setShowAddForm(true); }
+                  else { resetProductForm(); setShowAddForm(true); }
+                }}
+                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">
+                  + Dodaj
+                </button>
+              )}
             </div>
-
-            {/* Add button - top right - ADMIN ONLY */}
-            {artikliSubTab === 'sifrant' && role === 'admin' && (
-              <div className="flex justify-end px-6 mt-3">
-                <button onClick={() => { resetProductForm(); setShowAddForm(true); }}
-                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Dodaj</button>
-              </div>
-            )}
-            {artikliSubTab === 'akcije' && role === 'admin' && (
-              <div className="flex justify-end px-6 mt-3">
-                <button onClick={() => { resetPromoForm(); setShowPromoForm(true); }}
-                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Nova akcija</button>
-              </div>
-            )}
-            {artikliSubTab === 'trgovina' && role === 'admin' && (
-              <div className="flex justify-end px-6 mt-3">
-                <button onClick={() => { resetProductForm(); setFormCategory('Trgovina'); setShowAddForm(true); }}
-                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-sm">+ Dodaj</button>
-              </div>
             )}
 
             <div className="px-6 py-3">
