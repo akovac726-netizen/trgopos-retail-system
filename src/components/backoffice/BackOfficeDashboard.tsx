@@ -135,6 +135,17 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [businessOpened, setBusinessOpened] = useState(false);
   const [showOpenConfirm, setShowOpenConfirm] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showOpenChecklist, setShowOpenChecklist] = useState(false);
+  const [openChecklistItems, setOpenChecklistItems] = useState([
+    { label: 'Preveri konec ponudbe', checked: false },
+    { label: 'Prevzemi začetek ponudbe', checked: false },
+    { label: 'Izvleček prodajnih cen', checked: false },
+    { label: 'Natisni etikete', checked: false },
+    { label: 'Izvleček sprememb', checked: false },
+    { label: 'Širjenje blagajne', checked: false },
+    { label: 'Posodobitev blagajne', checked: false },
+  ]);
+  const [showUpravljanje, setShowUpravljanje] = useState(false);
 
   // Zaključevanje
   const [showZakljuciConfirm, setShowZakljuciConfirm] = useState(false);
