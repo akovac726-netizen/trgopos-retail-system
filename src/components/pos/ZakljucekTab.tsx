@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { toast } from "sonner";
 import { Cashier, Transaction } from "@/types/pos";
 import { ClosingReport } from "./ShiftEndDialog";
@@ -14,14 +14,15 @@ interface ZakljucekTabProps {
   onEndShift: (report: ClosingReport) => void;
   onEndDay: (report: ClosingReport) => void;
   onOpenDrawer: () => void;
-  activeSubTab?: 'zakljucek' | 'informacije';
-  onSubTabChange?: (tab: 'zakljucek' | 'informacije') => void;
+  activeSubTab?: 'zakljucek' | 'nastavitve' | 'informacije';
+  onSubTabChange?: (tab: 'zakljucek' | 'nastavitve' | 'informacije') => void;
+  settingsContent?: ReactNode;
 }
 
-const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registerId, onEndShift, onEndDay, onOpenDrawer, activeSubTab = 'zakljucek', onSubTabChange }: ZakljucekTabProps) => {
+const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registerId, onEndShift, onEndDay, onOpenDrawer, activeSubTab = 'zakljucek', onSubTabChange, settingsContent }: ZakljucekTabProps) => {
   const [showDrawerDialog, setShowDrawerDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<'shift' | 'day' | null>(null);
-  const [localSubTab, setLocalSubTab] = useState<'zakljucek' | 'informacije'>(activeSubTab);
+  const [localSubTab, setLocalSubTab] = useState<'zakljucek' | 'nastavitve' | 'informacije'>(activeSubTab);
   const subTab = activeSubTab || localSubTab;
   const setSubTab = onSubTabChange || setLocalSubTab;
 
@@ -66,7 +67,7 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registe
 
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{ background: '#e8f4f8' }}>
-      {/* Top tabs: Zaključek | Informacije - matches Diapozitiv 12 */}
+      {/* Top tabs: Zaključek | Nastavitve | Informacije - matches Diapozitiv 14 */}
       <div className="border-2 border-gray-800 bg-white mx-3 mt-3">
         <div className="px-4 py-2 font-bold text-lg border-b border-gray-400">Glavni meni:</div>
         <div className="flex">
@@ -75,8 +76,12 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registe
             Zaključek
           </button>
           <div className="flex-1" />
+          <button onClick={() => setSubTab('nastavitve')}
+            className={`px-6 py-2 font-bold text-base border-l border-gray-400 transition-colors ${subTab === 'nastavitve' ? 'bg-sky-200' : 'bg-white hover:bg-gray-100'}`}>
+            Nastavitve
+          </button>
           <button onClick={() => setSubTab('informacije')}
-            className={`px-6 py-2 font-bold text-base transition-colors ${subTab === 'informacije' ? 'bg-sky-200' : 'bg-white hover:bg-gray-100'}`}>
+            className={`px-6 py-2 font-bold text-base border-l border-gray-400 transition-colors ${subTab === 'informacije' ? 'bg-sky-200' : 'bg-white hover:bg-gray-100'}`}>
             Informacije
           </button>
         </div>
@@ -84,21 +89,19 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registe
 
       {/* Content */}
       <div className="flex-1 p-3 overflow-auto">
-        {subTab === 'zakljucek' ? (
+        {subTab === 'zakljucek' && (
           <div className="flex gap-6 items-start justify-center h-full pt-4">
-            {/* Left column - Today's summary + empty box */}
+            {/* Left column */}
             <div className="flex flex-col gap-4 w-80">
               <div className="border-2 border-gray-600 rounded-lg bg-amber-300 text-center py-3">
                 <h3 className="font-bold text-lg">Zgodovina aktivnih<br />blagajnikov</h3>
               </div>
               <div className="border-2 border-gray-600 bg-white rounded-lg min-h-[200px]">
-                {/* Empty per PDF mockup */}
               </div>
             </div>
 
-            {/* Right column - Closing info + actions */}
+            {/* Right column */}
             <div className="flex flex-col gap-4 w-80">
-              {/* Closing info */}
               <div className="border-2 border-gray-600 rounded-lg bg-white p-4">
                 <h3 className="font-bold text-xl mb-3">Zaključek blagajne</h3>
                 <div className="space-y-1 text-sm">
@@ -108,13 +111,11 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registe
                 </div>
               </div>
 
-              {/* Open drawer */}
               <button onClick={onOpenDrawer}
                 className="h-14 bg-white border-2 border-gray-600 rounded-lg font-bold text-lg text-gray-800 hover:bg-gray-50 transition-colors">
                 ODPRI BL. PREDAL
               </button>
 
-              {/* Action buttons */}
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => handleClosingAction('shift')}
                   className="h-24 bg-amber-400 hover:bg-amber-500 rounded-lg font-bold text-sm text-gray-800 flex flex-col items-center justify-center gap-2 transition-colors border-2 border-amber-500">
@@ -129,8 +130,22 @@ const ZakljucekTab = ({ cashier, cashiers, transactions, closingHistory, registe
               </div>
             </div>
           </div>
-        ) : (
-          /* Informacije tab - matches Diapozitiv 13 */
+        )}
+
+        {subTab === 'nastavitve' && (
+          <div className="border-2 border-gray-800 bg-white rounded-lg max-w-2xl mx-auto mt-4">
+            <div className="px-6 py-3 border-b border-gray-400">
+              <h3 className="text-xl font-bold">Nastavitve</h3>
+            </div>
+            <div className="p-6 space-y-3">
+              {settingsContent || (
+                <p className="text-gray-500">Nastavitve niso na voljo.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {subTab === 'informacije' && (
           <div className="border-2 border-gray-800 bg-white rounded-lg p-6 max-w-2xl mx-auto mt-4">
             <h3 className="text-xl font-bold mb-4 border-b-2 border-gray-800 pb-2">Informacije (zakonsko zaščiteni moduli):</h3>
             <table className="w-full text-base">
