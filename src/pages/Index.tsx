@@ -805,7 +805,154 @@ const Index = () => {
 
         {posTab === 'zakljucek' && currentCashier && (
           <ZakljucekTab cashier={currentCashier} cashiers={cashiers} transactions={transactions}
-            closingHistory={closingHistory} registerId={registerId} onEndShift={handleEndShift} onEndDay={handleEndDay} onOpenDrawer={handleOpenDrawer} />
+            closingHistory={closingHistory} registerId={registerId} onEndShift={handleEndShift} onEndDay={handleEndDay} onOpenDrawer={handleOpenDrawer}
+            settingsContent={
+              <div className="space-y-3 text-sm">
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <h3 className="font-bold text-base mb-2">Tiskalnik računov</h3>
+                  <p className="text-gray-600">Status: <span className="text-green-600 font-bold">Povezan</span></p>
+                  <p className="text-gray-600">Model: Epson TM-T20III</p>
+                </div>
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <h3 className="font-bold text-base mb-2">POS Terminal</h3>
+                  <p className="text-gray-600">Status: <span className="text-green-600 font-bold">Aktiven</span></p>
+                </div>
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <h3 className="font-bold text-base mb-2">FURS povezava</h3>
+                  <p className="text-gray-600">Status: <span className="text-amber-600 font-bold">Ni konfiguriran</span></p>
+                  <p className="text-gray-500 text-xs mt-1">Digitalno potrdilo za davčno potrjevanje računov</p>
+                </div>
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <h3 className="font-bold text-base mb-2">Davčne stopnje</h3>
+                  <p className="text-gray-600">DDV 22% (standard) | DDV 9.5% (znižana)</p>
+                </div>
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-base">⌨ Tipkovnica</h3>
+                      <p className="text-gray-500 text-xs mt-1">Omogoči fizično tipkovnico za vnos EAN kod</p>
+                    </div>
+                    <button onClick={() => {
+                      const next = !keyboardEnabled;
+                      setKeyboardEnabled(next);
+                      localStorage.setItem('trgopos_keyboard', String(next));
+                      toast.success(next ? 'Tipkovnica VKLOPLJENA' : 'Tipkovnica IZKLOPLJENA');
+                    }}
+                      className={`w-16 h-8 rounded-full relative transition-colors ${keyboardEnabled ? 'bg-green-500' : 'bg-gray-300'}`}>
+                      <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${keyboardEnabled ? 'right-1' : 'left-1'}`} />
+                    </button>
+                  </div>
+                </div>
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <h3 className="font-bold text-base mb-2">Popravek ure in datuma</h3>
+                  <div className="flex gap-2 mt-2">
+                    <input type="datetime-local" id="settings-datetime-inline"
+                      defaultValue={new Date().toISOString().slice(0, 16)}
+                      className="flex-1 border-2 border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                    <button onClick={() => {
+                      const el = document.getElementById('settings-datetime-inline') as HTMLInputElement;
+                      if (el?.value) {
+                        localStorage.setItem('trgopos_time_offset', String(new Date(el.value).getTime() - Date.now()));
+                        toast.success(`Sistemski čas nastavljen na ${new Date(el.value).toLocaleString('sl-SI')}`);
+                      }
+                    }} className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-bold text-sm transition-colors">
+                      Nastavi
+                    </button>
+                  </div>
+                </div>
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <h3 className="font-bold text-base mb-2">Test tiskalnika in skenerja</h3>
+                  <div className="flex gap-2 mt-2">
+                    <button onClick={() => toast.success('🖨 Test tiskalnika poslan. Tiskalnik deluje pravilno.')}
+                      className="flex-1 h-10 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">
+                      🖨 Test tiskalnika
+                    </button>
+                    <button onClick={() => toast.success('📡 Skener zaznan. Skener deluje pravilno.')}
+                      className="flex-1 h-10 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">
+                      📡 Test skenerja
+                    </button>
+                  </div>
+                </div>
+                <div className="border-2 border-sky-400 rounded-lg p-4">
+                  <h3 className="font-bold text-base mb-2">Menjava blagajne</h3>
+                  <p className="text-gray-600 mb-3">Trenutna: <span className={`font-bold ${isSelfCheckout ? 'text-orange-600' : 'text-sky-600'}`}>
+                    {isSelfCheckout ? `🛒 Samoplačniška ${selfCheckoutLabel} (ID: ${registerId})` : `Blagajna ${registerId}`}
+                  </span></p>
+                  <div className="flex gap-2">
+                    {[1, 2, 3].map(id => (
+                      <button key={id} onClick={() => {
+                        if (isSelfCheckout) { toast.error('Najprej izklopite samoplačniški način'); return; }
+                        localStorage.setItem('trgopos_register_id', String(id));
+                        setRegisterIdState(id);
+                        toast.success(`Naprava nastavljena na Blagajno ${id}`);
+                      }}
+                        className={`flex-1 h-12 rounded-lg font-bold text-lg transition-colors border-2 ${
+                          id === registerId ? 'bg-sky-500 text-white border-sky-600' : isSelfCheckout ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:border-sky-400'
+                        }`}>
+                        {id}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="border-2 border-orange-400 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-base">🛒 Samoplačniška blagajna</h3>
+                      <p className="text-gray-500 text-xs mt-1">Ločen register ID za ločeno beleženje transakcij</p>
+                    </div>
+                    <button onClick={async () => {
+                      const canActivate = currentCashier?.id === '00087' || currentCashier?.role === 'admin';
+                      if (!canActivate) { toast.error('Samo PODPORA ali Direktor lahko aktivira samoplačniško blagajno'); return; }
+                      const newState = !isSelfCheckout;
+                      if (newState) {
+                        const label = selfCheckoutLabel || 'A1';
+                        const scId = labelToRegisterId(label);
+                        await supabase.from('self_checkout_config').upsert({ register_id: scId, enabled: true, label, activated_by: currentCashier?.id || '', activated_at: new Date().toISOString() } as any, { onConflict: 'register_id' });
+                        setIsSelfCheckout(true); setSelfCheckoutLabel(label); setRegisterIdState(scId);
+                        localStorage.setItem('trgopos_register_id', String(scId));
+                        toast.success(`Samoplačniška blagajna ${label} AKTIVIRANA (register ${scId})`);
+                      } else {
+                        const scId = SELF_CHECKOUT_IDS.includes(registerId) ? registerId : labelToRegisterId(selfCheckoutLabel || 'A1');
+                        await supabase.from('self_checkout_config').upsert({ register_id: scId, enabled: false, label: '', activated_by: currentCashier?.id || '', activated_at: new Date().toISOString() } as any, { onConflict: 'register_id' });
+                        setIsSelfCheckout(false); setSelfCheckoutLabel(''); setRegisterIdState(1);
+                        localStorage.setItem('trgopos_register_id', '1');
+                        toast.success('Samoplačniški način IZKLOPLJEN – blagajna nastavljena na 1');
+                      }
+                    }}
+                      className={`w-16 h-8 rounded-full relative transition-colors ${isSelfCheckout ? 'bg-orange-500' : 'bg-gray-300'}`}>
+                      <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${isSelfCheckout ? 'right-1' : 'left-1'}`} />
+                    </button>
+                  </div>
+                  {isSelfCheckout && (
+                    <>
+                      <p className="text-xs text-gray-500">Izberite oznako samoplačniške blagajne:</p>
+                      <div className="flex gap-2">
+                        {['A1', 'A2', 'A3'].map(label => {
+                          const scId = labelToRegisterId(label);
+                          return (
+                            <button key={label} onClick={async () => {
+                              setSelfCheckoutLabel(label); setRegisterIdState(scId);
+                              localStorage.setItem('trgopos_register_id', String(scId));
+                              await supabase.from('self_checkout_config').upsert({ register_id: scId, enabled: true, label, activated_by: currentCashier?.id || '', activated_at: new Date().toISOString() } as any, { onConflict: 'register_id' });
+                              toast.success(`Samoplačniška blagajna ${label} (register ${scId})`);
+                            }}
+                              className={`flex-1 h-12 rounded-lg font-bold text-lg transition-colors border-2 ${
+                                selfCheckoutLabel === label ? 'bg-orange-500 text-white border-orange-600' : 'bg-white text-gray-700 border-gray-300 hover:border-orange-400'
+                              }`}>
+                              🛒 {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="bg-orange-50 border border-orange-300 rounded p-2 text-orange-700 text-xs font-bold">
+                        ✅ Samoplačniška blagajna {selfCheckoutLabel || 'A1'} (register ID: {registerId}) – transakcije se beležijo ločeno
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            }
+          />
         )}
       </main>
 
@@ -863,195 +1010,7 @@ const Index = () => {
         </div>
       )}
 
-      {/* Settings dialog - only for PODPORA STANDBUY */}
-      {showSettingsDialog && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowSettingsDialog(false)}>
-          <div className="bg-white rounded-xl shadow-2xl border-2 border-gray-300 max-w-lg w-full max-h-[calc(100vh-2rem)] flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="p-6 pb-3 border-b border-gray-200 shrink-0">
-              <h2 className="text-2xl font-bold">⚙ Nastavitve</h2>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-3 text-sm">
-              <div className="border-2 border-gray-300 rounded-lg p-4">
-                <h3 className="font-bold text-base mb-2">Tiskalnik računov</h3>
-                <p className="text-gray-600">Status: <span className="text-green-600 font-bold">Povezan</span></p>
-                <p className="text-gray-600">Model: Epson TM-T20III</p>
-              </div>
-              <div className="border-2 border-gray-300 rounded-lg p-4">
-                <h3 className="font-bold text-base mb-2">POS Terminal</h3>
-                <p className="text-gray-600">Status: <span className="text-green-600 font-bold">Aktiven</span></p>
-              </div>
-              <div className="border-2 border-gray-300 rounded-lg p-4">
-                <h3 className="font-bold text-base mb-2">FURS povezava</h3>
-                <p className="text-gray-600">Status: <span className="text-amber-600 font-bold">Ni konfiguriran</span></p>
-                <p className="text-gray-500 text-xs mt-1">Digitalno potrdilo za davčno potrjevanje računov</p>
-              </div>
-              <div className="border-2 border-gray-300 rounded-lg p-4">
-                <h3 className="font-bold text-base mb-2">Davčne stopnje</h3>
-                <p className="text-gray-600">DDV 22% (standard) | DDV 9.5% (znižana)</p>
-              </div>
-              <div className="border-2 border-gray-300 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-base">⌨ Tipkovnica</h3>
-                    <p className="text-gray-500 text-xs mt-1">Omogoči fizično tipkovnico za vnos EAN kod (0-9, Enter, Backspace, F2=plačilo)</p>
-                  </div>
-                  <button onClick={() => {
-                    const next = !keyboardEnabled;
-                    setKeyboardEnabled(next);
-                    localStorage.setItem('trgopos_keyboard', String(next));
-                    toast.success(next ? 'Tipkovnica VKLOPLJENA' : 'Tipkovnica IZKLOPLJENA');
-                  }}
-                    className={`w-16 h-8 rounded-full relative transition-colors ${keyboardEnabled ? 'bg-green-500' : 'bg-gray-300'}`}>
-                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${keyboardEnabled ? 'right-1' : 'left-1'}`} />
-                  </button>
-                </div>
-              </div>
-              <div className="border-2 border-gray-300 rounded-lg p-4">
-                <h3 className="font-bold text-base mb-2">Popravek ure in datuma</h3>
-                <div className="flex gap-2 mt-2">
-                  <input type="datetime-local" id="settings-datetime"
-                    defaultValue={new Date().toISOString().slice(0, 16)}
-                    className="flex-1 border-2 border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                  <button onClick={() => {
-                    const el = document.getElementById('settings-datetime') as HTMLInputElement;
-                    if (el?.value) {
-                      localStorage.setItem('trgopos_time_offset', String(new Date(el.value).getTime() - Date.now()));
-                      toast.success(`Sistemski čas nastavljen na ${new Date(el.value).toLocaleString('sl-SI')}`);
-                    }
-                  }} className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-bold text-sm transition-colors">
-                    Nastavi
-                  </button>
-                </div>
-                <p className="text-gray-500 text-xs mt-1">Sprememba vpliva samo na to napravo</p>
-              </div>
-              <div className="border-2 border-gray-300 rounded-lg p-4">
-                <h3 className="font-bold text-base mb-2">Test tiskalnika in skenerja</h3>
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => {
-                    toast.success('🖨 Test tiskalnika poslan. Tiskalnik deluje pravilno.');
-                  }} className="flex-1 h-10 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">
-                    🖨 Test tiskalnika
-                  </button>
-                  <button onClick={() => {
-                    toast.success('📡 Skener zaznan. Skener deluje pravilno.');
-                  }} className="flex-1 h-10 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">
-                    📡 Test skenerja
-                  </button>
-                </div>
-              </div>
-              <div className="border-2 border-sky-400 rounded-lg p-4">
-                <h3 className="font-bold text-base mb-2">Menjava blagajne</h3>
-                <p className="text-gray-600 mb-3">Trenutna: <span className={`font-bold ${isSelfCheckout ? 'text-orange-600' : 'text-sky-600'}`}>
-                  {isSelfCheckout ? `🛒 Samoplačniška ${selfCheckoutLabel} (ID: ${registerId})` : `Blagajna ${registerId}`}
-                </span></p>
-                {isSelfCheckout && (
-                  <p className="text-orange-500 text-xs mb-2 font-medium">⚠️ Za menjavo na navadno blagajno najprej izklopite samoplačniški način</p>
-                )}
-                <div className="flex gap-2">
-                  {[1, 2, 3].map(id => (
-                    <button key={id} onClick={() => {
-                      if (isSelfCheckout) {
-                        toast.error('Najprej izklopite samoplačniški način');
-                        return;
-                      }
-                      localStorage.setItem('trgopos_register_id', String(id));
-                      setRegisterIdState(id);
-                      setShowSettingsDialog(false);
-                      toast.success(`Naprava nastavljena na Blagajno ${id}`);
-                    }}
-                      className={`flex-1 h-12 rounded-lg font-bold text-lg transition-colors border-2 ${
-                        id === registerId ? 'bg-sky-500 text-white border-sky-600' : isSelfCheckout ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:border-sky-400'
-                      }`}>
-                      {id}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="border-2 border-orange-400 rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-base">🛒 Samoplačniška blagajna</h3>
-                    <p className="text-gray-500 text-xs mt-1">Ločen register ID (101–103) za ločeno beleženje transakcij</p>
-                  </div>
-                  <button onClick={async () => {
-                    const canActivate = currentCashier?.id === '00087' || currentCashier?.role === 'admin';
-                    if (!canActivate) {
-                      toast.error('Samo PODPORA ali Direktor lahko aktivira samoplačniško blagajno');
-                      return;
-                    }
-                    const newState = !isSelfCheckout;
-                    if (newState) {
-                      const label = selfCheckoutLabel || 'A1';
-                      const scId = labelToRegisterId(label);
-                      await supabase.from('self_checkout_config').upsert({
-                        register_id: scId, enabled: true, label,
-                        activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
-                      } as any, { onConflict: 'register_id' });
-                      setIsSelfCheckout(true);
-                      setSelfCheckoutLabel(label);
-                      setRegisterIdState(scId);
-                      localStorage.setItem('trgopos_register_id', String(scId));
-                      toast.success(`Samoplačniška blagajna ${label} AKTIVIRANA (register ${scId})`);
-                    } else {
-                      // Deactivate — find which SC config was active
-                      const scId = SELF_CHECKOUT_IDS.includes(registerId) ? registerId : labelToRegisterId(selfCheckoutLabel || 'A1');
-                      await supabase.from('self_checkout_config').upsert({
-                        register_id: scId, enabled: false, label: '',
-                        activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
-                      } as any, { onConflict: 'register_id' });
-                      setIsSelfCheckout(false);
-                      setSelfCheckoutLabel('');
-                      // Revert to base register 1
-                      setRegisterIdState(1);
-                      localStorage.setItem('trgopos_register_id', '1');
-                      toast.success('Samoplačniški način IZKLOPLJEN – blagajna nastavljena na 1');
-                    }
-                  }}
-                    className={`w-16 h-8 rounded-full relative transition-colors ${isSelfCheckout ? 'bg-orange-500' : 'bg-gray-300'}`}>
-                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${isSelfCheckout ? 'right-1' : 'left-1'}`} />
-                  </button>
-                </div>
-                {isSelfCheckout && (
-                  <>
-                    <p className="text-xs text-gray-500">Izberite oznako samoplačniške blagajne:</p>
-                    <div className="flex gap-2">
-                      {['A1', 'A2', 'A3'].map(label => {
-                        const scId = labelToRegisterId(label);
-                        return (
-                          <button key={label} onClick={async () => {
-                            setSelfCheckoutLabel(label);
-                            setRegisterIdState(scId);
-                            localStorage.setItem('trgopos_register_id', String(scId));
-                            await supabase.from('self_checkout_config').upsert({
-                              register_id: scId, enabled: true, label,
-                              activated_by: currentCashier?.id || '', activated_at: new Date().toISOString(),
-                            } as any, { onConflict: 'register_id' });
-                            toast.success(`Samoplačniška blagajna ${label} (register ${scId})`);
-                          }}
-                            className={`flex-1 h-12 rounded-lg font-bold text-lg transition-colors border-2 ${
-                              selfCheckoutLabel === label ? 'bg-orange-500 text-white border-orange-600' : 'bg-white text-gray-700 border-gray-300 hover:border-orange-400'
-                            }`}>
-                            🛒 {label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div className="bg-orange-50 border border-orange-300 rounded p-2 text-orange-700 text-xs font-bold">
-                      ✅ Samoplačniška blagajna {selfCheckoutLabel || 'A1'} (register ID: {registerId}) – transakcije se beležijo ločeno
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="p-6 pt-3 border-t border-gray-200 shrink-0">
-              <button onClick={() => setShowSettingsDialog(false)}
-                className="w-full h-12 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-bold text-base transition-colors">
-                Zapri
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };
