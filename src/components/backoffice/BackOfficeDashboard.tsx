@@ -1147,6 +1147,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   </div>
                 )}
               </div>
+            )}
 
               {/* ═══ IZVLEČEK PRODAJNIH CEN ═══ */}
               {showIzvlecekCen && (
@@ -1381,7 +1382,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   </div>
                 </div>
               )}
-            )}
 
             {/* Confirmation dialog for ZAPIRANJE */}
             {showCloseConfirm && (
