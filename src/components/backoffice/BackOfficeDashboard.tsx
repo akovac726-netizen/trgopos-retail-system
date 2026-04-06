@@ -2507,10 +2507,13 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 };
 
 // ─── DOKUMENTI MODULE ───
-type DocTab = 'fakture' | 'dobropisi' | 'prevzemi' | 'narocilnice';
+type DocMainTab = 'prodajni' | 'nabavni' | 'skladiscni' | 'ostali';
 
 const DokumentiModule = ({ role }: { role: 'admin' | 'shop' }) => {
-  const [docTab, setDocTab] = useState<DocTab>('fakture');
+  const [mainTab, setMainTab] = useState<DocMainTab>('prodajni');
+  const [prodajniSub, setProdajniSub] = useState<string | null>(null);
+  const [nabavniSub, setNabavniSub] = useState<string | null>(null);
+  const [skladiscniSub, setSkladiscniSub] = useState<string | null>(null);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [returns, setReturns] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -2541,160 +2544,241 @@ const DokumentiModule = ({ role }: { role: 'admin' | 'shop' }) => {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  const tabs: { id: DocTab; label: string; count: number }[] = [
-    { id: 'fakture', label: 'Fakture', count: invoices.length },
-    { id: 'dobropisi', label: 'Dobropisi / Vračila', count: returns.length },
-    { id: 'prevzemi', label: 'Prevzemni listi', count: orders.filter(o => o.received_confirmed).length },
-    { id: 'narocilnice', label: 'Naročilnice', count: orders.length },
-  ];
+  const tabColors: Record<DocMainTab, string> = {
+    prodajni: 'bg-orange-400 text-white font-bold',
+    nabavni: 'bg-yellow-400 text-gray-900 font-bold',
+    skladiscni: 'bg-yellow-400 text-gray-900 font-bold',
+    ostali: 'bg-gray-200 text-gray-800',
+  };
 
   return (
     <div>
-      <div className="bg-gray-600/80 px-6 py-3 flex items-center justify-between">
+      <div className="bg-gray-400/60 px-6 py-3">
         <h2 className="text-white font-bold text-xl">Dokumenti</h2>
-        <span className="text-white/60 text-xs">Profil: {role === 'admin' ? 'Direktor' : 'Trgovina'}</span>
       </div>
+      {/* Main tabs - Diapozitiv 16 */}
       <div className="flex gap-1 px-6 mt-3">
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setDocTab(t.id)}
+        {([
+          { id: 'prodajni' as DocMainTab, label: 'Prodajni dokumenti' },
+          { id: 'nabavni' as DocMainTab, label: 'Nabavni dokumenti' },
+          { id: 'skladiscni' as DocMainTab, label: 'Skladiščni dokumenti' },
+          { id: 'ostali' as DocMainTab, label: 'Ostali dokumenti' },
+        ]).map(t => (
+          <button key={t.id} onClick={() => { setMainTab(t.id); setProdajniSub(null); setNabavniSub(null); setSkladiscniSub(null); }}
             className={`px-5 py-2 text-sm font-medium border border-gray-400 transition-colors ${
-              docTab === t.id ? 'bg-green-400 text-gray-900 font-bold' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+              mainTab === t.id ? tabColors[t.id] : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
             }`}>
-            {t.label} <span className="ml-1 text-xs opacity-70">({t.count})</span>
+            {t.label}
           </button>
         ))}
       </div>
 
       <div className="px-6 py-4">
-        {/* FAKTURE */}
-        {docTab === 'fakture' && (
-          <table className="w-full border-collapse bg-white">
-            <thead><tr className="bg-gray-200">
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Št. računa</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kupec</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Davčna št.</th>
-              <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Znesek</th>
-              <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Blagajna</th>
-            </tr></thead>
-            <tbody>
-              {invoices.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-4 text-gray-500">Ni izdanih faktur</td></tr>
-              ) : invoices.map((inv: any, i: number) => {
-                const invData = inv.invoice_data || {};
-                return (
-                  <tr key={inv.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="border border-gray-300 px-3 py-2 text-sm font-mono font-bold">{inv.receipt_number}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm">{new Date(inv.created_at).toLocaleString('sl-SI')}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm">{invData.name || invData.company || '-'}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{invData.taxNumber || '-'}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">{Number(inv.total).toFixed(2)} €</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">{inv.register_id > 100 ? `🛒 A${inv.register_id - 100}` : inv.register_id}</td>
+        {/* PRODAJNI DOKUMENTI - Diapozitiv 17 */}
+        {mainTab === 'prodajni' && !prodajniSub && (
+          <div className="bg-gray-200 border border-gray-400 w-[280px] mt-4">
+            {['', '', 'Dobropisi – lastna raba', '', ''].map((label, i) => (
+              <button key={i} onClick={() => { if (label) setProdajniSub(label); }}
+                className="block w-full text-left px-4 py-2.5 text-sm border-b border-gray-400 hover:bg-gray-300 transition-colors">
+                {label || '\u00A0'}
+              </button>
+            ))}
+          </div>
+        )}
+        {mainTab === 'prodajni' && prodajniSub === 'Dobropisi – lastna raba' && (
+          <div>
+            <button onClick={() => setProdajniSub(null)} className="text-sm text-blue-600 hover:underline mb-3">◀ Nazaj</button>
+            <table className="w-full border-collapse bg-white">
+              <thead><tr className="bg-gray-200">
+                <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Št. računa</th>
+                <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
+                <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajnik</th>
+                <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Razlog</th>
+                <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Znesek</th>
+              </tr></thead>
+              <tbody>
+                {returns.length === 0 ? (
+                  <tr><td colSpan={5} className="text-center py-4 text-gray-500">Ni dobropisov</td></tr>
+                ) : returns.map((ret: any, i: number) => (
+                  <tr key={ret.id} className={`${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} text-red-700`}>
+                    <td className="border border-gray-300 px-3 py-2 text-sm font-mono font-bold">{ret.receipt_number}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{new Date(ret.created_at).toLocaleString('sl-SI')}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{ret.cashier_name}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{ret.void_reason || 'Storno'}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">-{Number(ret.total).toFixed(2)} €</td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
-        {/* DOBROPISI / VRAČILA */}
-        {docTab === 'dobropisi' && (
-          <table className="w-full border-collapse bg-white">
-            <thead><tr className="bg-gray-200">
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Št. računa</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Blagajnik</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Razlog</th>
-              <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Znesek</th>
-              <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Blagajna</th>
-            </tr></thead>
-            <tbody>
-              {returns.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-4 text-gray-500">Ni dobropisov ali vračil</td></tr>
-              ) : returns.map((ret: any, i: number) => (
-                <tr key={ret.id} className={`${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} text-red-700`}>
-                  <td className="border border-gray-300 px-3 py-2 text-sm font-mono font-bold">{ret.receipt_number}</td>
-                  <td className="border border-gray-300 px-3 py-2 text-sm">{new Date(ret.created_at).toLocaleString('sl-SI')}</td>
-                  <td className="border border-gray-300 px-3 py-2 text-sm">{ret.cashier_name}</td>
-                  <td className="border border-gray-300 px-3 py-2 text-sm">{ret.void_reason || 'Storno'}</td>
-                  <td className="border border-gray-300 px-3 py-2 text-sm text-right font-bold">-{Number(ret.total).toFixed(2)} €</td>
-                  <td className="border border-gray-300 px-3 py-2 text-sm text-center">{ret.register_id > 100 ? `🛒 A${ret.register_id - 100}` : ret.register_id}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* NABAVNI DOKUMENTI - Diapozitiv 18/19/20 */}
+        {mainTab === 'nabavni' && !nabavniSub && (
+          <div className="bg-gray-200 border border-gray-400 w-[320px] mt-4">
+            {['Naročilnice za skladišče', 'Prevzemnice', 'Dobavnice od skladišča', 'Reklamacije dobaviteljem'].map(label => (
+              <button key={label} onClick={() => setNabavniSub(label)}
+                className="block w-full text-left px-4 py-2.5 text-sm border-b border-gray-400 hover:bg-gray-300 transition-colors">
+                {label}
+              </button>
+            ))}
+          </div>
         )}
-
-        {/* PREVZEMNI LISTI */}
-        {docTab === 'prevzemi' && (
-          <table className="w-full border-collapse bg-white">
-            <thead><tr className="bg-gray-200">
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Št.</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Dobavitelj</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Od profila</th>
-              <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Št. artiklov</th>
-              <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold">Prevzeto</th>
-            </tr></thead>
-            <tbody>
-              {(() => {
-                const confirmed = orders.filter(o => o.received_confirmed);
-                return confirmed.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-4 text-gray-500">Ni prevzemnih listov</td></tr>
-                ) : confirmed.map((o: any, i: number) => {
-                  const items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []);
+        {mainTab === 'nabavni' && nabavniSub === 'Prevzemnice' && (
+          <div>
+            <button onClick={() => setNabavniSub(null)} className="text-sm text-blue-600 hover:underline mb-3">◀ Nazaj</button>
+            <div className="bg-gray-100 border border-gray-400 p-3 mb-3">
+              <h4 className="text-sm font-bold mb-2 text-red-700">Izdane dobavnice - pregled in iskanje</h4>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                <div className="flex items-center gap-1"><label className="text-xs whitespace-nowrap">Št. dobavnice:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Kupec:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Str.m.:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Skladišče:</label><select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white"><option>—</option></select></div>
+              </div>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                <div className="flex items-center gap-1"><label className="text-xs">Išči po:</label><select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white"><option>datum dokumenta</option></select></div>
+                <div className="flex items-center gap-1"><label className="text-xs">od dne:</label><input type="date" className="flex-1 h-7 border border-gray-400 px-1 text-xs" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">do dne:</label><input type="date" className="flex-1 h-7 border border-gray-400 px-1 text-xs" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Status:</label><select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white"><option>—</option></select></div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="flex items-center gap-1"><label className="text-xs">Šifra/Bar koda/Opis:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Serijska št.:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">LOT št.:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+              </div>
+            </div>
+            {/* Toolbar */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex gap-1">
+                <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">💾</button>
+                <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">📁</button>
+                <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">🖨 Tiskanje</button>
+                <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">Več...</button>
+              </div>
+              <div className="flex gap-1">
+                <button className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Iskanje</button>
+                <button className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Izdelava nove dobavnice</button>
+              </div>
+            </div>
+            {/* Table - Diapozitiv 19 */}
+            <table className="w-full border-collapse bg-white text-xs">
+              <thead><tr className="bg-gray-200">
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Št. dobavnice</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Dat.dok</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Dat.dob</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Skladišče</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Kupec</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Opombe</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Za plačilo</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Stroškovno mesto</th>
+              </tr></thead>
+              <tbody>
+                {invoices.length === 0 ? (
+                  <tr><td colSpan={8} className="text-center py-4 text-gray-400">Ni dokumentov</td></tr>
+                ) : invoices.slice(0, 7).map((inv: any, i: number) => {
+                  const invData = inv.invoice_data || {};
                   return (
-                    <tr key={o.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
-                      <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{i + 1}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm font-bold">{o.supplier}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{o.date}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{o.from_profile || '-'}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-right">{items.length}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                        <span className="px-2 py-0.5 bg-green-500 text-white rounded text-xs font-bold">✓ Prevzeto</span>
-                      </td>
+                    <tr key={inv.id} className={i % 2 === 0 ? 'bg-yellow-50' : 'bg-white'}>
+                      <td className="border border-gray-300 px-2 py-1 font-mono text-blue-700">{inv.receipt_number}</td>
+                      <td className="border border-gray-300 px-2 py-1">{new Date(inv.created_at).toLocaleDateString('sl-SI')}</td>
+                      <td className="border border-gray-300 px-2 py-1">{new Date(inv.created_at).toLocaleDateString('sl-SI')}</td>
+                      <td className="border border-gray-300 px-2 py-1">0000</td>
+                      <td className="border border-gray-300 px-2 py-1">{invData.name || invData.company || '-'}</td>
+                      <td className="border border-gray-300 px-2 py-1">{invData.taxNumber ? 'TEST' : '-'}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-right">€ {Number(inv.total).toFixed(2)}</td>
+                      <td className="border border-gray-300 px-2 py-1">{'-'}</td>
                     </tr>
                   );
-                });
-              })()}
-            </tbody>
-          </table>
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {mainTab === 'nabavni' && nabavniSub && nabavniSub !== 'Prevzemnice' && (
+          <div>
+            <button onClick={() => setNabavniSub(null)} className="text-sm text-blue-600 hover:underline mb-3">◀ Nazaj</button>
+            <p className="text-gray-400 text-center py-12">{nabavniSub} – v pripravi</p>
+          </div>
         )}
 
-        {/* NAROČILNICE */}
-        {docTab === 'narocilnice' && (
-          <table className="w-full border-collapse bg-white">
-            <thead><tr className="bg-gray-200">
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Št.</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Dobavitelj</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Datum</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Status</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Od → Za</th>
-              <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Št. artiklov</th>
-              <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Opomba</th>
-            </tr></thead>
-            <tbody>
-              {orders.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-4 text-gray-500">Ni naročilnic</td></tr>
-              ) : orders.map((o: any, i: number) => {
-                const items = typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []);
-                const statusColor = o.status === 'Poslano' ? 'bg-blue-500' : o.status === 'Dostavljeno' ? 'bg-green-500' : 'bg-gray-400';
-                return (
-                  <tr key={o.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{i + 1}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm font-bold">{o.supplier}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm">{o.date}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm">
-                      <span className={`px-2 py-0.5 ${statusColor} text-white rounded text-xs font-bold`}>{o.status}</span>
-                    </td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm">{o.from_profile || '-'} → {o.to_profile || '-'}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm text-right">{items.length}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm text-gray-500 truncate max-w-[150px]">{o.note || '-'}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        {/* SKLADIŠČNI DOKUMENTI - Diapozitiv 21/22 */}
+        {mainTab === 'skladiscni' && !skladiscniSub && (
+          <div className="bg-gray-200 border border-gray-400 w-[280px] mt-4">
+            {['', 'Popis zaloge', 'Odpis blaga'].map((label, i) => (
+              <button key={i} onClick={() => { if (label) setSkladiscniSub(label); }}
+                className="block w-full text-left px-4 py-2.5 text-sm border-b border-gray-400 hover:bg-gray-300 transition-colors">
+                {label || '\u00A0'}
+              </button>
+            ))}
+          </div>
+        )}
+        {mainTab === 'skladiscni' && skladiscniSub === 'Popis zaloge' && (
+          <div>
+            <button onClick={() => setSkladiscniSub(null)} className="text-sm text-blue-600 hover:underline mb-3">◀ Nazaj</button>
+            {/* Diapozitiv 22 - Popis zalog */}
+            <div className="bg-gray-100 border border-gray-400 p-3 mb-3">
+              <h4 className="text-sm font-bold mb-2 text-red-700">Popisi zalog - pregled in iskanje</h4>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                <div className="flex items-center gap-1"><label className="text-xs">Št. dok.:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Dat.dok. od:</label><input type="date" defaultValue="2025-01-01" className="flex-1 h-7 border border-gray-400 px-1 text-xs" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">do:</label><input type="date" className="flex-1 h-7 border border-gray-400 px-1 text-xs" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Status:</label><select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white"><option>—</option></select></div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center gap-1"><label className="text-xs">Opis:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Skladišče:</label><select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white"><option>—</option></select>
+                  <label className="text-xs ml-2">Šifra/Bar koda/Kat. št./Opis:</label><select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white"><option>—</option></select>
+                </div>
+              </div>
+            </div>
+            {/* Toolbar */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex gap-1">
+                <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">💾</button>
+                <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">📁</button>
+                <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">🖨 Tiskanje</button>
+                <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">Več...</button>
+              </div>
+              <div className="flex gap-1">
+                <button className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Iskanje</button>
+                <button className="px-3 py-1 bg-gray-300 text-gray-800 text-xs font-bold border border-gray-400">Novi popis zalog</button>
+              </div>
+            </div>
+            {/* Table */}
+            <table className="w-full border-collapse bg-white text-xs">
+              <thead><tr className="bg-gray-200">
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold w-8">#</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Št. dok.</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Skladišče</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Dat.dok.</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Opis</th>
+                <th className="border border-gray-400 px-2 py-1.5 w-16"></th>
+              </tr></thead>
+              <tbody>
+                <tr className="bg-white">
+                  <td className="border border-gray-300 px-2 py-1">1.</td>
+                  <td className="border border-gray-300 px-2 py-1 text-blue-700">(osnutek) 0000</td>
+                  <td className="border border-gray-300 px-2 py-1"></td>
+                  <td className="border border-gray-300 px-2 py-1">{new Date().toLocaleDateString('sl-SI')}</td>
+                  <td className="border border-gray-300 px-2 py-1"></td>
+                  <td className="border border-gray-300 px-2 py-1 text-center">
+                    <span className="cursor-pointer mr-2">🖨</span><span className="cursor-pointer text-red-500">🗑</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+        {mainTab === 'skladiscni' && skladiscniSub === 'Odpis blaga' && (
+          <div>
+            <button onClick={() => setSkladiscniSub(null)} className="text-sm text-blue-600 hover:underline mb-3">◀ Nazaj</button>
+            <p className="text-gray-400 text-center py-12">Odpis blaga – v pripravi</p>
+          </div>
+        )}
+
+        {/* OSTALI DOKUMENTI */}
+        {mainTab === 'ostali' && (
+          <p className="text-gray-400 text-center py-12">Ostali dokumenti – v pripravi</p>
         )}
       </div>
     </div>
