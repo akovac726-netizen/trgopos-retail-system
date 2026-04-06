@@ -150,6 +150,34 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   // Zaključevanje
   const [showZakljuciConfirm, setShowZakljuciConfirm] = useState(false);
 
+  // Checklist dialogs
+  const [showIzvlecekCen, setShowIzvlecekCen] = useState(false);
+  const [showNatisniEtikete, setShowNatisniEtikete] = useState(false);
+  const [showIzvlecekSprememb, setShowIzvlecekSprememb] = useState(false);
+  const [izvlecekSablona, setIzvlecekSablona] = useState<'kompaktna' | 'razsirjena' | 'interna'>('kompaktna');
+  const [izvlecekVodniZig, setIzvlecekVodniZig] = useState(false);
+  const [izvlecekLogotip, setIzvlecekLogotip] = useState(false);
+  const [etiketaVelikost, setEtiketaVelikost] = useState<'58x40' | '70x36' | 'A4'>('58x40');
+  const [etiketaKoda, setEtiketaKoda] = useState<'barcod' | 'qr'>('barcod');
+  const [etiketaFilter, setEtiketaFilter] = useState<'sprememba' | 'vsi'>('sprememba');
+  const [selectedEtiketaProducts, setSelectedEtiketaProducts] = useState<string[]>([]);
+  const [spremembeDobavitelj, setSpremembeDobavitelj] = useState("");
+  const [spremembeOd, setSpremembeOd] = useState("");
+  const [spremembeDo, setSpremembeDo] = useState("");
+  const [spremembeZig, setSpremembeZig] = useState<'brez' | 'osnutek' | 'potrjeno'>('brez');
+
+  // Popusti
+  const [popusti, setPopusti] = useState<any[]>([]);
+  const [showPopustForm, setShowPopustForm] = useState(false);
+  const [popustEan, setPopustEan] = useState("");
+  const [popustProductName, setPopustProductName] = useState("");
+  const [popustSkupinaArtiklov, setPopustSkupinaArtiklov] = useState("");
+  const [popustSkupinaKupcev, setPopustSkupinaKupcev] = useState("");
+  const [popustSkladisce, setPopustSkladisce] = useState("");
+  const [popustVeljaOd, setPopustVeljaOd] = useState("");
+  const [popustVeljaDo, setPopustVeljaDo] = useState("");
+  const [popustPercent, setPopustPercent] = useState("");
+
   // Finančna poročila - filter by register type
   const [financeFilter, setFinanceFilter] = useState<'all' | 'regular' | 'self'>('all');
   const [financeClosings, setFinanceClosings] = useState<any[]>([]);
@@ -1092,7 +1120,15 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                     {openChecklistItems.map((item, i) => (
                       <tr key={i} className="border-b border-gray-200">
                         <td className="px-4 py-3 text-center font-medium border-r border-gray-300">{i + 1}.</td>
-                        <td className="px-4 py-3 font-medium border-r border-gray-300">{item.label}</td>
+                        <td className="px-4 py-3 font-medium border-r border-gray-300">
+                          {i === 2 ? (
+                            <button onClick={() => setShowIzvlecekCen(true)} className="text-blue-600 hover:underline font-medium">{item.label}</button>
+                          ) : i === 3 ? (
+                            <button onClick={() => setShowNatisniEtikete(true)} className="text-blue-600 hover:underline font-medium">{item.label}</button>
+                          ) : i === 4 ? (
+                            <button onClick={() => setShowIzvlecekSprememb(true)} className="text-blue-600 hover:underline font-medium">{item.label}</button>
+                          ) : item.label}
+                        </td>
                         <td className="px-4 py-3 text-center">
                           <input type="checkbox" checked={item.checked}
                             onChange={() => setOpenChecklistItems(prev => prev.map((it, idx) => idx === i ? { ...it, checked: !it.checked } : it))}
@@ -1111,6 +1147,240 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   </div>
                 )}
               </div>
+
+              {/* ═══ IZVLEČEK PRODAJNIH CEN ═══ */}
+              {showIzvlecekCen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg border-2 border-gray-600 w-[600px] max-h-[90vh] overflow-y-auto">
+                    <div className="bg-sky-600 text-white px-6 py-3 flex justify-between items-center">
+                      <h3 className="font-bold text-lg">Izvleček prodajnih cen</h3>
+                      <button onClick={() => setShowIzvlecekCen(false)} className="text-white hover:text-gray-200"><X className="w-5 h-5" /></button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <p className="text-sm text-gray-600">Generiranje dokumenta s posodobljenimi prodajnimi cenami artiklov.</p>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold">Šablona:</label>
+                        <div className="flex gap-2">
+                          {(['kompaktna', 'razsirjena', 'interna'] as const).map(s => (
+                            <button key={s} onClick={() => setIzvlecekSablona(s)}
+                              className={`flex-1 py-2 text-sm rounded border-2 font-medium ${izvlecekSablona === s ? 'bg-sky-500 text-white border-sky-600' : 'bg-gray-100 border-gray-300'}`}>
+                              {s === 'kompaktna' ? 'Kompaktna' : s === 'razsirjena' ? 'Razširjena' : 'Interna'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={izvlecekLogotip} onChange={e => setIzvlecekLogotip(e.target.checked)} className="w-4 h-4" />
+                          Dodaj logotip podjetja
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={izvlecekVodniZig} onChange={e => setIzvlecekVodniZig(e.target.checked)} className="w-4 h-4" />
+                          Vodni žig "OSNUTEK"
+                        </label>
+                      </div>
+
+                      <div className="border-t border-gray-200 pt-4">
+                        <h4 className="font-bold text-sm mb-2">Predogled ({products.length} artiklov):</h4>
+                        <div className="max-h-48 overflow-y-auto border border-gray-300 bg-gray-50 rounded">
+                          <table className="w-full text-xs">
+                            <thead className="bg-gray-200 sticky top-0">
+                              <tr>
+                                <th className="px-2 py-1 text-left">EAN</th>
+                                <th className="px-2 py-1 text-left">Naziv</th>
+                                <th className="px-2 py-1 text-right">Cena</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {products.filter(p => p.category !== 'Trgovina').slice(0, 20).map(p => (
+                                <tr key={p.id} className="border-b border-gray-200">
+                                  <td className="px-2 py-1 font-mono">{p.ean}</td>
+                                  <td className="px-2 py-1">{p.name}</td>
+                                  <td className="px-2 py-1 text-right font-bold">{Number(p.price).toFixed(2)} €</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 justify-end border-t border-gray-200 pt-4">
+                        <button onClick={() => { toast.success('PDF generiran'); setShowIzvlecekCen(false); setOpenChecklistItems(prev => prev.map((it, idx) => idx === 2 ? { ...it, checked: true } : it)); }}
+                          className="px-5 py-2 bg-red-600 text-white font-bold rounded text-sm">📄 PDF</button>
+                        <button onClick={() => { toast.success('Excel izvožen'); }}
+                          className="px-5 py-2 bg-green-600 text-white font-bold rounded text-sm">📊 Excel</button>
+                        <button onClick={() => { toast.success('CSV izvožen'); }}
+                          className="px-5 py-2 bg-blue-600 text-white font-bold rounded text-sm">📋 CSV</button>
+                        <button onClick={() => { toast.info('E-pošta – v pripravi'); }}
+                          className="px-5 py-2 bg-purple-600 text-white font-bold rounded text-sm">✉ E-pošta</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ NATISNI ETIKETE ═══ */}
+              {showNatisniEtikete && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg border-2 border-gray-600 w-[650px] max-h-[90vh] overflow-y-auto">
+                    <div className="bg-sky-600 text-white px-6 py-3 flex justify-between items-center">
+                      <h3 className="font-bold text-lg">Natisni etikete</h3>
+                      <button onClick={() => setShowNatisniEtikete(false)} className="text-white hover:text-gray-200"><X className="w-5 h-5" /></button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <div className="flex gap-4">
+                        <div className="flex-1 space-y-2">
+                          <label className="text-sm font-bold">Velikost etikete:</label>
+                          <div className="flex gap-2">
+                            {(['58x40', '70x36', 'A4'] as const).map(v => (
+                              <button key={v} onClick={() => setEtiketaVelikost(v)}
+                                className={`flex-1 py-2 text-sm rounded border-2 font-medium ${etiketaVelikost === v ? 'bg-sky-500 text-white border-sky-600' : 'bg-gray-100 border-gray-300'}`}>
+                                {v === 'A4' ? 'A4 list' : `${v} mm`}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <label className="text-sm font-bold">Tip kode:</label>
+                          <div className="flex gap-2">
+                            <button onClick={() => setEtiketaKoda('barcod')}
+                              className={`flex-1 py-2 text-sm rounded border-2 font-medium ${etiketaKoda === 'barcod' ? 'bg-sky-500 text-white border-sky-600' : 'bg-gray-100 border-gray-300'}`}>
+                              Črtna koda
+                            </button>
+                            <button onClick={() => setEtiketaKoda('qr')}
+                              className={`flex-1 py-2 text-sm rounded border-2 font-medium ${etiketaKoda === 'qr' ? 'bg-sky-500 text-white border-sky-600' : 'bg-gray-100 border-gray-300'}`}>
+                              QR koda
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold">Filter artiklov:</label>
+                        <div className="flex gap-2">
+                          <button onClick={() => setEtiketaFilter('sprememba')}
+                            className={`px-4 py-2 text-sm rounded border-2 font-medium ${etiketaFilter === 'sprememba' ? 'bg-orange-500 text-white border-orange-600' : 'bg-gray-100 border-gray-300'}`}>
+                            S spremembo cene
+                          </button>
+                          <button onClick={() => setEtiketaFilter('vsi')}
+                            className={`px-4 py-2 text-sm rounded border-2 font-medium ${etiketaFilter === 'vsi' ? 'bg-orange-500 text-white border-orange-600' : 'bg-gray-100 border-gray-300'}`}>
+                            Vsi artikli
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="border border-gray-300 rounded max-h-48 overflow-y-auto">
+                        <table className="w-full text-xs">
+                          <thead className="bg-gray-200 sticky top-0">
+                            <tr>
+                              <th className="px-2 py-1 w-8"></th>
+                              <th className="px-2 py-1 text-left">EAN</th>
+                              <th className="px-2 py-1 text-left">Naziv</th>
+                              <th className="px-2 py-1 text-right">Cena</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {products.filter(p => p.category !== 'Trgovina').map(p => (
+                              <tr key={p.id} className="border-b border-gray-200 cursor-pointer hover:bg-sky-50"
+                                onClick={() => setSelectedEtiketaProducts(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])}>
+                                <td className="px-2 py-1 text-center">
+                                  <div className={`w-4 h-4 rounded border-2 mx-auto flex items-center justify-center ${selectedEtiketaProducts.includes(p.id) ? 'bg-sky-600 border-sky-600' : 'border-gray-400'}`}>
+                                    {selectedEtiketaProducts.includes(p.id) && <Check className="w-3 h-3 text-white" />}
+                                  </div>
+                                </td>
+                                <td className="px-2 py-1 font-mono">{p.ean}</td>
+                                <td className="px-2 py-1">{p.name}</td>
+                                <td className="px-2 py-1 text-right font-bold">{Number(p.price).toFixed(2)} €</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Predogled etikete */}
+                      <div className="border-2 border-dashed border-gray-400 rounded p-4 flex items-center justify-center bg-gray-50">
+                        <div className="text-center border border-gray-800 px-6 py-3 bg-white" style={{ minWidth: etiketaVelikost === 'A4' ? '200px' : '140px' }}>
+                          <div className="text-[10px] text-gray-500 mb-1">Predogled etikete ({etiketaVelikost})</div>
+                          <div className="font-bold text-sm">Naziv artikla</div>
+                          <div className="text-xs font-mono my-1">{etiketaKoda === 'barcod' ? '|||||||||||||||' : '▓▓▓▓'}</div>
+                          <div className="font-black text-lg">0,00 €</div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 justify-end border-t border-gray-200 pt-4">
+                        <button onClick={() => { 
+                          if (selectedEtiketaProducts.length === 0) { toast.error('Izberite artikle'); return; }
+                          toast.success(`${selectedEtiketaProducts.length} etiket pripravljenih za tisk`); 
+                          setShowNatisniEtikete(false); 
+                          setOpenChecklistItems(prev => prev.map((it, idx) => idx === 3 ? { ...it, checked: true } : it)); 
+                        }}
+                          className="px-5 py-2 bg-purple-600 text-white font-bold rounded text-sm">🖨 Natisni ({selectedEtiketaProducts.length})</button>
+                        <button onClick={() => { toast.success('Etikete izvožene kot PNG'); }}
+                          className="px-5 py-2 bg-blue-600 text-white font-bold rounded text-sm">📷 PNG</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ IZVLEČEK SPREMEMB ═══ */}
+              {showIzvlecekSprememb && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg border-2 border-gray-600 w-[600px] max-h-[90vh] overflow-y-auto">
+                    <div className="bg-sky-600 text-white px-6 py-3 flex justify-between items-center">
+                      <h3 className="font-bold text-lg">Izvleček sprememb</h3>
+                      <button onClick={() => setShowIzvlecekSprememb(false)} className="text-white hover:text-gray-200"><X className="w-5 h-5" /></button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <p className="text-sm text-gray-600">Seznam vseh sprememb cen dobaviteljev z arhivom verzij.</p>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-sm font-bold">Dobavitelj:</label>
+                          <input value={spremembeDobavitelj} onChange={e => setSpremembeDobavitelj(e.target.value)}
+                            className="w-full h-9 px-3 border border-gray-400 rounded text-sm" placeholder="Vsi dobavitelji" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-sm font-bold">Vodni žig:</label>
+                          <select value={spremembeZig} onChange={e => setSpremembeZig(e.target.value as any)}
+                            className="w-full h-9 px-3 border border-gray-400 rounded text-sm">
+                            <option value="brez">Brez</option>
+                            <option value="osnutek">OSNUTEK</option>
+                            <option value="potrjeno">POTRJENO</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-sm font-bold">Datum od:</label>
+                          <input type="date" value={spremembeOd} onChange={e => setSpremembeOd(e.target.value)}
+                            className="w-full h-9 px-3 border border-gray-400 rounded text-sm" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-sm font-bold">Datum do:</label>
+                          <input type="date" value={spremembeDo} onChange={e => setSpremembeDo(e.target.value)}
+                            className="w-full h-9 px-3 border border-gray-400 rounded text-sm" />
+                        </div>
+                      </div>
+
+                      <div className="border border-gray-300 rounded bg-gray-50 p-3">
+                        <h4 className="font-bold text-sm mb-2">Predogled sprememb:</h4>
+                        <div className="text-xs text-gray-500 text-center py-6">
+                          Ni zabeleženih sprememb cen za izbrano obdobje.
+                          <br /><span className="text-[10px]">Spremembe se beležijo samodejno ob posodobitvi cen v šifrantu.</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 justify-end border-t border-gray-200 pt-4">
+                        <button onClick={() => { toast.success('PDF sprememb generiran'); setShowIzvlecekSprememb(false); setOpenChecklistItems(prev => prev.map((it, idx) => idx === 4 ? { ...it, checked: true } : it)); }}
+                          className="px-5 py-2 bg-red-600 text-white font-bold rounded text-sm">📄 PDF</button>
+                        <button onClick={() => { toast.success('Excel izvožen'); }}
+                          className="px-5 py-2 bg-green-600 text-white font-bold rounded text-sm">📊 Excel</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             )}
 
             {/* Confirmation dialog for ZAPIRANJE */}
@@ -1424,11 +1694,172 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 </>
               )}
 
-              {/* POPUSTI / ZNIŽANJA - placeholder */}
+              {/* POPUSTI / ZNIŽANJA - Diapozitiv 13-15 */}
               {artikliSubTab === 'popusti' && (
-                <div className="text-gray-400 text-center py-12 text-lg">
-                  Modul Popusti / Znižanja – v pripravi
-                </div>
+                <>
+                  {/* Popusti form dialog - Diapozitiv 14 */}
+                  {showPopustForm && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-gray-100 border-2 border-sky-600 w-[520px]">
+                        <div className="bg-sky-600 text-white px-4 py-2 flex justify-between items-center">
+                          <span className="font-bold">Popusti artikla</span>
+                          <div className="flex gap-1">
+                            <button className="w-6 h-6 bg-white/20 rounded-full text-xs">?</button>
+                            <button onClick={() => setShowPopustForm(false)} className="w-6 h-6 bg-red-500 rounded-full text-xs text-white">✕</button>
+                          </div>
+                        </div>
+                        <div className="p-6 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <label className="w-48 text-sm text-right">Šifra/Bar koda/Kat. št./Opis:</label>
+                            <select className="flex-1 h-8 border border-gray-400 px-2 text-sm bg-white">
+                              <option value="">—</option>
+                              {products.map(p => <option key={p.id} value={p.ean}>{p.ean} – {p.name}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <label className="w-48 text-sm text-right">Skupina artiklov:</label>
+                            <select value={popustSkupinaArtiklov} onChange={e => setPopustSkupinaArtiklov(e.target.value)}
+                              className="flex-1 h-8 border border-gray-400 px-2 text-sm bg-white">
+                              <option value="">—</option>
+                              {categories.map(c => <option key={c}>{c}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <label className="w-48 text-sm text-right">Skupina kupcev:</label>
+                            <select value={popustSkupinaKupcev} onChange={e => setPopustSkupinaKupcev(e.target.value)}
+                              className="w-24 h-8 border border-gray-400 px-2 text-sm bg-white">
+                              <option value="">—</option>
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <label className="w-48 text-sm text-right">Skladišče:</label>
+                            <select value={popustSkladisce} onChange={e => setPopustSkladisce(e.target.value)}
+                              className="flex-1 h-8 border border-gray-400 px-2 text-sm bg-white">
+                              <option value="">—</option>
+                              <option>01 - PRIVZETO SKLADIŠČE</option>
+                              <option>01 - DISTRIBUTERJI EVROPA</option>
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <label className="w-48 text-sm text-right">Velja od:</label>
+                            <input type="date" value={popustVeljaOd} onChange={e => setPopustVeljaOd(e.target.value)}
+                              className="w-36 h-8 border border-gray-400 px-2 text-sm" />
+                            <span className="text-red-500">*</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <label className="w-48 text-sm text-right">Velja do:</label>
+                            <input type="date" value={popustVeljaDo} onChange={e => setPopustVeljaDo(e.target.value)}
+                              className="w-36 h-8 border border-gray-400 px-2 text-sm" />
+                            <span className="text-red-500">*</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <label className="w-48 text-sm text-right">Popust %:</label>
+                            <input type="text" value={popustPercent} onChange={e => setPopustPercent(e.target.value)}
+                              className="w-20 h-8 border border-gray-400 px-2 text-sm text-right" placeholder="0" />
+                            <span className="text-red-500">*</span>
+                          </div>
+                          <div className="flex justify-center gap-3 pt-4">
+                            <button onClick={() => { 
+                              if (!popustVeljaOd || !popustVeljaDo || !popustPercent) { toast.error('Izpolnite obvezna polja'); return; }
+                              setPopusti(prev => [...prev, { id: Date.now().toString(), ean: popustEan, name: popustProductName || popustSkupinaArtiklov, skupina: popustSkupinaArtiklov, kupci: popustSkupinaKupcev, skladisce: popustSkladisce, veljaOd: popustVeljaOd, veljaDo: popustVeljaDo, percent: popustPercent }]);
+                              setShowPopustForm(false); toast.success('Popust dodan');
+                            }}
+                              className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded text-sm">V redu</button>
+                            <button onClick={() => setShowPopustForm(false)}
+                              className="px-6 py-2 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded text-sm">Prekliči</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Filter bar - Diapozitiv 13 */}
+                  <div className="bg-gray-100 border border-gray-400 p-3 mb-3">
+                    <h4 className="text-sm font-bold mb-2 text-red-700">Popusti in prodajne akcije - pregled</h4>
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      <div className="flex items-center gap-1">
+                        <label className="text-xs whitespace-nowrap">Šifra/Bar koda/Kat. št./Opis:</label>
+                        <input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <label className="text-xs">Skupina artiklov:</label>
+                        <select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white"><option>—</option></select>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <label className="text-xs">Skupina kupcev:</label>
+                        <select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white"><option>—</option></select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="flex items-center gap-1">
+                        <label className="text-xs">Skladišče:</label>
+                        <select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white"><option>—</option></select>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <label className="text-xs">Velja od:</label>
+                        <input type="date" className="flex-1 h-7 border border-gray-400 px-1 text-xs" />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <label className="text-xs">Velja do:</label>
+                        <input type="date" className="flex-1 h-7 border border-gray-400 px-1 text-xs" />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <label className="text-xs">Popust %:</label>
+                        <input className="w-16 h-7 border border-gray-400 px-1 text-xs" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Toolbar */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex gap-1">
+                      <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">💾</button>
+                      <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">📁</button>
+                      <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">🗑 Odstrani</button>
+                      <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">Več...</button>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => toast.info('Iskanje – v pripravi')} className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Iskanje</button>
+                      <button onClick={() => setShowPopustForm(true)} className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Nov zapis</button>
+                    </div>
+                  </div>
+
+                  {/* Popusti table */}
+                  <table className="w-full border-collapse bg-white text-xs">
+                    <thead>
+                      <tr className="bg-gray-200">
+                        <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Šifra artikla</th>
+                        <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Naziv artikla</th>
+                        <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Skupina artiklov</th>
+                        <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Skupina kupcev</th>
+                        <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Skladišče</th>
+                        <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Velja od</th>
+                        <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Velja do</th>
+                        <th className="border border-gray-400 px-2 py-1.5 text-right font-bold">Popust %</th>
+                        <th className="border border-gray-400 px-2 py-1.5 w-6"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {popusti.length === 0 ? (
+                        <tr><td colSpan={9} className="text-center py-4 text-gray-400">Ni popustov</td></tr>
+                      ) : popusti.map((p, i) => (
+                        <tr key={p.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="border border-gray-300 px-2 py-1 font-mono">{p.ean || '-'}</td>
+                          <td className="border border-gray-300 px-2 py-1">{p.name || '-'}</td>
+                          <td className="border border-gray-300 px-2 py-1">{p.skupina || '-'}</td>
+                          <td className="border border-gray-300 px-2 py-1">{p.kupci || '-'}</td>
+                          <td className="border border-gray-300 px-2 py-1">{p.skladisce || '-'}</td>
+                          <td className="border border-gray-300 px-2 py-1">{p.veljaOd}</td>
+                          <td className="border border-gray-300 px-2 py-1">{p.veljaDo}</td>
+                          <td className="border border-gray-300 px-2 py-1 text-right font-bold">{p.percent}</td>
+                          <td className="border border-gray-300 px-2 py-1 text-center">
+                            <input type="checkbox" className="w-3 h-3" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
 
               {/* TRGOVINA: ARTIKLI - internal store items (not shown on POS) */}
