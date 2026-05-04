@@ -31,10 +31,12 @@ interface ClosingReportData {
   total: number; cash: number; card: number; other: number; transactionCount: number; itemCount: number;
 }
 
+export type BORole = 'admin' | 'shop' | 'oddelki' | 'skladisce';
+
 interface BackOfficeDashboardProps {
   onLogout: () => void;
   closingReports?: ClosingReportData[];
-  role: 'admin' | 'shop';
+  role: BORole;
 }
 
 type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice';
