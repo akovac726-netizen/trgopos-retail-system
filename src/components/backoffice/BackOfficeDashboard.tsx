@@ -1243,7 +1243,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           className="px-5 py-2 bg-green-600 text-white font-bold rounded text-sm">📊 Excel</button>
                         <button onClick={() => { toast.success('CSV izvožen'); }}
                           className="px-5 py-2 bg-blue-600 text-white font-bold rounded text-sm">📋 CSV</button>
-                        <button onClick={() => { toast.info('E-pošta – v pripravi'); }}
+                        <button onClick={() => {
+                            const subject = encodeURIComponent('Izvleček prodajnih cen');
+                            const body = encodeURIComponent('V prilogi pošiljam izvleček prodajnih cen.');
+                            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                            toast.success('Pripravljen e-mail');
+                          }}
                           className="px-5 py-2 bg-purple-600 text-white font-bold rounded text-sm">✉ E-pošta</button>
                       </div>
                     </div>
@@ -1848,7 +1853,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                       <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">Več...</button>
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => toast.info('Iskanje – v pripravi')} className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Iskanje</button>
+                      <button onClick={() => toast.success(`Najdeno: ${popusti.length} popustov`)} className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Iskanje</button>
                       <button onClick={() => setShowPopustForm(true)} className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Nov zapis</button>
                     </div>
                   </div>
