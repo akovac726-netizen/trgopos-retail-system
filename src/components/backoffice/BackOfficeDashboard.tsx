@@ -2731,7 +2731,23 @@ const DokumentiModule = ({ role }: { role: BORole }) => {
         {mainTab === 'nabavni' && nabavniSub && nabavniSub !== 'Prevzemnice' && (
           <div>
             <button onClick={() => setNabavniSub(null)} className="text-sm text-blue-600 hover:underline mb-3">◀ Nazaj</button>
-            <p className="text-gray-400 text-center py-12">{nabavniSub} – v pripravi</p>
+            <div className="bg-gray-100 border border-gray-400 p-3 mb-3">
+              <h4 className="text-sm font-bold mb-2 text-red-700">{nabavniSub} – pregled</h4>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="flex items-center gap-1"><label className="text-xs">Št. dok.:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Datum od:</label><input type="date" className="flex-1 h-7 border border-gray-400 px-1 text-xs" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">do:</label><input type="date" className="flex-1 h-7 border border-gray-400 px-1 text-xs" /></div>
+              </div>
+            </div>
+            <table className="w-full border-collapse bg-white text-xs">
+              <thead><tr className="bg-gray-200">
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Št. dok.</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Datum</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Dobavitelj</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-right font-bold">Znesek</th>
+              </tr></thead>
+              <tbody><tr><td colSpan={4} className="text-center py-4 text-gray-500">Ni dokumentov</td></tr></tbody>
+            </table>
           </div>
         )}
 
@@ -2806,13 +2822,48 @@ const DokumentiModule = ({ role }: { role: BORole }) => {
         {mainTab === 'skladiscni' && skladiscniSub === 'Odpis blaga' && (
           <div>
             <button onClick={() => setSkladiscniSub(null)} className="text-sm text-blue-600 hover:underline mb-3">◀ Nazaj</button>
-            <p className="text-gray-400 text-center py-12">Odpis blaga – v pripravi</p>
+            <div className="bg-gray-100 border border-gray-400 p-3 mb-3">
+              <h4 className="text-sm font-bold mb-2 text-red-700">Odpis blaga - novi vnos</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center gap-1"><label className="text-xs w-24">EAN/Šifra:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" placeholder="EAN ali šifra" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Naziv:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Količina:</label><input type="number" className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Razlog:</label>
+                  <select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white">
+                    <option>Pokvarjeno</option><option>Poteklo</option><option>Razbito</option><option>Krađa</option><option>Drugo</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Zaposleni:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Datum:</label><input type="date" defaultValue={new Date().toISOString().split('T')[0]} className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white" /></div>
+              </div>
+              <div className="flex justify-end gap-2 mt-3">
+                <button onClick={() => toast.success('Odpis shranjen')} className="px-4 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">💾 Shrani</button>
+                <button className="px-4 py-1 bg-gray-300 text-gray-800 text-xs font-bold border border-gray-400">Prekliči</button>
+              </div>
+            </div>
+            <table className="w-full border-collapse bg-white text-xs">
+              <thead><tr className="bg-gray-200">
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Datum</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Artikel</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-right font-bold">Količina</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Razlog</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Zaposleni</th>
+              </tr></thead>
+              <tbody><tr><td colSpan={5} className="text-center py-4 text-gray-500">Ni odpisov</td></tr></tbody>
+            </table>
           </div>
         )}
 
         {/* OSTALI DOKUMENTI */}
         {mainTab === 'ostali' && (
-          <p className="text-gray-400 text-center py-12">Ostali dokumenti – v pripravi</p>
+          <div className="bg-gray-200 border border-gray-400 w-[280px] mt-4">
+            {['Interni dokumenti', 'Izpis cenika artiklov', 'Popis evidenc', 'Servisni nalog'].map(label => (
+              <button key={label} onClick={() => toast.success(`${label} odprt`)}
+                className="block w-full text-left px-4 py-2.5 text-sm border-b border-gray-400 hover:bg-gray-300 transition-colors">
+                {label}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </div>
