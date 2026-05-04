@@ -8,7 +8,7 @@ type AppMode = 'trgopos' | 'backoffice';
 interface LoginScreenProps {
   cashiers: Cashier[];
   onLogin: (cashier: Cashier) => void;
-  onBackOfficeLogin: (role: 'admin' | 'shop') => void;
+  onBackOfficeLogin: (role: 'admin' | 'shop' | 'oddelki' | 'skladisce') => void;
   registerId: number;
   registerLocked: boolean;
   onSelectRegister: (id: number) => void;
@@ -53,13 +53,21 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
         setPassword("");
       }
     } else {
-      // BackOffice login
+      // BackOffice login - 4 profili
       if (username === 'TR-IVO-001' && password === 'StandBuyIVO-001') {
         onBackOfficeLogin('shop');
         toast.success('Dobrodošli v BackOffice (Trgovina)!');
-      } else if (username === 'StBy-core' && password === 'Adm!@SB-core') {
+      } else if ((username === 'StBy-core' && password === 'Adm!@SB-core') ||
+                 (username === 'BB.admin' && password === 'S!RQB!XX!') ||
+                 (username === 'SB-admin' && password === 'StB@71X!')) {
         onBackOfficeLogin('admin');
         toast.success('Dobrodošli v BackOffice (Direktor)!');
+      } else if (username === 'StBoddelki' && password === 'StBy12273') {
+        onBackOfficeLogin('oddelki');
+        toast.success('Dobrodošli v BackOffice (Oddelki poslovanja)!');
+      } else if (username === 'StB_SKL' && password === 'SKL;stb') {
+        onBackOfficeLogin('skladisce');
+        toast.success('Dobrodošli v BackOffice (Vodja skladišča)!');
       } else {
         toast.error('Napačno uporabniško ime ali geslo');
         setPassword("");
