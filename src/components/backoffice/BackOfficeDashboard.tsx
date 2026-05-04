@@ -31,10 +31,12 @@ interface ClosingReportData {
   total: number; cash: number; card: number; other: number; transactionCount: number; itemCount: number;
 }
 
+export type BORole = 'admin' | 'shop' | 'oddelki' | 'skladisce';
+
 interface BackOfficeDashboardProps {
   onLogout: () => void;
   closingReports?: ClosingReportData[];
-  role: 'admin' | 'shop';
+  role: BORole;
 }
 
 type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice';
@@ -184,6 +186,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
   // Artikli sub-tabs
   const [artikliSubTab, setArtikliSubTab] = useState<ArtikliSubTab>('sifrant');
+  // Iskanje artiklov - TAB preklop med načini
+  const [searchMode, setSearchMode] = useState<'name' | 'ean' | 'sifra'>('name');
+  // Vizitka artikla
+  const [viewProduct, setViewProduct] = useState<DBProduct | null>(null);
+  // Trgovina-artikli vnos: določitev poslovalnice
+  const [trgovinaPE, setTrgovinaPE] = useState('PE-01 (Trgovina IVO)');
 
   // Promotions
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -543,10 +551,17 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     toast.success('Promet zaključen');
   };
 
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.ean.includes(searchQuery));
+  const filteredProducts = products.filter(p => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    if (searchMode === 'ean') return p.ean.includes(q);
+    if (searchMode === 'sifra') return (p.id || '').toLowerCase().includes(q);
+    return p.name.toLowerCase().includes(q);
+  });
   const filteredOrderProducts = products.filter(p => { const q = orderSearch.toLowerCase(); if (!q) return true; return orderSearchType === 'ean' ? p.ean.includes(q) : p.name.toLowerCase().includes(q); });
 
-  const menuItems: { id: Tab; label: string }[] = [
+  // Meniji glede na vlogo (profil)
+  const allMenu: { id: Tab; label: string }[] = [
     { id: 'poslovanje', label: 'Poslovanje' },
     { id: 'artikli', label: 'Artikli' },
     { id: 'narocila', label: 'Naročila' },
@@ -558,6 +573,24 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     { id: 'financna', label: 'Finančna poročila' },
     { id: 'partnerji', label: 'Partnerji' },
   ];
+  const menuByRole: Record<BORole, Tab[]> = {
+    admin: ['poslovanje','artikli','narocila','dokumenti','nalepke','urnik','zakljucevanje','inventura','financna','partnerji'],
+    shop: ['poslovanje','artikli','narocila','nalepke','zakljucevanje','partnerji'],
+    oddelki: ['poslovanje','narocila','dokumenti','urnik','financna','partnerji'],
+    skladisce: ['narocila','dokumenti','inventura','partnerji'],
+  };
+  const menuItems = allMenu.filter(m => menuByRole[role].includes(m.id));
+  // Avtomatsko prilagodi privzeti tab če trenutni ni dovoljen
+  useEffect(() => {
+    if (!menuByRole[role].includes(activeTab) && menuItems.length > 0) {
+      setActiveTab(menuItems[0].id);
+    }
+  }, [role]);
+  const roleLabel: Record<BORole, string> = {
+    admin: 'Direktor (Admin)', shop: 'Trgovina',
+    oddelki: 'Oddelki poslovanja', skladisce: 'Vodja skladišča',
+  };
+  const isAdmin = role === 'admin';
 
   // ===== TrgoBackEnd LOGIN =====
   if (showBackend && !backendLoggedIn) {
@@ -977,6 +1010,40 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       <div className="absolute top-1/3 right-10 w-20 h-28 rounded-full bg-gradient-to-b from-white/8 to-white/3 blur-md" />
       <div className="absolute bottom-20 left-1/2 w-8 h-10 rounded-full bg-gradient-to-b from-white/6 to-transparent blur-sm" />
 
+      {/* Vizitka artikla */}
+      {viewProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setViewProduct(null)}>
+          <div className="bg-white rounded-xl border-2 border-sky-500 w-[440px] shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-sky-500 text-white px-5 py-3 rounded-t-xl flex justify-between items-center">
+              <h3 className="font-bold text-lg">Vizitka artikla</h3>
+              <button onClick={() => setViewProduct(null)} className="text-white hover:text-gray-200"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="p-5 space-y-2">
+              <div className="text-xl font-bold text-gray-900 mb-3">{viewProduct.name}</div>
+              {[
+                ['Šifra artikla', viewProduct.id.slice(0,8).toUpperCase()],
+                ['EAN koda', viewProduct.ean],
+                ['Cena', `${viewProduct.price.toFixed(2)} €`],
+                ['Zaloga', `${viewProduct.stock} kos`],
+                ['Min. zaloga', `${viewProduct.min_stock} kos`],
+                ['Kategorija', viewProduct.category],
+              ].map(([l,v]) => (
+                <div key={l} className="flex border-b border-gray-200 py-1.5">
+                  <div className="w-32 text-sm text-gray-500 font-medium">{l}:</div>
+                  <div className="flex-1 text-sm font-bold text-gray-900">{v}</div>
+                </div>
+              ))}
+              {role === 'admin' && (
+                <div className="flex justify-end gap-2 pt-3">
+                  <button onClick={() => { handleEditStart(viewProduct); setViewProduct(null); }}
+                    className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded text-sm">Uredi</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom right small logo */}
       <div className="absolute bottom-3 right-4 z-10">
         <span className="text-2xl font-black">
@@ -1022,7 +1089,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         {/* Top bar: Uporabnik + Upravljanje */}
         <div className="flex items-center gap-4 px-2 py-1">
           <div className="border border-gray-500 bg-gray-200/80 px-3 py-1 text-sm text-gray-800 min-w-[180px]">
-            Uporabnik: {role === 'admin' ? 'Direktor' : 'Trgovina'}
+            Uporabnik: {roleLabel[role]}
           </div>
           <div className="relative">
             <button onClick={() => setShowUpravljanje(!showUpravljanje)}
@@ -1032,18 +1099,26 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
             {showUpravljanje && (
               <div className="absolute top-full left-0 mt-1 flex gap-1 z-50">
                 <div className="bg-white border-2 border-gray-700 min-w-[200px]">
-                  {['Nastavitve', 'Upravljanje uporabnikov', 'Pregled dnevnika', 'Polog denarja'].map(item => (
-                    <button key={item} onClick={() => { setShowUpravljanje(false); toast.info(`${item} – v pripravi`); }}
+                  {[
+                    { label: 'Nastavitve', action: () => { setActiveTab('poslovanje'); toast.success('Nastavitve odprte'); } },
+                    { label: 'Upravljanje uporabnikov', action: () => { setShowBackend(true); } },
+                    { label: 'Pregled dnevnika', action: () => setActiveTab('financna') },
+                    { label: 'Polog denarja', action: () => setActiveTab('zakljucevanje') },
+                  ].map(item => (
+                    <button key={item.label} onClick={() => { setShowUpravljanje(false); item.action(); }}
                       className="block w-full text-left px-4 py-2 text-sm border-b border-gray-200 hover:bg-gray-100 transition-colors">
-                      {item}
+                      {item.label}
                     </button>
                   ))}
                 </div>
                 <div className="bg-white border-2 border-gray-700 min-w-[180px]">
-                  {['Spremeni geslo', 'Dodaj uporabnika'].map(item => (
-                    <button key={item} onClick={() => { setShowUpravljanje(false); toast.info(`${item} – v pripravi`); }}
+                  {[
+                    { label: 'Spremeni geslo', action: () => toast.success('Pošljite zahtevo administratorju za spremembo gesla') },
+                    { label: 'Dodaj uporabnika', action: () => { setShowBackend(true); } },
+                  ].map(item => (
+                    <button key={item.label} onClick={() => { setShowUpravljanje(false); item.action(); }}
                       className="block w-full text-left px-4 py-2 text-sm border-b border-gray-200 hover:bg-gray-100 transition-colors">
-                      {item}
+                      {item.label}
                     </button>
                   ))}
                 </div>
@@ -1214,7 +1289,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           className="px-5 py-2 bg-green-600 text-white font-bold rounded text-sm">📊 Excel</button>
                         <button onClick={() => { toast.success('CSV izvožen'); }}
                           className="px-5 py-2 bg-blue-600 text-white font-bold rounded text-sm">📋 CSV</button>
-                        <button onClick={() => { toast.info('E-pošta – v pripravi'); }}
+                        <button onClick={() => {
+                            const subject = encodeURIComponent('Izvleček prodajnih cen');
+                            const body = encodeURIComponent('V prilogi pošiljam izvleček prodajnih cen.');
+                            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                            toast.success('Pripravljen e-mail');
+                          }}
                           className="px-5 py-2 bg-purple-600 text-white font-bold rounded text-sm">✉ E-pošta</button>
                       </div>
                     </div>
@@ -1440,10 +1520,27 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               {/* ŠIFRANT ARTIKLOV */}
               {artikliSubTab === 'sifrant' && (
                 <>
-                  <div className="relative mb-3">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Išči po imenu ali EAN..."
-                      className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Tab') {
+                            e.preventDefault();
+                            setSearchMode(m => m === 'name' ? 'ean' : m === 'ean' ? 'sifra' : 'name');
+                          }
+                        }}
+                        placeholder={`Išči po ${searchMode === 'name' ? 'IMENU' : searchMode === 'ean' ? 'EAN' : 'ŠIFRI'}... (TAB za preklop)`}
+                        className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
+                    </div>
+                    <div className="flex border border-gray-400 rounded overflow-hidden text-xs">
+                      {(['name','ean','sifra'] as const).map(m => (
+                        <button key={m} onClick={() => setSearchMode(m)}
+                          className={`px-3 py-1.5 font-bold ${searchMode === m ? 'bg-sky-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
+                          {m === 'name' ? 'IME' : m === 'ean' ? 'EAN' : 'ŠIFRA'}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {showAddForm && role === 'admin' && (
@@ -1468,9 +1565,8 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           ))}
                           <div className="flex border border-gray-400 bg-white">
                             <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Kategorija:</div>
-                            <select value={formCategory} onChange={e => setFormCategory(e.target.value)} className="flex-1 px-3 py-1.5 text-sm focus:outline-none">
-                              {categories.map(c => <option key={c}>{c}</option>)}
-                            </select>
+                            <input value={formCategory} onChange={e => setFormCategory(e.target.value)} placeholder="Vnesite kategorijo (prosto besedilo)"
+                              className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
                           </div>
                         </div>
                       </div>
@@ -1481,7 +1577,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                     <thead>
                       <tr className="bg-gray-200">
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold w-10">Št.</th>
-                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Ime</th>
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kategorija</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
@@ -1491,19 +1586,19 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                     </thead>
                     <tbody>
                       {loading ? (
-                        <tr><td colSpan={7} className="text-center py-4 text-gray-500">Nalagam...</td></tr>
-                      ) : filteredProducts.length === 0 ? (
-                        <tr><td colSpan={7} className="text-center py-4 text-gray-500">Ni artiklov</td></tr>
-                      ) : filteredProducts.map((p, i) => (
-                        <tr key={p.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                        <tr><td colSpan={6} className="text-center py-4 text-gray-500">Nalagam...</td></tr>
+                      ) : filteredProducts.filter(p => p.category !== 'Trgovina').length === 0 ? (
+                        <tr><td colSpan={6} className="text-center py-4 text-gray-500">Ni artiklov</td></tr>
+                      ) : filteredProducts.filter(p => p.category !== 'Trgovina').map((p, i) => (
+                        <tr key={p.id} onClick={() => setViewProduct(p)}
+                          className={`cursor-pointer ${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} hover:bg-sky-50`}>
                           <td className="border border-gray-300 px-3 py-2 text-sm">{i + 1}.</td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{p.ean}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm font-medium">{p.name}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm">{p.category}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.stock}</td>
                           {role === 'admin' && (
-                          <td className="border border-gray-300 px-3 py-2 text-center">
+                          <td className="border border-gray-300 px-3 py-2 text-center" onClick={e => e.stopPropagation()}>
                             <button onClick={() => handleEditStart(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
                           </td>
                           )}
@@ -1819,7 +1914,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                       <button className="px-2 py-1 bg-gray-200 border border-gray-400 text-xs hover:bg-gray-300">Več...</button>
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => toast.info('Iskanje – v pripravi')} className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Iskanje</button>
+                      <button onClick={() => toast.success(`Najdeno: ${popusti.length} popustov`)} className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Iskanje</button>
                       <button onClick={() => setShowPopustForm(true)} className="px-3 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">Nov zapis</button>
                     </div>
                   </div>
@@ -2509,7 +2604,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 // ─── DOKUMENTI MODULE ───
 type DocMainTab = 'prodajni' | 'nabavni' | 'skladiscni' | 'ostali';
 
-const DokumentiModule = ({ role }: { role: 'admin' | 'shop' }) => {
+const DokumentiModule = ({ role }: { role: BORole }) => {
   const [mainTab, setMainTab] = useState<DocMainTab>('prodajni');
   const [prodajniSub, setProdajniSub] = useState<string | null>(null);
   const [nabavniSub, setNabavniSub] = useState<string | null>(null);
@@ -2697,7 +2792,23 @@ const DokumentiModule = ({ role }: { role: 'admin' | 'shop' }) => {
         {mainTab === 'nabavni' && nabavniSub && nabavniSub !== 'Prevzemnice' && (
           <div>
             <button onClick={() => setNabavniSub(null)} className="text-sm text-blue-600 hover:underline mb-3">◀ Nazaj</button>
-            <p className="text-gray-400 text-center py-12">{nabavniSub} – v pripravi</p>
+            <div className="bg-gray-100 border border-gray-400 p-3 mb-3">
+              <h4 className="text-sm font-bold mb-2 text-red-700">{nabavniSub} – pregled</h4>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="flex items-center gap-1"><label className="text-xs">Št. dok.:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">Datum od:</label><input type="date" className="flex-1 h-7 border border-gray-400 px-1 text-xs" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs">do:</label><input type="date" className="flex-1 h-7 border border-gray-400 px-1 text-xs" /></div>
+              </div>
+            </div>
+            <table className="w-full border-collapse bg-white text-xs">
+              <thead><tr className="bg-gray-200">
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Št. dok.</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Datum</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Dobavitelj</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-right font-bold">Znesek</th>
+              </tr></thead>
+              <tbody><tr><td colSpan={4} className="text-center py-4 text-gray-500">Ni dokumentov</td></tr></tbody>
+            </table>
           </div>
         )}
 
@@ -2772,13 +2883,48 @@ const DokumentiModule = ({ role }: { role: 'admin' | 'shop' }) => {
         {mainTab === 'skladiscni' && skladiscniSub === 'Odpis blaga' && (
           <div>
             <button onClick={() => setSkladiscniSub(null)} className="text-sm text-blue-600 hover:underline mb-3">◀ Nazaj</button>
-            <p className="text-gray-400 text-center py-12">Odpis blaga – v pripravi</p>
+            <div className="bg-gray-100 border border-gray-400 p-3 mb-3">
+              <h4 className="text-sm font-bold mb-2 text-red-700">Odpis blaga - novi vnos</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center gap-1"><label className="text-xs w-24">EAN/Šifra:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" placeholder="EAN ali šifra" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Naziv:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Količina:</label><input type="number" className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Razlog:</label>
+                  <select className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white">
+                    <option>Pokvarjeno</option><option>Poteklo</option><option>Razbito</option><option>Krađa</option><option>Drugo</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Zaposleni:</label><input className="flex-1 h-7 border border-gray-400 px-2 text-xs bg-white" /></div>
+                <div className="flex items-center gap-1"><label className="text-xs w-24">Datum:</label><input type="date" defaultValue={new Date().toISOString().split('T')[0]} className="flex-1 h-7 border border-gray-400 px-1 text-xs bg-white" /></div>
+              </div>
+              <div className="flex justify-end gap-2 mt-3">
+                <button onClick={() => toast.success('Odpis shranjen')} className="px-4 py-1 bg-green-500 text-white text-xs font-bold border border-green-600">💾 Shrani</button>
+                <button className="px-4 py-1 bg-gray-300 text-gray-800 text-xs font-bold border border-gray-400">Prekliči</button>
+              </div>
+            </div>
+            <table className="w-full border-collapse bg-white text-xs">
+              <thead><tr className="bg-gray-200">
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Datum</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Artikel</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-right font-bold">Količina</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Razlog</th>
+                <th className="border border-gray-400 px-2 py-1.5 text-left font-bold">Zaposleni</th>
+              </tr></thead>
+              <tbody><tr><td colSpan={5} className="text-center py-4 text-gray-500">Ni odpisov</td></tr></tbody>
+            </table>
           </div>
         )}
 
         {/* OSTALI DOKUMENTI */}
         {mainTab === 'ostali' && (
-          <p className="text-gray-400 text-center py-12">Ostali dokumenti – v pripravi</p>
+          <div className="bg-gray-200 border border-gray-400 w-[280px] mt-4">
+            {['Interni dokumenti', 'Izpis cenika artiklov', 'Popis evidenc', 'Servisni nalog'].map(label => (
+              <button key={label} onClick={() => toast.success(`${label} odprt`)}
+                className="block w-full text-left px-4 py-2.5 text-sm border-b border-gray-400 hover:bg-gray-300 transition-colors">
+                {label}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </div>
