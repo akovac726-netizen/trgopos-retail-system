@@ -1486,10 +1486,27 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
               {/* ŠIFRANT ARTIKLOV */}
               {artikliSubTab === 'sifrant' && (
                 <>
-                  <div className="relative mb-3">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Išči po imenu ali EAN..."
-                      className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Tab') {
+                            e.preventDefault();
+                            setSearchMode(m => m === 'name' ? 'ean' : m === 'ean' ? 'sifra' : 'name');
+                          }
+                        }}
+                        placeholder={`Išči po ${searchMode === 'name' ? 'IMENU' : searchMode === 'ean' ? 'EAN' : 'ŠIFRI'}... (TAB za preklop)`}
+                        className="w-full h-9 pl-10 pr-4 bg-white rounded text-sm focus:outline-none border border-gray-400" />
+                    </div>
+                    <div className="flex border border-gray-400 rounded overflow-hidden text-xs">
+                      {(['name','ean','sifra'] as const).map(m => (
+                        <button key={m} onClick={() => setSearchMode(m)}
+                          className={`px-3 py-1.5 font-bold ${searchMode === m ? 'bg-sky-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
+                          {m === 'name' ? 'IME' : m === 'ean' ? 'EAN' : 'ŠIFRA'}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {showAddForm && role === 'admin' && (
@@ -1514,9 +1531,8 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           ))}
                           <div className="flex border border-gray-400 bg-white">
                             <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Kategorija:</div>
-                            <select value={formCategory} onChange={e => setFormCategory(e.target.value)} className="flex-1 px-3 py-1.5 text-sm focus:outline-none">
-                              {categories.map(c => <option key={c}>{c}</option>)}
-                            </select>
+                            <input value={formCategory} onChange={e => setFormCategory(e.target.value)} placeholder="Vnesite kategorijo (prosto besedilo)"
+                              className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
                           </div>
                         </div>
                       </div>
@@ -1527,7 +1543,6 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                     <thead>
                       <tr className="bg-gray-200">
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold w-10">Št.</th>
-                        <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Ime</th>
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kategorija</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
@@ -1537,19 +1552,19 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                     </thead>
                     <tbody>
                       {loading ? (
-                        <tr><td colSpan={7} className="text-center py-4 text-gray-500">Nalagam...</td></tr>
-                      ) : filteredProducts.length === 0 ? (
-                        <tr><td colSpan={7} className="text-center py-4 text-gray-500">Ni artiklov</td></tr>
-                      ) : filteredProducts.map((p, i) => (
-                        <tr key={p.id} className={i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                        <tr><td colSpan={6} className="text-center py-4 text-gray-500">Nalagam...</td></tr>
+                      ) : filteredProducts.filter(p => p.category !== 'Trgovina').length === 0 ? (
+                        <tr><td colSpan={6} className="text-center py-4 text-gray-500">Ni artiklov</td></tr>
+                      ) : filteredProducts.filter(p => p.category !== 'Trgovina').map((p, i) => (
+                        <tr key={p.id} onClick={() => setViewProduct(p)}
+                          className={`cursor-pointer ${i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} hover:bg-sky-50`}>
                           <td className="border border-gray-300 px-3 py-2 text-sm">{i + 1}.</td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm font-mono">{p.ean}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm font-medium">{p.name}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm">{p.category}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.stock}</td>
                           {role === 'admin' && (
-                          <td className="border border-gray-300 px-3 py-2 text-center">
+                          <td className="border border-gray-300 px-3 py-2 text-center" onClick={e => e.stopPropagation()}>
                             <button onClick={() => handleEditStart(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
                           </td>
                           )}
