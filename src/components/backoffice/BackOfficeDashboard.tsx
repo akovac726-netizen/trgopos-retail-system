@@ -2511,7 +2511,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 // ─── DOKUMENTI MODULE ───
 type DocMainTab = 'prodajni' | 'nabavni' | 'skladiscni' | 'ostali';
 
-const DokumentiModule = ({ role }: { role: 'admin' | 'shop' }) => {
+const DokumentiModule = ({ role }: { role: BORole }) => {
   const [mainTab, setMainTab] = useState<DocMainTab>('prodajni');
   const [prodajniSub, setProdajniSub] = useState<string | null>(null);
   const [nabavniSub, setNabavniSub] = useState<string | null>(null);
