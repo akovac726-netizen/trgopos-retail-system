@@ -548,7 +548,8 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.ean.includes(searchQuery));
   const filteredOrderProducts = products.filter(p => { const q = orderSearch.toLowerCase(); if (!q) return true; return orderSearchType === 'ean' ? p.ean.includes(q) : p.name.toLowerCase().includes(q); });
 
-  const menuItems: { id: Tab; label: string }[] = [
+  // Meniji glede na vlogo (profil)
+  const allMenu: { id: Tab; label: string }[] = [
     { id: 'poslovanje', label: 'Poslovanje' },
     { id: 'artikli', label: 'Artikli' },
     { id: 'narocila', label: 'Naročila' },
@@ -560,6 +561,24 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     { id: 'financna', label: 'Finančna poročila' },
     { id: 'partnerji', label: 'Partnerji' },
   ];
+  const menuByRole: Record<BORole, Tab[]> = {
+    admin: ['poslovanje','artikli','narocila','dokumenti','nalepke','urnik','zakljucevanje','inventura','financna','partnerji'],
+    shop: ['poslovanje','artikli','narocila','nalepke','zakljucevanje','partnerji'],
+    oddelki: ['poslovanje','narocila','dokumenti','urnik','financna','partnerji'],
+    skladisce: ['narocila','dokumenti','inventura','partnerji'],
+  };
+  const menuItems = allMenu.filter(m => menuByRole[role].includes(m.id));
+  // Avtomatsko prilagodi privzeti tab če trenutni ni dovoljen
+  useEffect(() => {
+    if (!menuByRole[role].includes(activeTab) && menuItems.length > 0) {
+      setActiveTab(menuItems[0].id);
+    }
+  }, [role]);
+  const roleLabel: Record<BORole, string> = {
+    admin: 'Direktor (Admin)', shop: 'Trgovina',
+    oddelki: 'Oddelki poslovanja', skladisce: 'Vodja skladišča',
+  };
+  const isAdmin = role === 'admin';
 
   // ===== TrgoBackEnd LOGIN =====
   if (showBackend && !backendLoggedIn) {
