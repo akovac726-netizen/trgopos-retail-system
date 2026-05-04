@@ -246,7 +246,7 @@ const Index = () => {
     // Re-fetch transactions for this cashier's permissions
     fetchTransactions(cashier.id);
   };
-  const handleBackOfficeLogin = (role: 'admin' | 'shop') => { setBackofficeRole(role); setAppMode('backoffice'); };
+  const handleBackOfficeLogin = (role: 'admin' | 'shop' | 'oddelki' | 'skladisce') => { setBackofficeRole(role); setAppMode('backoffice'); };
   const handleLogout = () => {
     setCurrentCashier(null); setCartItems([]); setSelectedItemIndex(null); setInputValue("");
     setAppMode('login'); setScreen('main'); setPosTab('blagajna');
