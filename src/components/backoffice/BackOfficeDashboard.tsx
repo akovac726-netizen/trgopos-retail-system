@@ -1043,7 +1043,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         {/* Top bar: Uporabnik + Upravljanje */}
         <div className="flex items-center gap-4 px-2 py-1">
           <div className="border border-gray-500 bg-gray-200/80 px-3 py-1 text-sm text-gray-800 min-w-[180px]">
-            Uporabnik: {role === 'admin' ? 'Direktor' : 'Trgovina'}
+            Uporabnik: {roleLabel[role]}
           </div>
           <div className="relative">
             <button onClick={() => setShowUpravljanje(!showUpravljanje)}
@@ -1053,18 +1053,26 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
             {showUpravljanje && (
               <div className="absolute top-full left-0 mt-1 flex gap-1 z-50">
                 <div className="bg-white border-2 border-gray-700 min-w-[200px]">
-                  {['Nastavitve', 'Upravljanje uporabnikov', 'Pregled dnevnika', 'Polog denarja'].map(item => (
-                    <button key={item} onClick={() => { setShowUpravljanje(false); toast.info(`${item} – v pripravi`); }}
+                  {[
+                    { label: 'Nastavitve', action: () => { setActiveTab('poslovanje'); toast.success('Nastavitve odprte'); } },
+                    { label: 'Upravljanje uporabnikov', action: () => { setShowBackend(true); } },
+                    { label: 'Pregled dnevnika', action: () => setActiveTab('financna') },
+                    { label: 'Polog denarja', action: () => setActiveTab('zakljucevanje') },
+                  ].map(item => (
+                    <button key={item.label} onClick={() => { setShowUpravljanje(false); item.action(); }}
                       className="block w-full text-left px-4 py-2 text-sm border-b border-gray-200 hover:bg-gray-100 transition-colors">
-                      {item}
+                      {item.label}
                     </button>
                   ))}
                 </div>
                 <div className="bg-white border-2 border-gray-700 min-w-[180px]">
-                  {['Spremeni geslo', 'Dodaj uporabnika'].map(item => (
-                    <button key={item} onClick={() => { setShowUpravljanje(false); toast.info(`${item} – v pripravi`); }}
+                  {[
+                    { label: 'Spremeni geslo', action: () => toast.success('Pošljite zahtevo administratorju za spremembo gesla') },
+                    { label: 'Dodaj uporabnika', action: () => { setShowBackend(true); } },
+                  ].map(item => (
+                    <button key={item.label} onClick={() => { setShowUpravljanje(false); item.action(); }}
                       className="block w-full text-left px-4 py-2 text-sm border-b border-gray-200 hover:bg-gray-100 transition-colors">
-                      {item}
+                      {item.label}
                     </button>
                   ))}
                 </div>
