@@ -1010,6 +1010,40 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       <div className="absolute top-1/3 right-10 w-20 h-28 rounded-full bg-gradient-to-b from-white/8 to-white/3 blur-md" />
       <div className="absolute bottom-20 left-1/2 w-8 h-10 rounded-full bg-gradient-to-b from-white/6 to-transparent blur-sm" />
 
+      {/* Vizitka artikla */}
+      {viewProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setViewProduct(null)}>
+          <div className="bg-white rounded-xl border-2 border-sky-500 w-[440px] shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-sky-500 text-white px-5 py-3 rounded-t-xl flex justify-between items-center">
+              <h3 className="font-bold text-lg">Vizitka artikla</h3>
+              <button onClick={() => setViewProduct(null)} className="text-white hover:text-gray-200"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="p-5 space-y-2">
+              <div className="text-xl font-bold text-gray-900 mb-3">{viewProduct.name}</div>
+              {[
+                ['Šifra artikla', viewProduct.id.slice(0,8).toUpperCase()],
+                ['EAN koda', viewProduct.ean],
+                ['Cena', `${viewProduct.price.toFixed(2)} €`],
+                ['Zaloga', `${viewProduct.stock} kos`],
+                ['Min. zaloga', `${viewProduct.min_stock} kos`],
+                ['Kategorija', viewProduct.category],
+              ].map(([l,v]) => (
+                <div key={l} className="flex border-b border-gray-200 py-1.5">
+                  <div className="w-32 text-sm text-gray-500 font-medium">{l}:</div>
+                  <div className="flex-1 text-sm font-bold text-gray-900">{v}</div>
+                </div>
+              ))}
+              {role === 'admin' && (
+                <div className="flex justify-end gap-2 pt-3">
+                  <button onClick={() => { handleEditStart(viewProduct); setViewProduct(null); }}
+                    className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded text-sm">Uredi</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom right small logo */}
       <div className="absolute bottom-3 right-4 z-10">
         <span className="text-2xl font-black">
