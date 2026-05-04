@@ -186,6 +186,12 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
   // Artikli sub-tabs
   const [artikliSubTab, setArtikliSubTab] = useState<ArtikliSubTab>('sifrant');
+  // Iskanje artiklov - TAB preklop med načini
+  const [searchMode, setSearchMode] = useState<'name' | 'ean' | 'sifra'>('name');
+  // Vizitka artikla
+  const [viewProduct, setViewProduct] = useState<DBProduct | null>(null);
+  // Trgovina-artikli vnos: določitev poslovalnice
+  const [trgovinaPE, setTrgovinaPE] = useState('PE-01 (Trgovina IVO)');
 
   // Promotions
   const [promotions, setPromotions] = useState<Promotion[]>([]);
