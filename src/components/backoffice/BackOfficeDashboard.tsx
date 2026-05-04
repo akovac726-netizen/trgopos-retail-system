@@ -551,7 +551,13 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     toast.success('Promet zaključen');
   };
 
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.ean.includes(searchQuery));
+  const filteredProducts = products.filter(p => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    if (searchMode === 'ean') return p.ean.includes(q);
+    if (searchMode === 'sifra') return (p.id || '').toLowerCase().includes(q);
+    return p.name.toLowerCase().includes(q);
+  });
   const filteredOrderProducts = products.filter(p => { const q = orderSearch.toLowerCase(); if (!q) return true; return orderSearchType === 'ean' ? p.ean.includes(q) : p.name.toLowerCase().includes(q); });
 
   // Meniji glede na vlogo (profil)
