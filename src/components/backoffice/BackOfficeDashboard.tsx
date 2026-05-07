@@ -1677,7 +1677,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                     </div>
                   </div>
 
-                  {showAddForm && role === 'admin' && (
+                  {showAddForm && (role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                       <div className="bg-gray-200 rounded-xl p-6 w-[500px] border border-gray-400">
                         <div className="flex justify-end gap-2 mb-4">
@@ -1715,7 +1715,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kategorija</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Zaloga</th>
-                        {role === 'admin' && <th className="border border-gray-400 px-3 py-2 w-10"></th>}
+                        {(role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && <th className="border border-gray-400 px-3 py-2 w-10"></th>}
                       </tr>
                     </thead>
                     <tbody>
