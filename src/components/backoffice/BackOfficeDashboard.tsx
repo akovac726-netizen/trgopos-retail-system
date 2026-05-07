@@ -1174,15 +1174,31 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       <div className="w-[230px] flex flex-col shrink-0 z-10 relative">
         <div className="bg-gray-500 text-white font-bold text-center py-3 text-lg border-b border-gray-600">BackOffice</div>
         
-        <div className="bg-gray-300 flex-1 flex flex-col">
-          {menuItems.map(item => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)}
-              className={`text-left px-4 py-2.5 text-sm font-medium border-b border-gray-400 transition-colors ${
-                activeTab === item.id ? 'bg-sky-400 text-white' : 'text-gray-800 hover:bg-gray-200'
-              }`}>
-              {item.label}
-            </button>
-          ))}
+        <div className="bg-gray-300 flex-1 flex flex-col overflow-y-auto">
+          {menuGroups.map(group => {
+            const isOpen = openGroups[group.id] !== false;
+            // Če ima skupina samo en item in je to glavna skupina, prikaži flat (npr. shop)
+            const flat = menuGroups.length === 1;
+            return (
+              <div key={group.id} className="border-b border-gray-400">
+                {!flat && (
+                  <button onClick={() => setOpenGroups(s => ({ ...s, [group.id]: !isOpen }))}
+                    className="w-full text-left px-3 py-2 text-xs font-bold uppercase tracking-wide bg-gray-400/70 text-gray-900 hover:bg-gray-400 flex items-center justify-between">
+                    <span>{group.label}</span>
+                    <span className="text-[10px]">{isOpen ? '▼' : '▶'}</span>
+                  </button>
+                )}
+                {(flat || isOpen) && group.items.map(item => (
+                  <button key={item.id} onClick={() => setActiveTab(item.id)}
+                    className={`text-left w-full px-4 py-2 text-sm font-medium border-t border-gray-400/50 transition-colors ${
+                      activeTab === item.id ? 'bg-sky-400 text-white' : 'text-gray-800 hover:bg-gray-200'
+                    }`}>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
 
           <div className="flex-1" />
 
