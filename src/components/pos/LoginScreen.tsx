@@ -8,7 +8,7 @@ type AppMode = 'trgopos' | 'backoffice';
 interface LoginScreenProps {
   cashiers: Cashier[];
   onLogin: (cashier: Cashier) => void;
-  onBackOfficeLogin: (role: 'admin' | 'shop' | 'oddelki' | 'skladisce') => void;
+  onBackOfficeLogin: (role: 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo') => void;
   registerId: number;
   registerLocked: boolean;
   onSelectRegister: (id: number) => void;
@@ -64,10 +64,16 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
         toast.success('Dobrodošli v BackOffice (Direktor)!');
       } else if (username === 'StBoddelki' && password === 'StBy12273') {
         onBackOfficeLogin('oddelki');
-        toast.success('Dobrodošli v BackOffice (Oddelki poslovanja)!');
+        toast.success('Dobrodošli v BackOffice (Vodja prodaje)!');
       } else if (username === 'StB_SKL' && password === 'SKL;stb') {
         onBackOfficeLogin('skladisce');
         toast.success('Dobrodošli v BackOffice (Vodja skladišča)!');
+      } else if (username === 'StB_NAB' && password === 'NAB;stb12') {
+        onBackOfficeLogin('nabava');
+        toast.success('Dobrodošli v BackOffice (Nabava)!');
+      } else if (username === 'StB_RAC' && password === 'RAC;stb34') {
+        onBackOfficeLogin('racunovodstvo');
+        toast.success('Dobrodošli v BackOffice (Računovodstvo)!');
       } else {
         toast.error('Napačno uporabniško ime ali geslo');
         setPassword("");
