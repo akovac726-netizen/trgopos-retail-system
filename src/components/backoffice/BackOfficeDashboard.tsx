@@ -31,7 +31,7 @@ interface ClosingReportData {
   total: number; cash: number; card: number; other: number; transactionCount: number; itemCount: number;
 }
 
-export type BORole = 'admin' | 'shop' | 'oddelki' | 'skladisce';
+export type BORole = 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo';
 
 interface BackOfficeDashboardProps {
   onLogout: () => void;
@@ -39,7 +39,15 @@ interface BackOfficeDashboardProps {
   role: BORole;
 }
 
-type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice';
+type Tab =
+  | 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik'
+  | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice'
+  // Nove strani / moduli za dodatne profile
+  | 'dashboard' | 'prodaja' | 'cenovke' | 'akcije_top' | 'porocila' | 'zaposleni_top'
+  | 'prevzem' | 'zaloga' | 'dobavnice' | 'prenosi'
+  | 'dobavitelji' | 'nabava' | 'analitika' | 'marze'
+  | 'finance' | 'racuni' | 'ddv' | 'stroski' | 'export'
+  | 'poslovalnice' | 'uporabniki' | 'nastavitve' | 'sistem';
 type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti' | 'trgovina';
 type BackendTab = 'zaposleni' | 'zahtevki' | 'pregled' | 'blagajne';
 type PromoType = 'akcijska_cena' | 'popust_percent' | 'kolicinska';
@@ -560,35 +568,145 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   });
   const filteredOrderProducts = products.filter(p => { const q = orderSearch.toLowerCase(); if (!q) return true; return orderSearchType === 'ean' ? p.ean.includes(q) : p.name.toLowerCase().includes(q); });
 
-  // Meniji glede na vlogo (profil)
-  const allMenu: { id: Tab; label: string }[] = [
-    { id: 'poslovanje', label: 'Poslovanje' },
-    { id: 'artikli', label: 'Artikli' },
-    { id: 'narocila', label: 'Naročila' },
-    { id: 'dokumenti', label: 'Dokumenti' },
-    { id: 'nalepke', label: 'Nalepke / Cenovke' },
-    { id: 'urnik', label: 'Urnik' },
-    { id: 'zakljucevanje', label: 'Zaključevanje' },
-    { id: 'inventura', label: 'Inventura' },
-    { id: 'financna', label: 'Finančna poročila' },
-    { id: 'partnerji', label: 'Partnerji' },
-  ];
-  const menuByRole: Record<BORole, Tab[]> = {
-    admin: ['poslovanje','artikli','narocila','dokumenti','nalepke','urnik','zakljucevanje','inventura','financna','partnerji'],
-    shop: ['poslovanje','artikli','narocila','nalepke','zakljucevanje','partnerji'],
-    oddelki: ['poslovanje','narocila','dokumenti','urnik','financna','partnerji'],
-    skladisce: ['narocila','dokumenti','inventura','partnerji'],
+  // Meniji glede na vlogo (profil) - skupinsko organizirani spustni meniji
+  type MenuGroup = { id: string; label: string; items: { id: Tab; label: string }[] };
+  const menuGroupsByRole: Record<BORole, MenuGroup[]> = {
+    // DIREKTOR / ADMIN: vidi vse skupaj
+    admin: [
+      { id: 'pregled', label: 'Pregled', items: [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'analitika', label: 'Analitika' },
+        { id: 'porocila', label: 'Poročila' },
+        { id: 'financna', label: 'Finančna poročila' },
+      ]},
+      { id: 'prodaja_g', label: 'Prodaja', items: [
+        { id: 'prodaja', label: 'Prodaja' },
+        { id: 'akcije_top', label: 'Akcije' },
+        { id: 'cenovke', label: 'Cenovke' },
+        { id: 'nalepke', label: 'Nalepke / Cenovke' },
+      ]},
+      { id: 'asortiman', label: 'Asortiman', items: [
+        { id: 'artikli', label: 'Artikli' },
+        { id: 'inventura', label: 'Inventura' },
+      ]},
+      { id: 'nabava_g', label: 'Nabava', items: [
+        { id: 'dobavitelji', label: 'Dobavitelji' },
+        { id: 'nabava', label: 'Nabava' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'marze', label: 'Marže' },
+      ]},
+      { id: 'skladisce_g', label: 'Skladišče', items: [
+        { id: 'prevzem', label: 'Prevzem robe' },
+        { id: 'zaloga', label: 'Zaloga' },
+        { id: 'dobavnice', label: 'Dobavnice' },
+        { id: 'prenosi', label: 'Prenosi' },
+      ]},
+      { id: 'finance_g', label: 'Finance', items: [
+        { id: 'finance', label: 'Finance' },
+        { id: 'racuni', label: 'Računi' },
+        { id: 'ddv', label: 'DDV' },
+        { id: 'stroski', label: 'Stroški' },
+        { id: 'export', label: 'Izvoz podatkov' },
+      ]},
+      { id: 'kadri_g', label: 'Kadri', items: [
+        { id: 'zaposleni_top', label: 'Zaposleni' },
+        { id: 'urnik', label: 'Urnik' },
+      ]},
+      { id: 'poslovanje_g', label: 'Poslovanje', items: [
+        { id: 'poslovanje', label: 'Otvoritev / Zapiranje' },
+        { id: 'zakljucevanje', label: 'Zaključevanje' },
+        { id: 'dokumenti', label: 'Dokumenti' },
+        { id: 'partnerji', label: 'Partnerji' },
+      ]},
+      { id: 'sistem_g', label: 'Sistem', items: [
+        { id: 'poslovalnice', label: 'Poslovalnice' },
+        { id: 'uporabniki', label: 'Uporabniki' },
+        { id: 'nastavitve', label: 'Nastavitve' },
+        { id: 'sistem', label: 'Sistem' },
+      ]},
+    ],
+    // TRGOVINA - vse funkcije nazaj
+    shop: [
+      { id: 'shop_main', label: 'Trgovina', items: [
+        { id: 'poslovanje', label: 'Poslovanje' },
+        { id: 'artikli', label: 'Artikli' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'dokumenti', label: 'Dokumenti' },
+        { id: 'nalepke', label: 'Nalepke / Cenovke' },
+        { id: 'urnik', label: 'Urnik' },
+        { id: 'zakljucevanje', label: 'Zaključevanje' },
+        { id: 'inventura', label: 'Inventura' },
+        { id: 'financna', label: 'Finančna poročila' },
+        { id: 'partnerji', label: 'Partnerji' },
+      ]},
+    ],
+    // VODJA PRODAJE (Oddelki poslovanja)
+    oddelki: [
+      { id: 'vp_main', label: 'Vodja prodaje', items: [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'prodaja', label: 'Prodaja' },
+        { id: 'artikli', label: 'Artikli' },
+        { id: 'cenovke', label: 'Cenovke' },
+        { id: 'akcije_top', label: 'Akcije' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'inventura', label: 'Inventura' },
+        { id: 'porocila', label: 'Poročila' },
+        { id: 'zaposleni_top', label: 'Zaposleni' },
+      ]},
+    ],
+    // SKLADIŠČE
+    skladisce: [
+      { id: 'skl_main', label: 'Skladišče', items: [
+        { id: 'prevzem', label: 'Prevzem robe' },
+        { id: 'zaloga', label: 'Zaloga' },
+        { id: 'inventura', label: 'Inventura' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'dobavnice', label: 'Dobavnice' },
+        { id: 'prenosi', label: 'Prenosi' },
+        { id: 'artikli', label: 'Artikli' },
+      ]},
+    ],
+    // NABAVA
+    nabava: [
+      { id: 'nb_main', label: 'Nabava', items: [
+        { id: 'dobavitelji', label: 'Dobavitelji' },
+        { id: 'nabava', label: 'Nabava' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'analitika', label: 'Analitika' },
+        { id: 'marze', label: 'Marže' },
+        { id: 'akcije_top', label: 'Akcije' },
+      ]},
+    ],
+    // RAČUNOVODSTVO
+    racunovodstvo: [
+      { id: 'rac_main', label: 'Računovodstvo', items: [
+        { id: 'finance', label: 'Finance' },
+        { id: 'racuni', label: 'Računi' },
+        { id: 'ddv', label: 'DDV' },
+        { id: 'stroski', label: 'Stroški' },
+        { id: 'porocila', label: 'Poročila' },
+        { id: 'export', label: 'Izvoz podatkov' },
+      ]},
+    ],
   };
-  const menuItems = allMenu.filter(m => menuByRole[role].includes(m.id));
+  const menuGroups = menuGroupsByRole[role] || [];
+  const allowedTabs: Tab[] = menuGroups.flatMap(g => g.items.map(i => i.id));
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(menuGroups.map(g => [g.id, true]))
+  );
   // Avtomatsko prilagodi privzeti tab če trenutni ni dovoljen
   useEffect(() => {
-    if (!menuByRole[role].includes(activeTab) && menuItems.length > 0) {
-      setActiveTab(menuItems[0].id);
+    if (!allowedTabs.includes(activeTab) && allowedTabs.length > 0) {
+      setActiveTab(allowedTabs[0]);
     }
+    // re-init odprte skupine ob menjavi vloge
+    setOpenGroups(Object.fromEntries(menuGroups.map(g => [g.id, true])));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
   const roleLabel: Record<BORole, string> = {
     admin: 'Direktor (Admin)', shop: 'Trgovina',
-    oddelki: 'Oddelki poslovanja', skladisce: 'Vodja skladišča',
+    oddelki: 'Vodja prodaje', skladisce: 'Vodja skladišča',
+    nabava: 'Nabava', racunovodstvo: 'Računovodstvo',
   };
   const isAdmin = role === 'admin';
 
@@ -1056,15 +1174,31 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
       <div className="w-[230px] flex flex-col shrink-0 z-10 relative">
         <div className="bg-gray-500 text-white font-bold text-center py-3 text-lg border-b border-gray-600">BackOffice</div>
         
-        <div className="bg-gray-300 flex-1 flex flex-col">
-          {menuItems.map(item => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)}
-              className={`text-left px-4 py-2.5 text-sm font-medium border-b border-gray-400 transition-colors ${
-                activeTab === item.id ? 'bg-sky-400 text-white' : 'text-gray-800 hover:bg-gray-200'
-              }`}>
-              {item.label}
-            </button>
-          ))}
+        <div className="bg-gray-300 flex-1 flex flex-col overflow-y-auto">
+          {menuGroups.map(group => {
+            const isOpen = openGroups[group.id] !== false;
+            // Če ima skupina samo en item in je to glavna skupina, prikaži flat (npr. shop)
+            const flat = menuGroups.length === 1;
+            return (
+              <div key={group.id} className="border-b border-gray-400">
+                {!flat && (
+                  <button onClick={() => setOpenGroups(s => ({ ...s, [group.id]: !isOpen }))}
+                    className="w-full text-left px-3 py-2 text-xs font-bold uppercase tracking-wide bg-gray-400/70 text-gray-900 hover:bg-gray-400 flex items-center justify-between">
+                    <span>{group.label}</span>
+                    <span className="text-[10px]">{isOpen ? '▼' : '▶'}</span>
+                  </button>
+                )}
+                {(flat || isOpen) && group.items.map(item => (
+                  <button key={item.id} onClick={() => setActiveTab(item.id)}
+                    className={`text-left w-full px-4 py-2 text-sm font-medium border-t border-gray-400/50 transition-colors ${
+                      activeTab === item.id ? 'bg-sky-400 text-white' : 'text-gray-800 hover:bg-gray-200'
+                    }`}>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
 
           <div className="flex-1" />
 
@@ -1504,7 +1638,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 </button>
               ))}
               <div className="flex-1" />
-              {role === 'admin' && (
+              {(role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && (
                 <button onClick={() => {
                   if (artikliSubTab === 'akcije') { resetPromoForm(); setShowPromoForm(true); }
                   else if (artikliSubTab === 'trgovina') { resetProductForm(); setFormCategory('Trgovina'); setShowAddForm(true); }
@@ -1543,7 +1677,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                     </div>
                   </div>
 
-                  {showAddForm && role === 'admin' && (
+                  {showAddForm && (role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                       <div className="bg-gray-200 rounded-xl p-6 w-[500px] border border-gray-400">
                         <div className="flex justify-end gap-2 mb-4">
@@ -1581,7 +1715,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                         <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Kategorija</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Cena</th>
                         <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Zaloga</th>
-                        {role === 'admin' && <th className="border border-gray-400 px-3 py-2 w-10"></th>}
+                        {(role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && <th className="border border-gray-400 px-3 py-2 w-10"></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -1597,7 +1731,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           <td className="border border-gray-300 px-3 py-2 text-sm">{p.category}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.stock}</td>
-                          {role === 'admin' && (
+                          {(role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && (
                           <td className="border border-gray-300 px-3 py-2 text-center" onClick={e => e.stopPropagation()}>
                             <button onClick={() => handleEditStart(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
                           </td>
@@ -2594,6 +2728,46 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
         {/* BONI IN KARTICE */}
         {activeTab === 'bonikartice' && <BoniKarticeModule />}
+
+        {/* === Nove strani za dodatne profile === */}
+        {([
+          { id: 'dashboard' as Tab, label: 'Dashboard', desc: 'Pregled ključnih kazalnikov: dnevni promet, transakcije, najbolje prodajani artikli, opozorila o zalogi.' },
+          { id: 'prodaja' as Tab, label: 'Prodaja', desc: 'Pregled in analiza prodaje po dnevih, prodajalcih in oddelkih.' },
+          { id: 'cenovke' as Tab, label: 'Cenovke', desc: 'Generiranje in tiskanje cenovk za artikle v trgovini.' },
+          { id: 'akcije_top' as Tab, label: 'Akcije', desc: 'Aktivne in načrtovane akcijske ponudbe za poslovalnice.' },
+          { id: 'porocila' as Tab, label: 'Poročila', desc: 'Operativna in poslovna poročila za vodstvo.' },
+          { id: 'zaposleni_top' as Tab, label: 'Zaposleni', desc: 'Pregled zaposlenih, statusov, dopustov in produktivnosti v poslovalnici.' },
+          { id: 'prevzem' as Tab, label: 'Prevzem robe', desc: 'Skeniranje EAN, vnos količin in primerjava z dobavnico ob prevzemu.' },
+          { id: 'zaloga' as Tab, label: 'Zaloga', desc: 'Realno-časovno stanje zaloge v skladišču in poslovalnicah.' },
+          { id: 'dobavnice' as Tab, label: 'Dobavnice', desc: 'Pregled prejetih dobavnic in ujemanj s prevzemom.' },
+          { id: 'prenosi' as Tab, label: 'Skladiščni prenosi', desc: 'Premiki blaga med skladiščem in poslovalnicami ter med poslovalnicami.' },
+          { id: 'dobavitelji' as Tab, label: 'Dobavitelji', desc: 'Šifrant dobaviteljev, kontakti, pogodbeni pogoji in plačilni roki.' },
+          { id: 'nabava' as Tab, label: 'Nabava', desc: 'Nabavna naročila, nabavne cene, status dostave.' },
+          { id: 'analitika' as Tab, label: 'Analitika prodaje', desc: 'Top artikli, sezonski trendi, kategorije, primerjave po obdobjih.' },
+          { id: 'marze' as Tab, label: 'Marže', desc: 'Pregled marž po dobaviteljih, kategorijah in artiklih.' },
+          { id: 'finance' as Tab, label: 'Finance', desc: 'Pregled denarnih tokov, salda in odprtih postavk.' },
+          { id: 'racuni' as Tab, label: 'Računi', desc: 'Pregled vseh izdanih in prejetih računov.' },
+          { id: 'ddv' as Tab, label: 'DDV', desc: 'Obračun DDV, knjige DDV, oddaja v eDavki.' },
+          { id: 'stroski' as Tab, label: 'Stroški', desc: 'Stroški poslovanja, fiksni in variabilni, po kategorijah.' },
+          { id: 'export' as Tab, label: 'Izvoz podatkov', desc: 'Izvoz podatkov v Excel, CSV in standardne računovodske formate.' },
+          { id: 'poslovalnice' as Tab, label: 'Poslovalnice', desc: 'Upravljanje poslovalnic v mreži, konfiguracije in nadzor.' },
+          { id: 'uporabniki' as Tab, label: 'Uporabniki & pravice', desc: 'Upravljanje uporabnikov, profilov in pravic dostopa.' },
+          { id: 'nastavitve' as Tab, label: 'Nastavitve sistema', desc: 'Globalne nastavitve sistema, FURS, valute, davki.' },
+          { id: 'sistem' as Tab, label: 'Sistem & dnevniki', desc: 'Sistemski dnevniki, varnostne kopije, vzdrževanje.' },
+        ]).map(p => activeTab === p.id && (
+          <div key={p.id}>
+            <div className="bg-gray-400/60 px-6 py-3">
+              <h2 className="text-white font-bold text-xl">{p.label}</h2>
+            </div>
+            <div className="px-8 py-6">
+              <div className="bg-white border border-gray-300 rounded-lg p-6 max-w-3xl shadow-sm">
+                <h3 className="font-bold text-lg text-gray-800 mb-2">{p.label}</h3>
+                <p className="text-sm text-gray-600 mb-4">{p.desc}</p>
+                <div className="text-xs text-gray-500 italic">Modul je pripravljen za polno implementacijo. Za prijavo podatkov in operativno uporabo kontaktirajte administratorja sistema.</div>
+              </div>
+            </div>
+          </div>
+        ))}
 
         </div>{/* end inner scrollable div */}
       </div>{/* end main content flex col */}
