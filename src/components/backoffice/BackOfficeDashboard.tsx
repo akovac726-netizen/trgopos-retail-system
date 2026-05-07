@@ -1731,7 +1731,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                           <td className="border border-gray-300 px-3 py-2 text-sm">{p.category}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.price.toFixed(2)} €</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-right">{p.stock}</td>
-                          {role === 'admin' && (
+                          {(role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && (
                           <td className="border border-gray-300 px-3 py-2 text-center" onClick={e => e.stopPropagation()}>
                             <button onClick={() => handleEditStart(p)} className="text-gray-600 hover:text-gray-900"><Pencil className="w-4 h-4" /></button>
                           </td>
