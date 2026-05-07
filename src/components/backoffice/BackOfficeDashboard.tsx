@@ -568,35 +568,145 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   });
   const filteredOrderProducts = products.filter(p => { const q = orderSearch.toLowerCase(); if (!q) return true; return orderSearchType === 'ean' ? p.ean.includes(q) : p.name.toLowerCase().includes(q); });
 
-  // Meniji glede na vlogo (profil)
-  const allMenu: { id: Tab; label: string }[] = [
-    { id: 'poslovanje', label: 'Poslovanje' },
-    { id: 'artikli', label: 'Artikli' },
-    { id: 'narocila', label: 'Naročila' },
-    { id: 'dokumenti', label: 'Dokumenti' },
-    { id: 'nalepke', label: 'Nalepke / Cenovke' },
-    { id: 'urnik', label: 'Urnik' },
-    { id: 'zakljucevanje', label: 'Zaključevanje' },
-    { id: 'inventura', label: 'Inventura' },
-    { id: 'financna', label: 'Finančna poročila' },
-    { id: 'partnerji', label: 'Partnerji' },
-  ];
-  const menuByRole: Record<BORole, Tab[]> = {
-    admin: ['poslovanje','artikli','narocila','dokumenti','nalepke','urnik','zakljucevanje','inventura','financna','partnerji'],
-    shop: ['poslovanje','artikli','narocila','nalepke','zakljucevanje','partnerji'],
-    oddelki: ['poslovanje','narocila','dokumenti','urnik','financna','partnerji'],
-    skladisce: ['narocila','dokumenti','inventura','partnerji'],
+  // Meniji glede na vlogo (profil) - skupinsko organizirani spustni meniji
+  type MenuGroup = { id: string; label: string; items: { id: Tab; label: string }[] };
+  const menuGroupsByRole: Record<BORole, MenuGroup[]> = {
+    // DIREKTOR / ADMIN: vidi vse skupaj
+    admin: [
+      { id: 'pregled', label: 'Pregled', items: [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'analitika', label: 'Analitika' },
+        { id: 'porocila', label: 'Poročila' },
+        { id: 'financna', label: 'Finančna poročila' },
+      ]},
+      { id: 'prodaja_g', label: 'Prodaja', items: [
+        { id: 'prodaja', label: 'Prodaja' },
+        { id: 'akcije_top', label: 'Akcije' },
+        { id: 'cenovke', label: 'Cenovke' },
+        { id: 'nalepke', label: 'Nalepke / Cenovke' },
+      ]},
+      { id: 'asortiman', label: 'Asortiman', items: [
+        { id: 'artikli', label: 'Artikli' },
+        { id: 'inventura', label: 'Inventura' },
+      ]},
+      { id: 'nabava_g', label: 'Nabava', items: [
+        { id: 'dobavitelji', label: 'Dobavitelji' },
+        { id: 'nabava', label: 'Nabava' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'marze', label: 'Marže' },
+      ]},
+      { id: 'skladisce_g', label: 'Skladišče', items: [
+        { id: 'prevzem', label: 'Prevzem robe' },
+        { id: 'zaloga', label: 'Zaloga' },
+        { id: 'dobavnice', label: 'Dobavnice' },
+        { id: 'prenosi', label: 'Prenosi' },
+      ]},
+      { id: 'finance_g', label: 'Finance', items: [
+        { id: 'finance', label: 'Finance' },
+        { id: 'racuni', label: 'Računi' },
+        { id: 'ddv', label: 'DDV' },
+        { id: 'stroski', label: 'Stroški' },
+        { id: 'export', label: 'Izvoz podatkov' },
+      ]},
+      { id: 'kadri_g', label: 'Kadri', items: [
+        { id: 'zaposleni_top', label: 'Zaposleni' },
+        { id: 'urnik', label: 'Urnik' },
+      ]},
+      { id: 'poslovanje_g', label: 'Poslovanje', items: [
+        { id: 'poslovanje', label: 'Otvoritev / Zapiranje' },
+        { id: 'zakljucevanje', label: 'Zaključevanje' },
+        { id: 'dokumenti', label: 'Dokumenti' },
+        { id: 'partnerji', label: 'Partnerji' },
+      ]},
+      { id: 'sistem_g', label: 'Sistem', items: [
+        { id: 'poslovalnice', label: 'Poslovalnice' },
+        { id: 'uporabniki', label: 'Uporabniki' },
+        { id: 'nastavitve', label: 'Nastavitve' },
+        { id: 'sistem', label: 'Sistem' },
+      ]},
+    ],
+    // TRGOVINA - vse funkcije nazaj
+    shop: [
+      { id: 'shop_main', label: 'Trgovina', items: [
+        { id: 'poslovanje', label: 'Poslovanje' },
+        { id: 'artikli', label: 'Artikli' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'dokumenti', label: 'Dokumenti' },
+        { id: 'nalepke', label: 'Nalepke / Cenovke' },
+        { id: 'urnik', label: 'Urnik' },
+        { id: 'zakljucevanje', label: 'Zaključevanje' },
+        { id: 'inventura', label: 'Inventura' },
+        { id: 'financna', label: 'Finančna poročila' },
+        { id: 'partnerji', label: 'Partnerji' },
+      ]},
+    ],
+    // VODJA PRODAJE (Oddelki poslovanja)
+    oddelki: [
+      { id: 'vp_main', label: 'Vodja prodaje', items: [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'prodaja', label: 'Prodaja' },
+        { id: 'artikli', label: 'Artikli' },
+        { id: 'cenovke', label: 'Cenovke' },
+        { id: 'akcije_top', label: 'Akcije' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'inventura', label: 'Inventura' },
+        { id: 'porocila', label: 'Poročila' },
+        { id: 'zaposleni_top', label: 'Zaposleni' },
+      ]},
+    ],
+    // SKLADIŠČE
+    skladisce: [
+      { id: 'skl_main', label: 'Skladišče', items: [
+        { id: 'prevzem', label: 'Prevzem robe' },
+        { id: 'zaloga', label: 'Zaloga' },
+        { id: 'inventura', label: 'Inventura' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'dobavnice', label: 'Dobavnice' },
+        { id: 'prenosi', label: 'Prenosi' },
+        { id: 'artikli', label: 'Artikli' },
+      ]},
+    ],
+    // NABAVA
+    nabava: [
+      { id: 'nb_main', label: 'Nabava', items: [
+        { id: 'dobavitelji', label: 'Dobavitelji' },
+        { id: 'nabava', label: 'Nabava' },
+        { id: 'narocila', label: 'Naročila' },
+        { id: 'analitika', label: 'Analitika' },
+        { id: 'marze', label: 'Marže' },
+        { id: 'akcije_top', label: 'Akcije' },
+      ]},
+    ],
+    // RAČUNOVODSTVO
+    racunovodstvo: [
+      { id: 'rac_main', label: 'Računovodstvo', items: [
+        { id: 'finance', label: 'Finance' },
+        { id: 'racuni', label: 'Računi' },
+        { id: 'ddv', label: 'DDV' },
+        { id: 'stroski', label: 'Stroški' },
+        { id: 'porocila', label: 'Poročila' },
+        { id: 'export', label: 'Izvoz podatkov' },
+      ]},
+    ],
   };
-  const menuItems = allMenu.filter(m => menuByRole[role].includes(m.id));
+  const menuGroups = menuGroupsByRole[role] || [];
+  const allowedTabs: Tab[] = menuGroups.flatMap(g => g.items.map(i => i.id));
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(menuGroups.map(g => [g.id, true]))
+  );
   // Avtomatsko prilagodi privzeti tab če trenutni ni dovoljen
   useEffect(() => {
-    if (!menuByRole[role].includes(activeTab) && menuItems.length > 0) {
-      setActiveTab(menuItems[0].id);
+    if (!allowedTabs.includes(activeTab) && allowedTabs.length > 0) {
+      setActiveTab(allowedTabs[0]);
     }
+    // re-init odprte skupine ob menjavi vloge
+    setOpenGroups(Object.fromEntries(menuGroups.map(g => [g.id, true])));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
   const roleLabel: Record<BORole, string> = {
     admin: 'Direktor (Admin)', shop: 'Trgovina',
-    oddelki: 'Oddelki poslovanja', skladisce: 'Vodja skladišča',
+    oddelki: 'Vodja prodaje', skladisce: 'Vodja skladišča',
+    nabava: 'Nabava', racunovodstvo: 'Računovodstvo',
   };
   const isAdmin = role === 'admin';
 
