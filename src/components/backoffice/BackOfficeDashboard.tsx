@@ -31,7 +31,7 @@ interface ClosingReportData {
   total: number; cash: number; card: number; other: number; transactionCount: number; itemCount: number;
 }
 
-export type BORole = 'admin' | 'shop' | 'oddelki' | 'skladisce';
+export type BORole = 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo';
 
 interface BackOfficeDashboardProps {
   onLogout: () => void;
@@ -39,7 +39,15 @@ interface BackOfficeDashboardProps {
   role: BORole;
 }
 
-type Tab = 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik' | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice';
+type Tab =
+  | 'poslovanje' | 'artikli' | 'narocila' | 'dokumenti' | 'nalepke' | 'urnik'
+  | 'zakljucevanje' | 'inventura' | 'financna' | 'partnerji' | 'bonikartice'
+  // Nove strani / moduli za dodatne profile
+  | 'dashboard' | 'prodaja' | 'cenovke' | 'akcije_top' | 'porocila' | 'zaposleni_top'
+  | 'prevzem' | 'zaloga' | 'dobavnice' | 'prenosi'
+  | 'dobavitelji' | 'nabava' | 'analitika' | 'marze'
+  | 'finance' | 'racuni' | 'ddv' | 'stroski' | 'export'
+  | 'poslovalnice' | 'uporabniki' | 'nastavitve' | 'sistem';
 type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti' | 'trgovina';
 type BackendTab = 'zaposleni' | 'zahtevki' | 'pregled' | 'blagajne';
 type PromoType = 'akcijska_cena' | 'popust_percent' | 'kolicinska';
