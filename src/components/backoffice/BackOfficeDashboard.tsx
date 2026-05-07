@@ -2729,6 +2729,46 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         {/* BONI IN KARTICE */}
         {activeTab === 'bonikartice' && <BoniKarticeModule />}
 
+        {/* === Nove strani za dodatne profile === */}
+        {([
+          { id: 'dashboard' as Tab, label: 'Dashboard', desc: 'Pregled ključnih kazalnikov: dnevni promet, transakcije, najbolje prodajani artikli, opozorila o zalogi.' },
+          { id: 'prodaja' as Tab, label: 'Prodaja', desc: 'Pregled in analiza prodaje po dnevih, prodajalcih in oddelkih.' },
+          { id: 'cenovke' as Tab, label: 'Cenovke', desc: 'Generiranje in tiskanje cenovk za artikle v trgovini.' },
+          { id: 'akcije_top' as Tab, label: 'Akcije', desc: 'Aktivne in načrtovane akcijske ponudbe za poslovalnice.' },
+          { id: 'porocila' as Tab, label: 'Poročila', desc: 'Operativna in poslovna poročila za vodstvo.' },
+          { id: 'zaposleni_top' as Tab, label: 'Zaposleni', desc: 'Pregled zaposlenih, statusov, dopustov in produktivnosti v poslovalnici.' },
+          { id: 'prevzem' as Tab, label: 'Prevzem robe', desc: 'Skeniranje EAN, vnos količin in primerjava z dobavnico ob prevzemu.' },
+          { id: 'zaloga' as Tab, label: 'Zaloga', desc: 'Realno-časovno stanje zaloge v skladišču in poslovalnicah.' },
+          { id: 'dobavnice' as Tab, label: 'Dobavnice', desc: 'Pregled prejetih dobavnic in ujemanj s prevzemom.' },
+          { id: 'prenosi' as Tab, label: 'Skladiščni prenosi', desc: 'Premiki blaga med skladiščem in poslovalnicami ter med poslovalnicami.' },
+          { id: 'dobavitelji' as Tab, label: 'Dobavitelji', desc: 'Šifrant dobaviteljev, kontakti, pogodbeni pogoji in plačilni roki.' },
+          { id: 'nabava' as Tab, label: 'Nabava', desc: 'Nabavna naročila, nabavne cene, status dostave.' },
+          { id: 'analitika' as Tab, label: 'Analitika prodaje', desc: 'Top artikli, sezonski trendi, kategorije, primerjave po obdobjih.' },
+          { id: 'marze' as Tab, label: 'Marže', desc: 'Pregled marž po dobaviteljih, kategorijah in artiklih.' },
+          { id: 'finance' as Tab, label: 'Finance', desc: 'Pregled denarnih tokov, salda in odprtih postavk.' },
+          { id: 'racuni' as Tab, label: 'Računi', desc: 'Pregled vseh izdanih in prejetih računov.' },
+          { id: 'ddv' as Tab, label: 'DDV', desc: 'Obračun DDV, knjige DDV, oddaja v eDavki.' },
+          { id: 'stroski' as Tab, label: 'Stroški', desc: 'Stroški poslovanja, fiksni in variabilni, po kategorijah.' },
+          { id: 'export' as Tab, label: 'Izvoz podatkov', desc: 'Izvoz podatkov v Excel, CSV in standardne računovodske formate.' },
+          { id: 'poslovalnice' as Tab, label: 'Poslovalnice', desc: 'Upravljanje poslovalnic v mreži, konfiguracije in nadzor.' },
+          { id: 'uporabniki' as Tab, label: 'Uporabniki & pravice', desc: 'Upravljanje uporabnikov, profilov in pravic dostopa.' },
+          { id: 'nastavitve' as Tab, label: 'Nastavitve sistema', desc: 'Globalne nastavitve sistema, FURS, valute, davki.' },
+          { id: 'sistem' as Tab, label: 'Sistem & dnevniki', desc: 'Sistemski dnevniki, varnostne kopije, vzdrževanje.' },
+        ]).map(p => activeTab === p.id && (
+          <div key={p.id}>
+            <div className="bg-gray-400/60 px-6 py-3">
+              <h2 className="text-white font-bold text-xl">{p.label}</h2>
+            </div>
+            <div className="px-8 py-6">
+              <div className="bg-white border border-gray-300 rounded-lg p-6 max-w-3xl shadow-sm">
+                <h3 className="font-bold text-lg text-gray-800 mb-2">{p.label}</h3>
+                <p className="text-sm text-gray-600 mb-4">{p.desc}</p>
+                <div className="text-xs text-gray-500 italic">Modul je pripravljen za polno implementacijo. Za prijavo podatkov in operativno uporabo kontaktirajte administratorja sistema.</div>
+              </div>
+            </div>
+          </div>
+        ))}
+
         </div>{/* end inner scrollable div */}
       </div>{/* end main content flex col */}
     </div>
