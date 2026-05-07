@@ -1638,7 +1638,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                 </button>
               ))}
               <div className="flex-1" />
-              {role === 'admin' && (
+              {(role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && (
                 <button onClick={() => {
                   if (artikliSubTab === 'akcije') { resetPromoForm(); setShowPromoForm(true); }
                   else if (artikliSubTab === 'trgovina') { resetProductForm(); setFormCategory('Trgovina'); setShowAddForm(true); }
