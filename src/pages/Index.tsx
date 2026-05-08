@@ -797,10 +797,8 @@ const Index = () => {
           <CompletionScreen transaction={lastTransaction} onNewTransaction={handleNewTransaction} onPrintCopy={() => toast.success('Kopija računa se tiska...')} onAddLoyaltyPoints={handleAddLoyaltyPoints} />
         )}
 
-        {posTab === 'racuni' && (
-          <RacuniTab transactions={transactions} onPrintReceipt={handlePrintReceipt}
-            onPrintInvoice={handlePrintInvoice} onCopyToNew={handleCopyToNew} onVoidReceipt={handleVoidReceipt}
-            isSupport={currentCashier?.id === '00087'} />
+        {posTab === 'racuni' && currentCashier && (
+          <RacuniTab cashier={currentCashier} registerId={registerId} />
         )}
 
         {posTab === 'zakljucek' && currentCashier && (
