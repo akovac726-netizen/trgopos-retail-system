@@ -98,6 +98,54 @@ export type Database = {
         }
         Relationships: []
       }
+      cashier_closings_detail: {
+        Row: {
+          amex: number
+          cash: number
+          created_at: string
+          date: string
+          diners: number
+          id: string
+          master: number
+          note: string
+          operator: string
+          other: number
+          register_id: number
+          total: number
+          visa: number
+        }
+        Insert: {
+          amex?: number
+          cash?: number
+          created_at?: string
+          date?: string
+          diners?: number
+          id?: string
+          master?: number
+          note?: string
+          operator?: string
+          other?: number
+          register_id: number
+          total?: number
+          visa?: number
+        }
+        Update: {
+          amex?: number
+          cash?: number
+          created_at?: string
+          date?: string
+          diners?: number
+          id?: string
+          master?: number
+          note?: string
+          operator?: string
+          other?: number
+          register_id?: number
+          total?: number
+          visa?: number
+        }
+        Relationships: []
+      }
       closing_reports: {
         Row: {
           card: number
@@ -139,6 +187,129 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      dispatches: {
+        Row: {
+          created_at: string
+          from_location: string | null
+          id: string
+          items: Json
+          note: string
+          related_order_id: string | null
+          status: string
+          to_location: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          from_location?: string | null
+          id?: string
+          items?: Json
+          note?: string
+          related_order_id?: string | null
+          status?: string
+          to_location?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          from_location?: string | null
+          id?: string
+          items?: Json
+          note?: string
+          related_order_id?: string | null
+          status?: string
+          to_location?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatches_from_location_fkey"
+            columns: ["from_location"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_related_order_id_fkey"
+            columns: ["related_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_to_location_fkey"
+            columns: ["to_location"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dynamic_auth_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string
+          id: string
+          reason: string
+          valid_from: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          reason?: string
+          valid_from?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          reason?: string
+          valid_from?: string
+        }
+        Relationships: []
+      }
+      employee_documents: {
+        Row: {
+          created_at: string
+          description: string
+          employee_id: string
+          file_url: string
+          id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          employee_id: string
+          file_url: string
+          id?: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          employee_id?: string
+          file_url?: string
+          id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employees: {
         Row: {
@@ -211,6 +382,50 @@ export type Database = {
           username?: string
         }
         Relationships: []
+      }
+      equipment: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string | null
+          name: string
+          notes: string
+          serial: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          name: string
+          notes?: string
+          serial?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          name?: string
+          notes?: string
+          serial?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gift_cards: {
         Row: {
@@ -301,12 +516,14 @@ export type Database = {
       leave_requests: {
         Row: {
           approver: string
+          assigned_approver_id: string | null
           created_at: string
           description: string
           employee_name: string
           end_date: string
           id: string
           period: string
+          requested_by_id: string | null
           start_date: string
           status: string
           type: string
@@ -314,12 +531,14 @@ export type Database = {
         }
         Insert: {
           approver?: string
+          assigned_approver_id?: string | null
           created_at?: string
           description?: string
           employee_name: string
           end_date: string
           id?: string
           period?: string
+          requested_by_id?: string | null
           start_date: string
           status?: string
           type?: string
@@ -327,14 +546,103 @@ export type Database = {
         }
         Update: {
           approver?: string
+          assigned_approver_id?: string | null
           created_at?: string
           description?: string
           employee_name?: string
           end_date?: string
           id?: string
           period?: string
+          requested_by_id?: string | null
           start_date?: string
           status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_assigned_approver_id_fkey"
+            columns: ["assigned_approver_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_requested_by_id_fkey"
+            columns: ["requested_by_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_stock: {
+        Row: {
+          id: string
+          location_id: string
+          min_stock: number
+          product_id: string
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          location_id: string
+          min_stock?: number
+          product_id: string
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          location_id?: string
+          min_stock?: number
+          product_id?: string
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_stock_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          active: boolean
+          address: string
+          created_at: string
+          id: string
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          address?: string
+          created_at?: string
+          id?: string
+          name: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          created_at?: string
+          id?: string
+          name?: string
           type?: string
           updated_at?: string
         }
@@ -426,6 +734,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      product_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          product_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          product_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          product_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -639,6 +979,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      students: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string
+          emso: string
+          faculty: string
+          first_name: string
+          hourly_rate: number
+          iban: string
+          id: string
+          last_name: string
+          location_id: string | null
+          phone: string
+          tax_number: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email?: string
+          emso?: string
+          faculty?: string
+          first_name: string
+          hourly_rate?: number
+          iban?: string
+          id?: string
+          last_name: string
+          location_id?: string | null
+          phone?: string
+          tax_number?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string
+          emso?: string
+          faculty?: string
+          first_name?: string
+          hourly_rate?: number
+          iban?: string
+          id?: string
+          last_name?: string
+          location_id?: string | null
+          phone?: string
+          tax_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       terminal_requests: {
         Row: {
