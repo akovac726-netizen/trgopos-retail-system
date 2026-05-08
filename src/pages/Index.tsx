@@ -805,7 +805,15 @@ const Index = () => {
           <ZakljucekTab cashier={currentCashier} cashiers={cashiers} transactions={transactions}
             closingHistory={closingHistory} registerId={registerId} onEndShift={handleEndShift} onEndDay={handleEndDay} onOpenDrawer={handleOpenDrawer}
             settingsContent={
+              currentCashier?.id !== '00087' ? (
+                <div className="border-2 border-amber-300 bg-amber-50 rounded-lg p-6 text-center">
+                  <div className="text-4xl mb-2">🔒</div>
+                  <h3 className="font-bold text-base mb-2">Dostop omejen</h3>
+                  <p className="text-sm text-gray-700">Samo profil <strong>STANDBUY (PODPORA)</strong> lahko ureja nastavitve blagajne, menja vrsto blagajne, številko blagajne in odklepa zaključene blagajne.</p>
+                </div>
+              ) : (
               <div className="space-y-3 text-sm">
+                <div className="border-2 border-green-300 bg-green-50 rounded-lg p-3 text-sm font-bold text-green-800">✅ STANDBUY profil – polni dostop do nastavitev, menjave blagajne in odklepanja zaključenih blagajn.</div>
                 <div className="border-2 border-gray-300 rounded-lg p-4">
                   <h3 className="font-bold text-base mb-2">Tiskalnik računov</h3>
                   <p className="text-gray-600">Status: <span className="text-green-600 font-bold">Povezan</span></p>
