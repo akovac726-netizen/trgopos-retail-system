@@ -2782,25 +2782,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         )}
 
         {/* INVENTURA */}
-        {activeTab === 'inventura' && (
-          <div>
-            <div className="bg-gray-600/80 px-6 py-3"><h2 className="text-white font-bold text-xl">Inventura</h2></div>
-            <div className="px-6 py-4">
-              <table className="w-full border-collapse bg-white">
-                <thead><tr className="bg-gray-200">
-                  <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
-                  <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Artikel</th>
-                  <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Sistemska zaloga</th>
-                  <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Prešteto</th>
-                  <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Razlika</th>
-                </tr></thead>
-                <tbody>
-                  {products.map((p, i) => <InventoryRow key={p.id} product={p} index={i} onUpdate={() => {}} />)}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {activeTab === 'inventura' && <InventuraModule role={role} products={products as any} />}
 
         {/* FINANČNA POROČILA */}
         {activeTab === 'financna' && (() => {
