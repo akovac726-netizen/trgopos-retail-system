@@ -6,6 +6,11 @@ import BoniKarticeModule from "./BoniKarticeModule";
 
 interface DBProduct {
   id: string; ean: string; name: string; price: number; stock: number; min_stock: number; category: string;
+  sku?: string; catalog_number?: string; internal_name?: string; description?: string;
+  primary_group?: string; secondary_group?: string; product_type?: string; unit?: string;
+  package_qty?: number; brand?: string; country_of_origin?: string; warranty_months?: number;
+  currency?: string; wholesale_price?: number; vat_rate?: number; purchase_price?: number;
+  default_warehouse_location?: string; image_url?: string;
 }
 interface Partner {
   id: string; name: string; tax_number: string; address: string; city: string; postal_code: string; email: string; phone: string; notes: string;
