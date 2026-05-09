@@ -79,6 +79,27 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [formStock, setFormStock] = useState("");
   const [formMinStock, setFormMinStock] = useState("5");
   const [formCategory, setFormCategory] = useState("Ostalo");
+  // Razširjena polja kartice artikla
+  const [formSku, setFormSku] = useState("");
+  const [formCatalog, setFormCatalog] = useState("");
+  const [formInternalName, setFormInternalName] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formPrimaryGroup, setFormPrimaryGroup] = useState("");
+  const [formSecondaryGroup, setFormSecondaryGroup] = useState("");
+  const [formProductType, setFormProductType] = useState("prodaja blaga - evidenca zaloge");
+  const [formUnit, setFormUnit] = useState("kos");
+  const [formPackageQty, setFormPackageQty] = useState("1");
+  const [formBrand, setFormBrand] = useState("");
+  const [formCountry, setFormCountry] = useState("");
+  const [formWarranty, setFormWarranty] = useState("0");
+  const [formCurrency, setFormCurrency] = useState("EUR");
+  const [formWholesalePrice, setFormWholesalePrice] = useState("");
+  const [formVatRate, setFormVatRate] = useState("22");
+  const [formPurchasePrice, setFormPurchasePrice] = useState("");
+  const [formDefaultLocation, setFormDefaultLocation] = useState("");
+  const [formImageUrl, setFormImageUrl] = useState("");
+  const [productFormExpanded, setProductFormExpanded] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Partner form
   const [showPartnerForm, setShowPartnerForm] = useState(false);
