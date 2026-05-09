@@ -3,6 +3,8 @@ import { Pencil, Plus, Search, X, Check, Trash2, Clock, Printer, Save } from "lu
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BoniKarticeModule from "./BoniKarticeModule";
+import InventuraModule from "./InventuraModule";
+import PrevzemnicaModule from "./PrevzemnicaModule";
 
 interface DBProduct {
   id: string; ean: string; name: string; price: number; stock: number; min_stock: number; category: string;
