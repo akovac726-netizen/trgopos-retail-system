@@ -3,9 +3,16 @@ import { Pencil, Plus, Search, X, Check, Trash2, Clock, Printer, Save } from "lu
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BoniKarticeModule from "./BoniKarticeModule";
+import InventuraModule from "./InventuraModule";
+import PrevzemnicaModule from "./PrevzemnicaModule";
 
 interface DBProduct {
   id: string; ean: string; name: string; price: number; stock: number; min_stock: number; category: string;
+  sku?: string; catalog_number?: string; internal_name?: string; description?: string;
+  primary_group?: string; secondary_group?: string; product_type?: string; unit?: string;
+  package_qty?: number; brand?: string; country_of_origin?: string; warranty_months?: number;
+  currency?: string; wholesale_price?: number; vat_rate?: number; purchase_price?: number;
+  default_warehouse_location?: string; image_url?: string;
 }
 interface Partner {
   id: string; name: string; tax_number: string; address: string; city: string; postal_code: string; email: string; phone: string; notes: string;
@@ -74,6 +81,27 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [formStock, setFormStock] = useState("");
   const [formMinStock, setFormMinStock] = useState("5");
   const [formCategory, setFormCategory] = useState("Ostalo");
+  // Razširjena polja kartice artikla
+  const [formSku, setFormSku] = useState("");
+  const [formCatalog, setFormCatalog] = useState("");
+  const [formInternalName, setFormInternalName] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formPrimaryGroup, setFormPrimaryGroup] = useState("");
+  const [formSecondaryGroup, setFormSecondaryGroup] = useState("");
+  const [formProductType, setFormProductType] = useState("prodaja blaga - evidenca zaloge");
+  const [formUnit, setFormUnit] = useState("kos");
+  const [formPackageQty, setFormPackageQty] = useState("1");
+  const [formBrand, setFormBrand] = useState("");
+  const [formCountry, setFormCountry] = useState("");
+  const [formWarranty, setFormWarranty] = useState("0");
+  const [formCurrency, setFormCurrency] = useState("EUR");
+  const [formWholesalePrice, setFormWholesalePrice] = useState("");
+  const [formVatRate, setFormVatRate] = useState("22");
+  const [formPurchasePrice, setFormPurchasePrice] = useState("");
+  const [formDefaultLocation, setFormDefaultLocation] = useState("");
+  const [formImageUrl, setFormImageUrl] = useState("");
+  const [productFormExpanded, setProductFormExpanded] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Partner form
   const [showPartnerForm, setShowPartnerForm] = useState(false);
@@ -398,16 +426,61 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   };
   const formatCountdown = (s: number) => `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 
-  const resetProductForm = () => { setFormEan(""); setFormName(""); setFormPrice(""); setFormStock(""); setFormMinStock("5"); setFormCategory("Ostalo"); setShowAddForm(false); setEditingProduct(null); };
-  const handleEditStart = (p: DBProduct) => { setEditingProduct(p); setFormEan(p.ean); setFormName(p.name); setFormPrice(p.price.toString()); setFormStock(p.stock.toString()); setFormMinStock(p.min_stock.toString()); setFormCategory(p.category); setShowAddForm(true); };
+  const resetProductForm = () => {
+    setFormEan(""); setFormName(""); setFormPrice(""); setFormStock(""); setFormMinStock("5"); setFormCategory("Ostalo");
+    setFormSku(""); setFormCatalog(""); setFormInternalName(""); setFormDescription("");
+    setFormPrimaryGroup(""); setFormSecondaryGroup(""); setFormProductType("prodaja blaga - evidenca zaloge");
+    setFormUnit("kos"); setFormPackageQty("1"); setFormBrand(""); setFormCountry(""); setFormWarranty("0");
+    setFormCurrency("EUR"); setFormWholesalePrice(""); setFormVatRate("22"); setFormPurchasePrice("");
+    setFormDefaultLocation(""); setFormImageUrl("");
+    setShowAddForm(false); setEditingProduct(null);
+  };
+  const handleEditStart = (p: DBProduct) => {
+    setEditingProduct(p); setFormEan(p.ean); setFormName(p.name); setFormPrice(p.price.toString());
+    setFormStock(p.stock.toString()); setFormMinStock(p.min_stock.toString()); setFormCategory(p.category);
+    setFormSku(p.sku || ""); setFormCatalog(p.catalog_number || ""); setFormInternalName(p.internal_name || "");
+    setFormDescription(p.description || ""); setFormPrimaryGroup(p.primary_group || "");
+    setFormSecondaryGroup(p.secondary_group || ""); setFormProductType(p.product_type || "prodaja blaga - evidenca zaloge");
+    setFormUnit(p.unit || "kos"); setFormPackageQty(String(p.package_qty ?? 1)); setFormBrand(p.brand || "");
+    setFormCountry(p.country_of_origin || ""); setFormWarranty(String(p.warranty_months ?? 0));
+    setFormCurrency(p.currency || "EUR"); setFormWholesalePrice(String(p.wholesale_price ?? ""));
+    setFormVatRate(String(p.vat_rate ?? 22)); setFormPurchasePrice(String(p.purchase_price ?? ""));
+    setFormDefaultLocation(p.default_warehouse_location || ""); setFormImageUrl(p.image_url || "");
+    setShowAddForm(true);
+  };
+  const handleProductImageUpload = async (file: File) => {
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('product-images').upload(path, file, { upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+      setFormImageUrl(data.publicUrl);
+      toast.success('Slika naložena');
+    } catch (e: any) {
+      toast.error('Napaka pri nalaganju slike: ' + (e.message || ''));
+    } finally { setUploadingImage(false); }
+  };
   const handleSaveProduct = async () => {
     if (!formEan || !formName || !formPrice) { toast.error('Izpolnite vsa obvezna polja'); return; }
-    const d = { ean: formEan.trim(), name: formName.trim(), price: parseFloat(formPrice), stock: parseInt(formStock) || 0, min_stock: parseInt(formMinStock) || 5, category: formCategory };
+    const d: any = {
+      ean: formEan.trim(), name: formName.trim(), price: parseFloat(formPrice),
+      stock: parseInt(formStock) || 0, min_stock: parseInt(formMinStock) || 5, category: formCategory,
+      sku: formSku.trim(), catalog_number: formCatalog.trim(), internal_name: formInternalName.trim(),
+      description: formDescription.trim(), primary_group: formPrimaryGroup, secondary_group: formSecondaryGroup,
+      product_type: formProductType, unit: formUnit, package_qty: parseFloat(formPackageQty) || 1,
+      brand: formBrand.trim(), country_of_origin: formCountry, warranty_months: parseInt(formWarranty) || 0,
+      currency: formCurrency, wholesale_price: parseFloat(formWholesalePrice) || 0,
+      vat_rate: parseFloat(formVatRate) || 0, purchase_price: parseFloat(formPurchasePrice) || 0,
+      default_warehouse_location: formDefaultLocation, image_url: formImageUrl,
+    };
     if (editingProduct) {
-      const { error } = await supabase.from('products').update(d as any).eq('id', editingProduct.id as any);
+      const { error } = await supabase.from('products').update(d).eq('id', editingProduct.id as any);
       if (error) toast.error('Napaka'); else { toast.success('Posodobljeno'); resetProductForm(); }
     } else {
-      const { error } = await supabase.from('products').insert(d as any);
+      const { error } = await supabase.from('products').insert(d);
       if (error) { if (error.code === '23505') toast.error('EAN že obstaja'); else toast.error('Napaka'); }
       else { toast.success('Dodano'); resetProductForm(); }
     }
@@ -1130,28 +1203,55 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
       {/* Vizitka artikla */}
       {viewProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setViewProduct(null)}>
-          <div className="bg-white rounded-xl border-2 border-sky-500 w-[440px] shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="bg-sky-500 text-white px-5 py-3 rounded-t-xl flex justify-between items-center">
-              <h3 className="font-bold text-lg">Vizitka artikla</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={() => setViewProduct(null)}>
+          <div className="bg-white rounded-xl border-2 border-sky-500 w-[640px] max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-sky-500 text-white px-5 py-3 rounded-t-xl flex justify-between items-center sticky top-0">
+              <h3 className="font-bold text-lg">Kartica artikla</h3>
               <button onClick={() => setViewProduct(null)} className="text-white hover:text-gray-200"><X className="w-5 h-5"/></button>
             </div>
             <div className="p-5 space-y-2">
-              <div className="text-xl font-bold text-gray-900 mb-3">{viewProduct.name}</div>
+              <div className="flex gap-4 mb-3">
+                {viewProduct.image_url && (
+                  <img src={viewProduct.image_url} alt={viewProduct.name} className="w-32 h-32 object-cover border border-gray-300 rounded" />
+                )}
+                <div className="flex-1">
+                  <div className="text-xl font-bold text-gray-900">{viewProduct.name}</div>
+                  {viewProduct.internal_name && <div className="text-sm text-gray-600">{viewProduct.internal_name}</div>}
+                  {viewProduct.brand && <div className="text-xs text-gray-500 mt-1">Znamka: {viewProduct.brand}</div>}
+                </div>
+              </div>
               {[
-                ['Šifra artikla', viewProduct.id.slice(0,8).toUpperCase()],
+                ['Koda artikla', viewProduct.sku || '-'],
                 ['EAN koda', viewProduct.ean],
-                ['Cena', `${viewProduct.price.toFixed(2)} €`],
-                ['Zaloga', `${viewProduct.stock} kos`],
-                ['Min. zaloga', `${viewProduct.min_stock} kos`],
+                ['Kataloška številka', viewProduct.catalog_number || '-'],
+                ['Vrsta artikla', viewProduct.product_type || '-'],
+                ['Enota mere', viewProduct.unit || 'kos'],
+                ['Količina pakiranja', String(viewProduct.package_qty ?? 1)],
+                ['Primarna skupina', viewProduct.primary_group || '-'],
+                ['Sekundarna skupina', viewProduct.secondary_group || '-'],
+                ['Veleprodajna cena', `${(viewProduct.wholesale_price || 0).toFixed(2)} €`],
+                ['Maloprodajna cena', `${viewProduct.price.toFixed(2)} €`],
+                ['Stopnja DDV', `${viewProduct.vat_rate ?? 22}%`],
+                ['Nabavna cena', `${(viewProduct.purchase_price || 0).toFixed(2)} €`],
+                ['Zaloga', `${viewProduct.stock} ${viewProduct.unit || 'kos'}`],
+                ['Min. zaloga', `${viewProduct.min_stock} ${viewProduct.unit || 'kos'}`],
+                ['Privzeta lokacija', viewProduct.default_warehouse_location || '-'],
+                ['Država porekla', viewProduct.country_of_origin || '-'],
+                ['Garancija', `${viewProduct.warranty_months ?? 0} mes.`],
                 ['Kategorija', viewProduct.category],
               ].map(([l,v]) => (
                 <div key={l} className="flex border-b border-gray-200 py-1.5">
-                  <div className="w-32 text-sm text-gray-500 font-medium">{l}:</div>
+                  <div className="w-44 text-sm text-gray-500 font-medium">{l}:</div>
                   <div className="flex-1 text-sm font-bold text-gray-900">{v}</div>
                 </div>
               ))}
-              {role === 'admin' && (
+              {viewProduct.description && (
+                <div className="border-b border-gray-200 py-2">
+                  <div className="text-sm text-gray-500 font-medium mb-1">Opis:</div>
+                  <div className="text-sm text-gray-800 whitespace-pre-wrap">{viewProduct.description}</div>
+                </div>
+              )}
+              {(role === 'admin' || role === 'skladisce') && (
                 <div className="flex justify-end gap-2 pt-3">
                   <button onClick={() => { handleEditStart(viewProduct); setViewProduct(null); }}
                     className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded text-sm">Uredi</button>
@@ -1678,29 +1778,215 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   </div>
 
                   {showAddForm && (role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div className="bg-gray-200 rounded-xl p-6 w-[500px] border border-gray-400">
-                        <div className="flex justify-end gap-2 mb-4">
-                          <button onClick={handleSaveProduct} className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded text-sm">{editingProduct ? 'Posodobi' : 'Dodaj'}</button>
-                          <button onClick={resetProductForm} className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-sm">Prekliči</button>
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-4">
+                      <div className="bg-white rounded-lg shadow-2xl w-[820px] max-h-[90vh] overflow-y-auto">
+                        <div className="bg-sky-500 text-white px-5 py-3 flex justify-between items-center sticky top-0 z-10">
+                          <h3 className="font-bold text-base">Vnos podatkov o prodajnem artiklu</h3>
+                          <button onClick={resetProductForm} className="text-white hover:text-gray-200"><X className="w-5 h-5" /></button>
                         </div>
-                        <div className="space-y-1">
-                          {[
-                            { label: 'EAN koda:', value: formEan, setter: setFormEan },
-                            { label: 'Ime artikla:', value: formName, setter: setFormName },
-                            { label: 'Cena (€):', value: formPrice, setter: setFormPrice },
-                            { label: 'Zaloga:', value: formStock, setter: setFormStock },
-                            { label: 'Min. zaloga:', value: formMinStock, setter: setFormMinStock },
-                          ].map(f => (
-                            <div key={f.label} className="flex border border-gray-400 bg-white">
-                              <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">{f.label}</div>
-                              <input value={f.value} onChange={e => f.setter(e.target.value)} className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+                        <div className="p-5 space-y-3">
+                          <button onClick={() => setProductFormExpanded(v => !v)} className="text-sky-600 hover:underline text-sm font-medium">
+                            ▼ {productFormExpanded ? 'Prikaži manj' : 'Prikaži več'}
+                          </button>
+
+                          {/* Vrstica: Šifra (Koda) / Črtna koda / Kataloška številka */}
+                          <div className="grid grid-cols-3 gap-3">
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Koda artikla: <span className="text-red-500">*</span></label>
+                              <input value={formSku} onChange={e => setFormSku(e.target.value)} placeholder="Ročni vnos / šifra"
+                                disabled={!(role === 'admin' || role === 'skladisce')}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500 disabled:bg-gray-100" />
                             </div>
-                          ))}
-                          <div className="flex border border-gray-400 bg-white">
-                            <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Kategorija:</div>
-                            <input value={formCategory} onChange={e => setFormCategory(e.target.value)} placeholder="Vnesite kategorijo (prosto besedilo)"
-                              className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Črtna koda (EAN): <span className="text-red-500">*</span></label>
+                              <input value={formEan} onChange={e => setFormEan(e.target.value)}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Kataloška številka:</label>
+                              <input value={formCatalog} onChange={e => setFormCatalog(e.target.value)}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                            </div>
+                          </div>
+
+                          {/* Naziv / Interni naziv */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Naziv artikla: <span className="text-red-500">*</span></label>
+                              <input value={formName} onChange={e => setFormName(e.target.value)}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Interni naziv: <span className="text-red-500">*</span></label>
+                              <input value={formInternalName} onChange={e => setFormInternalName(e.target.value)}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                            </div>
+                          </div>
+
+                          {/* Opis */}
+                          <div>
+                            <label className="text-xs font-medium block mb-1">Opis artikla:</label>
+                            <textarea value={formDescription} onChange={e => setFormDescription(e.target.value)} rows={3}
+                              className="w-full px-2 py-1 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                          </div>
+
+                          {/* Slika artikla */}
+                          {(role === 'admin' || role === 'skladisce') && (
+                            <div className="border border-gray-300 rounded p-3 bg-gray-50">
+                              <label className="text-xs font-bold block mb-2">Slika artikla:</label>
+                              <div className="flex items-start gap-3">
+                                {formImageUrl && (
+                                  <img src={formImageUrl} alt="" className="w-24 h-24 object-cover border border-gray-300 rounded" />
+                                )}
+                                <div className="flex-1">
+                                  <input type="file" accept="image/*"
+                                    onChange={e => e.target.files?.[0] && handleProductImageUpload(e.target.files[0])}
+                                    className="text-sm" />
+                                  {uploadingImage && <p className="text-xs text-gray-500 mt-1">Nalagam...</p>}
+                                  {formImageUrl && (
+                                    <button onClick={() => setFormImageUrl("")} className="text-xs text-red-600 hover:underline mt-1 block">Odstrani sliko</button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {productFormExpanded && (
+                            <>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Primarna skupina artiklov:</label>
+                                  <select value={formPrimaryGroup} onChange={e => setFormPrimaryGroup(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="">-- izberi --</option>
+                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Sekundarna skupina artiklov:</label>
+                                  <select value={formSecondaryGroup} onChange={e => setFormSecondaryGroup(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="">-- izberi --</option>
+                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-4 gap-3">
+                                <div className="col-span-2">
+                                  <label className="text-xs font-medium block mb-1">Vrsta artikla:</label>
+                                  <select value={formProductType} onChange={e => setFormProductType(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option>prodaja blaga - evidenca zaloge</option>
+                                    <option>prodaja blaga - brez evidence zaloge</option>
+                                    <option>storitev</option>
+                                    <option>kavcija / embalaža</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Enota mere: <span className="text-red-500">*</span></label>
+                                  <select value={formUnit} onChange={e => setFormUnit(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="kos">kos</option><option value="kg">kg</option><option value="g">g</option>
+                                    <option value="l">l</option><option value="ml">ml</option><option value="m">m</option><option value="pak">pak</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Količina pakiranja:</label>
+                                  <input value={formPackageQty} onChange={e => setFormPackageQty(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Minimalna zaloga:</label>
+                                  <input value={formMinStock} onChange={e => setFormMinStock(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Začetna zaloga:</label>
+                                  <input value={formStock} onChange={e => setFormStock(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Privzeta lokacija v skladišču:</label>
+                                  <input value={formDefaultLocation} onChange={e => setFormDefaultLocation(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Znamka:</label>
+                                  <input value={formBrand} onChange={e => setFormBrand(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Država porekla:</label>
+                                  <select value={formCountry} onChange={e => setFormCountry(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="">-- izberi --</option>
+                                    <option>Slovenija</option><option>Hrvaška</option><option>Italija</option><option>Avstrija</option>
+                                    <option>Nemčija</option><option>Madžarska</option><option>Srbija</option><option>BiH</option>
+                                    <option>Kitajska</option><option>Drugo</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Garancijska doba (mes.):</label>
+                                  <input value={formWarranty} onChange={e => setFormWarranty(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-4 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Valuta:</label>
+                                  <select value={formCurrency} onChange={e => setFormCurrency(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option>EUR</option><option>USD</option><option>GBP</option><option>HRK</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Veleprod. cena (brez DDV):</label>
+                                  <input value={formWholesalePrice} onChange={e => setFormWholesalePrice(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Maloprodajna cena: <span className="text-red-500">*</span></label>
+                                  <input value={formPrice} onChange={e => setFormPrice(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Stopnja DDV:</label>
+                                  <select value={formVatRate} onChange={e => setFormVatRate(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="22">22% - splošna</option>
+                                    <option value="9.5">9,5% - znižana</option>
+                                    <option value="5">5% - posebno znižana</option>
+                                    <option value="0">0% - oproščeno</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Nabavna cena:</label>
+                                  <input value={formPurchasePrice} onChange={e => setFormPurchasePrice(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Kategorija (interno):</label>
+                                  <input value={formCategory} onChange={e => setFormCategory(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          <div className="flex justify-center gap-3 pt-3 border-t border-gray-300">
+                            <button onClick={handleSaveProduct} className="px-8 py-2 bg-sky-500 hover:bg-sky-600 text-white font-medium rounded text-sm">V redu</button>
+                            <button onClick={resetProductForm} className="px-8 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded text-sm border border-gray-400">Prekliči</button>
                           </div>
                         </div>
                       </div>
@@ -2498,25 +2784,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         )}
 
         {/* INVENTURA */}
-        {activeTab === 'inventura' && (
-          <div>
-            <div className="bg-gray-600/80 px-6 py-3"><h2 className="text-white font-bold text-xl">Inventura</h2></div>
-            <div className="px-6 py-4">
-              <table className="w-full border-collapse bg-white">
-                <thead><tr className="bg-gray-200">
-                  <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">EAN</th>
-                  <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">Artikel</th>
-                  <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Sistemska zaloga</th>
-                  <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Prešteto</th>
-                  <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">Razlika</th>
-                </tr></thead>
-                <tbody>
-                  {products.map((p, i) => <InventoryRow key={p.id} product={p} index={i} onUpdate={() => {}} />)}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {activeTab === 'inventura' && <InventuraModule role={role} products={products as any} />}
 
         {/* FINANČNA POROČILA */}
         {activeTab === 'financna' && (() => {
