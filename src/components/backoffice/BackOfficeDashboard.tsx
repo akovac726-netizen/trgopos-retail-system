@@ -424,16 +424,61 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   };
   const formatCountdown = (s: number) => `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 
-  const resetProductForm = () => { setFormEan(""); setFormName(""); setFormPrice(""); setFormStock(""); setFormMinStock("5"); setFormCategory("Ostalo"); setShowAddForm(false); setEditingProduct(null); };
-  const handleEditStart = (p: DBProduct) => { setEditingProduct(p); setFormEan(p.ean); setFormName(p.name); setFormPrice(p.price.toString()); setFormStock(p.stock.toString()); setFormMinStock(p.min_stock.toString()); setFormCategory(p.category); setShowAddForm(true); };
+  const resetProductForm = () => {
+    setFormEan(""); setFormName(""); setFormPrice(""); setFormStock(""); setFormMinStock("5"); setFormCategory("Ostalo");
+    setFormSku(""); setFormCatalog(""); setFormInternalName(""); setFormDescription("");
+    setFormPrimaryGroup(""); setFormSecondaryGroup(""); setFormProductType("prodaja blaga - evidenca zaloge");
+    setFormUnit("kos"); setFormPackageQty("1"); setFormBrand(""); setFormCountry(""); setFormWarranty("0");
+    setFormCurrency("EUR"); setFormWholesalePrice(""); setFormVatRate("22"); setFormPurchasePrice("");
+    setFormDefaultLocation(""); setFormImageUrl("");
+    setShowAddForm(false); setEditingProduct(null);
+  };
+  const handleEditStart = (p: DBProduct) => {
+    setEditingProduct(p); setFormEan(p.ean); setFormName(p.name); setFormPrice(p.price.toString());
+    setFormStock(p.stock.toString()); setFormMinStock(p.min_stock.toString()); setFormCategory(p.category);
+    setFormSku(p.sku || ""); setFormCatalog(p.catalog_number || ""); setFormInternalName(p.internal_name || "");
+    setFormDescription(p.description || ""); setFormPrimaryGroup(p.primary_group || "");
+    setFormSecondaryGroup(p.secondary_group || ""); setFormProductType(p.product_type || "prodaja blaga - evidenca zaloge");
+    setFormUnit(p.unit || "kos"); setFormPackageQty(String(p.package_qty ?? 1)); setFormBrand(p.brand || "");
+    setFormCountry(p.country_of_origin || ""); setFormWarranty(String(p.warranty_months ?? 0));
+    setFormCurrency(p.currency || "EUR"); setFormWholesalePrice(String(p.wholesale_price ?? ""));
+    setFormVatRate(String(p.vat_rate ?? 22)); setFormPurchasePrice(String(p.purchase_price ?? ""));
+    setFormDefaultLocation(p.default_warehouse_location || ""); setFormImageUrl(p.image_url || "");
+    setShowAddForm(true);
+  };
+  const handleProductImageUpload = async (file: File) => {
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('product-images').upload(path, file, { upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+      setFormImageUrl(data.publicUrl);
+      toast.success('Slika naložena');
+    } catch (e: any) {
+      toast.error('Napaka pri nalaganju slike: ' + (e.message || ''));
+    } finally { setUploadingImage(false); }
+  };
   const handleSaveProduct = async () => {
     if (!formEan || !formName || !formPrice) { toast.error('Izpolnite vsa obvezna polja'); return; }
-    const d = { ean: formEan.trim(), name: formName.trim(), price: parseFloat(formPrice), stock: parseInt(formStock) || 0, min_stock: parseInt(formMinStock) || 5, category: formCategory };
+    const d: any = {
+      ean: formEan.trim(), name: formName.trim(), price: parseFloat(formPrice),
+      stock: parseInt(formStock) || 0, min_stock: parseInt(formMinStock) || 5, category: formCategory,
+      sku: formSku.trim(), catalog_number: formCatalog.trim(), internal_name: formInternalName.trim(),
+      description: formDescription.trim(), primary_group: formPrimaryGroup, secondary_group: formSecondaryGroup,
+      product_type: formProductType, unit: formUnit, package_qty: parseFloat(formPackageQty) || 1,
+      brand: formBrand.trim(), country_of_origin: formCountry, warranty_months: parseInt(formWarranty) || 0,
+      currency: formCurrency, wholesale_price: parseFloat(formWholesalePrice) || 0,
+      vat_rate: parseFloat(formVatRate) || 0, purchase_price: parseFloat(formPurchasePrice) || 0,
+      default_warehouse_location: formDefaultLocation, image_url: formImageUrl,
+    };
     if (editingProduct) {
-      const { error } = await supabase.from('products').update(d as any).eq('id', editingProduct.id as any);
+      const { error } = await supabase.from('products').update(d).eq('id', editingProduct.id as any);
       if (error) toast.error('Napaka'); else { toast.success('Posodobljeno'); resetProductForm(); }
     } else {
-      const { error } = await supabase.from('products').insert(d as any);
+      const { error } = await supabase.from('products').insert(d);
       if (error) { if (error.code === '23505') toast.error('EAN že obstaja'); else toast.error('Napaka'); }
       else { toast.success('Dodano'); resetProductForm(); }
     }
