@@ -513,6 +513,57 @@ export type Database = {
         }
         Relationships: []
       }
+      inventure: {
+        Row: {
+          created_at: string
+          date_inventure: string
+          department: string | null
+          document_number: string
+          id: string
+          inventory_number: string | null
+          items: Json
+          notes: string | null
+          referent: string | null
+          responsible_person: string | null
+          status: string
+          total: number
+          updated_at: string
+          warehouse: string | null
+        }
+        Insert: {
+          created_at?: string
+          date_inventure?: string
+          department?: string | null
+          document_number: string
+          id?: string
+          inventory_number?: string | null
+          items?: Json
+          notes?: string | null
+          referent?: string | null
+          responsible_person?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+          warehouse?: string | null
+        }
+        Update: {
+          created_at?: string
+          date_inventure?: string
+          department?: string | null
+          document_number?: string
+          id?: string
+          inventory_number?: string | null
+          items?: Json
+          notes?: string | null
+          referent?: string | null
+          responsible_person?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+          warehouse?: string | null
+        }
+        Relationships: []
+      }
       leave_requests: {
         Row: {
           approver: string
@@ -735,6 +786,72 @@ export type Database = {
         }
         Relationships: []
       }
+      prevzemnice: {
+        Row: {
+          cost_center: string | null
+          created_at: string
+          created_by: string | null
+          date_prevzem: string
+          date_prevzemnice: string
+          delivery_note_date: string | null
+          delivery_note_number: string | null
+          document_number: string
+          exchange_rate: number | null
+          id: string
+          items: Json
+          language_variant: string | null
+          notes: string | null
+          order_reference: string | null
+          status: string
+          supplier: string
+          total: number
+          updated_at: string
+          warehouse: string | null
+        }
+        Insert: {
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_prevzem?: string
+          date_prevzemnice?: string
+          delivery_note_date?: string | null
+          delivery_note_number?: string | null
+          document_number: string
+          exchange_rate?: number | null
+          id?: string
+          items?: Json
+          language_variant?: string | null
+          notes?: string | null
+          order_reference?: string | null
+          status?: string
+          supplier?: string
+          total?: number
+          updated_at?: string
+          warehouse?: string | null
+        }
+        Update: {
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_prevzem?: string
+          date_prevzemnice?: string
+          delivery_note_date?: string | null
+          delivery_note_number?: string | null
+          document_number?: string
+          exchange_rate?: number | null
+          id?: string
+          items?: Json
+          language_variant?: string | null
+          notes?: string | null
+          order_reference?: string | null
+          status?: string
+          supplier?: string
+          total?: number
+          updated_at?: string
+          warehouse?: string | null
+        }
+        Relationships: []
+      }
       product_images: {
         Row: {
           created_at: string
@@ -769,37 +886,91 @@ export type Database = {
       }
       products: {
         Row: {
+          brand: string | null
+          catalog_number: string | null
           category: string
+          country_of_origin: string | null
           created_at: string
+          currency: string | null
+          default_warehouse_location: string | null
+          description: string | null
           ean: string
           id: string
+          image_url: string | null
+          internal_name: string | null
           min_stock: number
           name: string
+          package_qty: number | null
           price: number
+          primary_group: string | null
+          product_type: string | null
+          purchase_price: number | null
+          secondary_group: string | null
+          sku: string | null
           stock: number
+          unit: string | null
           updated_at: string
+          vat_rate: number | null
+          warranty_months: number | null
+          wholesale_price: number | null
         }
         Insert: {
+          brand?: string | null
+          catalog_number?: string | null
           category?: string
+          country_of_origin?: string | null
           created_at?: string
+          currency?: string | null
+          default_warehouse_location?: string | null
+          description?: string | null
           ean: string
           id?: string
+          image_url?: string | null
+          internal_name?: string | null
           min_stock?: number
           name: string
+          package_qty?: number | null
           price?: number
+          primary_group?: string | null
+          product_type?: string | null
+          purchase_price?: number | null
+          secondary_group?: string | null
+          sku?: string | null
           stock?: number
+          unit?: string | null
           updated_at?: string
+          vat_rate?: number | null
+          warranty_months?: number | null
+          wholesale_price?: number | null
         }
         Update: {
+          brand?: string | null
+          catalog_number?: string | null
           category?: string
+          country_of_origin?: string | null
           created_at?: string
+          currency?: string | null
+          default_warehouse_location?: string | null
+          description?: string | null
           ean?: string
           id?: string
+          image_url?: string | null
+          internal_name?: string | null
           min_stock?: number
           name?: string
+          package_qty?: number | null
           price?: number
+          primary_group?: string | null
+          product_type?: string | null
+          purchase_price?: number | null
+          secondary_group?: string | null
+          sku?: string | null
           stock?: number
+          unit?: string | null
           updated_at?: string
+          vat_rate?: number | null
+          warranty_months?: number | null
+          wholesale_price?: number | null
         }
         Relationships: []
       }
