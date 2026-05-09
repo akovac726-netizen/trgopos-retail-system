@@ -1201,28 +1201,55 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
       {/* Vizitka artikla */}
       {viewProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setViewProduct(null)}>
-          <div className="bg-white rounded-xl border-2 border-sky-500 w-[440px] shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="bg-sky-500 text-white px-5 py-3 rounded-t-xl flex justify-between items-center">
-              <h3 className="font-bold text-lg">Vizitka artikla</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={() => setViewProduct(null)}>
+          <div className="bg-white rounded-xl border-2 border-sky-500 w-[640px] max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-sky-500 text-white px-5 py-3 rounded-t-xl flex justify-between items-center sticky top-0">
+              <h3 className="font-bold text-lg">Kartica artikla</h3>
               <button onClick={() => setViewProduct(null)} className="text-white hover:text-gray-200"><X className="w-5 h-5"/></button>
             </div>
             <div className="p-5 space-y-2">
-              <div className="text-xl font-bold text-gray-900 mb-3">{viewProduct.name}</div>
+              <div className="flex gap-4 mb-3">
+                {viewProduct.image_url && (
+                  <img src={viewProduct.image_url} alt={viewProduct.name} className="w-32 h-32 object-cover border border-gray-300 rounded" />
+                )}
+                <div className="flex-1">
+                  <div className="text-xl font-bold text-gray-900">{viewProduct.name}</div>
+                  {viewProduct.internal_name && <div className="text-sm text-gray-600">{viewProduct.internal_name}</div>}
+                  {viewProduct.brand && <div className="text-xs text-gray-500 mt-1">Znamka: {viewProduct.brand}</div>}
+                </div>
+              </div>
               {[
-                ['Šifra artikla', viewProduct.id.slice(0,8).toUpperCase()],
+                ['Koda artikla', viewProduct.sku || '-'],
                 ['EAN koda', viewProduct.ean],
-                ['Cena', `${viewProduct.price.toFixed(2)} €`],
-                ['Zaloga', `${viewProduct.stock} kos`],
-                ['Min. zaloga', `${viewProduct.min_stock} kos`],
+                ['Kataloška številka', viewProduct.catalog_number || '-'],
+                ['Vrsta artikla', viewProduct.product_type || '-'],
+                ['Enota mere', viewProduct.unit || 'kos'],
+                ['Količina pakiranja', String(viewProduct.package_qty ?? 1)],
+                ['Primarna skupina', viewProduct.primary_group || '-'],
+                ['Sekundarna skupina', viewProduct.secondary_group || '-'],
+                ['Veleprodajna cena', `${(viewProduct.wholesale_price || 0).toFixed(2)} €`],
+                ['Maloprodajna cena', `${viewProduct.price.toFixed(2)} €`],
+                ['Stopnja DDV', `${viewProduct.vat_rate ?? 22}%`],
+                ['Nabavna cena', `${(viewProduct.purchase_price || 0).toFixed(2)} €`],
+                ['Zaloga', `${viewProduct.stock} ${viewProduct.unit || 'kos'}`],
+                ['Min. zaloga', `${viewProduct.min_stock} ${viewProduct.unit || 'kos'}`],
+                ['Privzeta lokacija', viewProduct.default_warehouse_location || '-'],
+                ['Država porekla', viewProduct.country_of_origin || '-'],
+                ['Garancija', `${viewProduct.warranty_months ?? 0} mes.`],
                 ['Kategorija', viewProduct.category],
               ].map(([l,v]) => (
                 <div key={l} className="flex border-b border-gray-200 py-1.5">
-                  <div className="w-32 text-sm text-gray-500 font-medium">{l}:</div>
+                  <div className="w-44 text-sm text-gray-500 font-medium">{l}:</div>
                   <div className="flex-1 text-sm font-bold text-gray-900">{v}</div>
                 </div>
               ))}
-              {role === 'admin' && (
+              {viewProduct.description && (
+                <div className="border-b border-gray-200 py-2">
+                  <div className="text-sm text-gray-500 font-medium mb-1">Opis:</div>
+                  <div className="text-sm text-gray-800 whitespace-pre-wrap">{viewProduct.description}</div>
+                </div>
+              )}
+              {(role === 'admin' || role === 'skladisce') && (
                 <div className="flex justify-end gap-2 pt-3">
                   <button onClick={() => { handleEditStart(viewProduct); setViewProduct(null); }}
                     className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded text-sm">Uredi</button>
