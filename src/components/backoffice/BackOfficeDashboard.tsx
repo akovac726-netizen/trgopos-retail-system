@@ -1749,29 +1749,215 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   </div>
 
                   {showAddForm && (role === 'admin' || role === 'skladisce' || role === 'shop' || role === 'oddelki') && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div className="bg-gray-200 rounded-xl p-6 w-[500px] border border-gray-400">
-                        <div className="flex justify-end gap-2 mb-4">
-                          <button onClick={handleSaveProduct} className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded text-sm">{editingProduct ? 'Posodobi' : 'Dodaj'}</button>
-                          <button onClick={resetProductForm} className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-sm">Prekliči</button>
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-4">
+                      <div className="bg-white rounded-lg shadow-2xl w-[820px] max-h-[90vh] overflow-y-auto">
+                        <div className="bg-sky-500 text-white px-5 py-3 flex justify-between items-center sticky top-0 z-10">
+                          <h3 className="font-bold text-base">Vnos podatkov o prodajnem artiklu</h3>
+                          <button onClick={resetProductForm} className="text-white hover:text-gray-200"><X className="w-5 h-5" /></button>
                         </div>
-                        <div className="space-y-1">
-                          {[
-                            { label: 'EAN koda:', value: formEan, setter: setFormEan },
-                            { label: 'Ime artikla:', value: formName, setter: setFormName },
-                            { label: 'Cena (€):', value: formPrice, setter: setFormPrice },
-                            { label: 'Zaloga:', value: formStock, setter: setFormStock },
-                            { label: 'Min. zaloga:', value: formMinStock, setter: setFormMinStock },
-                          ].map(f => (
-                            <div key={f.label} className="flex border border-gray-400 bg-white">
-                              <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">{f.label}</div>
-                              <input value={f.value} onChange={e => f.setter(e.target.value)} className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+                        <div className="p-5 space-y-3">
+                          <button onClick={() => setProductFormExpanded(v => !v)} className="text-sky-600 hover:underline text-sm font-medium">
+                            ▼ {productFormExpanded ? 'Prikaži manj' : 'Prikaži več'}
+                          </button>
+
+                          {/* Vrstica: Šifra (Koda) / Črtna koda / Kataloška številka */}
+                          <div className="grid grid-cols-3 gap-3">
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Koda artikla: <span className="text-red-500">*</span></label>
+                              <input value={formSku} onChange={e => setFormSku(e.target.value)} placeholder="Ročni vnos / šifra"
+                                disabled={!(role === 'admin' || role === 'skladisce')}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500 disabled:bg-gray-100" />
                             </div>
-                          ))}
-                          <div className="flex border border-gray-400 bg-white">
-                            <div className="w-32 px-3 py-1.5 bg-gray-100 border-r border-gray-400 text-sm font-medium">Kategorija:</div>
-                            <input value={formCategory} onChange={e => setFormCategory(e.target.value)} placeholder="Vnesite kategorijo (prosto besedilo)"
-                              className="flex-1 px-3 py-1.5 text-sm focus:outline-none" />
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Črtna koda (EAN): <span className="text-red-500">*</span></label>
+                              <input value={formEan} onChange={e => setFormEan(e.target.value)}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Kataloška številka:</label>
+                              <input value={formCatalog} onChange={e => setFormCatalog(e.target.value)}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                            </div>
+                          </div>
+
+                          {/* Naziv / Interni naziv */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Naziv artikla: <span className="text-red-500">*</span></label>
+                              <input value={formName} onChange={e => setFormName(e.target.value)}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-medium block mb-1">Interni naziv: <span className="text-red-500">*</span></label>
+                              <input value={formInternalName} onChange={e => setFormInternalName(e.target.value)}
+                                className="w-full h-8 px-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                            </div>
+                          </div>
+
+                          {/* Opis */}
+                          <div>
+                            <label className="text-xs font-medium block mb-1">Opis artikla:</label>
+                            <textarea value={formDescription} onChange={e => setFormDescription(e.target.value)} rows={3}
+                              className="w-full px-2 py-1 border border-gray-400 rounded text-sm focus:outline-none focus:border-sky-500" />
+                          </div>
+
+                          {/* Slika artikla */}
+                          {(role === 'admin' || role === 'skladisce') && (
+                            <div className="border border-gray-300 rounded p-3 bg-gray-50">
+                              <label className="text-xs font-bold block mb-2">Slika artikla:</label>
+                              <div className="flex items-start gap-3">
+                                {formImageUrl && (
+                                  <img src={formImageUrl} alt="" className="w-24 h-24 object-cover border border-gray-300 rounded" />
+                                )}
+                                <div className="flex-1">
+                                  <input type="file" accept="image/*"
+                                    onChange={e => e.target.files?.[0] && handleProductImageUpload(e.target.files[0])}
+                                    className="text-sm" />
+                                  {uploadingImage && <p className="text-xs text-gray-500 mt-1">Nalagam...</p>}
+                                  {formImageUrl && (
+                                    <button onClick={() => setFormImageUrl("")} className="text-xs text-red-600 hover:underline mt-1 block">Odstrani sliko</button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {productFormExpanded && (
+                            <>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Primarna skupina artiklov:</label>
+                                  <select value={formPrimaryGroup} onChange={e => setFormPrimaryGroup(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="">-- izberi --</option>
+                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Sekundarna skupina artiklov:</label>
+                                  <select value={formSecondaryGroup} onChange={e => setFormSecondaryGroup(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="">-- izberi --</option>
+                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-4 gap-3">
+                                <div className="col-span-2">
+                                  <label className="text-xs font-medium block mb-1">Vrsta artikla:</label>
+                                  <select value={formProductType} onChange={e => setFormProductType(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option>prodaja blaga - evidenca zaloge</option>
+                                    <option>prodaja blaga - brez evidence zaloge</option>
+                                    <option>storitev</option>
+                                    <option>kavcija / embalaža</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Enota mere: <span className="text-red-500">*</span></label>
+                                  <select value={formUnit} onChange={e => setFormUnit(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="kos">kos</option><option value="kg">kg</option><option value="g">g</option>
+                                    <option value="l">l</option><option value="ml">ml</option><option value="m">m</option><option value="pak">pak</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Količina pakiranja:</label>
+                                  <input value={formPackageQty} onChange={e => setFormPackageQty(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Minimalna zaloga:</label>
+                                  <input value={formMinStock} onChange={e => setFormMinStock(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Začetna zaloga:</label>
+                                  <input value={formStock} onChange={e => setFormStock(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Privzeta lokacija v skladišču:</label>
+                                  <input value={formDefaultLocation} onChange={e => setFormDefaultLocation(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Znamka:</label>
+                                  <input value={formBrand} onChange={e => setFormBrand(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Država porekla:</label>
+                                  <select value={formCountry} onChange={e => setFormCountry(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="">-- izberi --</option>
+                                    <option>Slovenija</option><option>Hrvaška</option><option>Italija</option><option>Avstrija</option>
+                                    <option>Nemčija</option><option>Madžarska</option><option>Srbija</option><option>BiH</option>
+                                    <option>Kitajska</option><option>Drugo</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Garancijska doba (mes.):</label>
+                                  <input value={formWarranty} onChange={e => setFormWarranty(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-4 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Valuta:</label>
+                                  <select value={formCurrency} onChange={e => setFormCurrency(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option>EUR</option><option>USD</option><option>GBP</option><option>HRK</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Veleprod. cena (brez DDV):</label>
+                                  <input value={formWholesalePrice} onChange={e => setFormWholesalePrice(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Maloprodajna cena: <span className="text-red-500">*</span></label>
+                                  <input value={formPrice} onChange={e => setFormPrice(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Stopnja DDV:</label>
+                                  <select value={formVatRate} onChange={e => setFormVatRate(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm bg-white">
+                                    <option value="22">22% - splošna</option>
+                                    <option value="9.5">9,5% - znižana</option>
+                                    <option value="5">5% - posebno znižana</option>
+                                    <option value="0">0% - oproščeno</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Nabavna cena:</label>
+                                  <input value={formPurchasePrice} onChange={e => setFormPurchasePrice(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium block mb-1">Kategorija (interno):</label>
+                                  <input value={formCategory} onChange={e => setFormCategory(e.target.value)}
+                                    className="w-full h-8 px-2 border border-gray-400 rounded text-sm" />
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          <div className="flex justify-center gap-3 pt-3 border-t border-gray-300">
+                            <button onClick={handleSaveProduct} className="px-8 py-2 bg-sky-500 hover:bg-sky-600 text-white font-medium rounded text-sm">V redu</button>
+                            <button onClick={resetProductForm} className="px-8 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded text-sm border border-gray-400">Prekliči</button>
                           </div>
                         </div>
                       </div>
