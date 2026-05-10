@@ -1343,6 +1343,15 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
           <div className="flex-1" />
 
+          {role === 'shop' && (
+            <div className="px-3 pb-2">
+              <button onClick={() => setShopHomeView(true)}
+                className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-sm transition-colors">
+                ⌂ Domov (meni)
+              </button>
+            </div>
+          )}
+
           <div className="px-3 pb-2">
             <button onClick={() => setShowBackend(true)}
               className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-sm transition-colors">
