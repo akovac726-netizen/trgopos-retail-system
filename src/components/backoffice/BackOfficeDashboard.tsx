@@ -811,6 +811,19 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   };
   const isAdmin = role === 'admin';
 
+  // ===== Shop Home (Diapozitiv 2 layout) =====
+  const [shopHomeView, setShopHomeView] = useState(true);
+  if (role === 'shop' && shopHomeView && !showBackend) {
+    return (
+      <ShopHomePage
+        userLabel={`Uporabnik: ${roleLabel[role]}`}
+        onLogout={onLogout}
+        onOpenBackend={() => setShowBackend(true)}
+        onNavigate={(tab) => { setActiveTab(tab as Tab); setShopHomeView(false); }}
+      />
+    );
+  }
+
   // ===== TrgoBackEnd LOGIN =====
   if (showBackend && !backendLoggedIn) {
     return (
