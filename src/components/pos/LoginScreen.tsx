@@ -8,7 +8,7 @@ type AppMode = 'trgopos' | 'backoffice';
 interface LoginScreenProps {
   cashiers: Cashier[];
   onLogin: (cashier: Cashier) => void;
-  onBackOfficeLogin: (role: 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo') => void;
+  onBackOfficeLogin: (role: 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo' | 'prodaja' | 'kadrovska') => void;
   registerId: number;
   registerLocked: boolean;
   onSelectRegister: (id: number) => void;

@@ -62,7 +62,7 @@ const getProductsLookup = (products: Product[]): Record<string, { name: string; 
 
 const Index = () => {
   const [appMode, setAppMode] = useState<'login' | 'pos' | 'backoffice' | 'terminal'>('login');
-  const [backofficeRole, setBackofficeRole] = useState<'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo'>('shop');
+  const [backofficeRole, setBackofficeRole] = useState<'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo' | 'prodaja' | 'kadrovska'>('shop');
   const [posTab, setPosTab] = useState<POSTab>('blagajna');
   const [screen, setScreen] = useState<'main' | 'payment' | 'complete' | 'giftvoucher'>('main');
   const [currentCashier, setCurrentCashier] = useState<Cashier | null>(null);
@@ -246,7 +246,7 @@ const Index = () => {
     // Re-fetch transactions for this cashier's permissions
     fetchTransactions(cashier.id);
   };
-  const handleBackOfficeLogin = (role: 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo') => { setBackofficeRole(role); setAppMode('backoffice'); };
+  const handleBackOfficeLogin = (role: 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo' | 'prodaja' | 'kadrovska') => { setBackofficeRole(role); setAppMode('backoffice'); };
   const handleLogout = () => {
     setCurrentCashier(null); setCartItems([]); setSelectedItemIndex(null); setInputValue("");
     setAppMode('login'); setScreen('main'); setPosTab('blagajna');
