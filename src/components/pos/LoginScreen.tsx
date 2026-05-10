@@ -8,7 +8,7 @@ type AppMode = 'trgopos' | 'backoffice';
 interface LoginScreenProps {
   cashiers: Cashier[];
   onLogin: (cashier: Cashier) => void;
-  onBackOfficeLogin: (role: 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo') => void;
+  onBackOfficeLogin: (role: 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo' | 'prodaja' | 'kadrovska') => void;
   registerId: number;
   registerLocked: boolean;
   onSelectRegister: (id: number) => void;
@@ -74,6 +74,12 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
       } else if (username === 'StB_RAC' && password === 'RAC;stb34') {
         onBackOfficeLogin('racunovodstvo');
         toast.success('Dobrodošli v BackOffice (Računovodstvo)!');
+      } else if (username === 'StB_PRO' && password === 'PRO;stb56') {
+        onBackOfficeLogin('prodaja');
+        toast.success('Dobrodošli v BackOffice (Prodaja)!');
+      } else if (username === 'StB_KAD' && password === 'KAD;stb78') {
+        onBackOfficeLogin('kadrovska');
+        toast.success('Dobrodošli v BackOffice (Kadrovska)!');
       } else {
         toast.error('Napačno uporabniško ime ali geslo');
         setPassword("");
