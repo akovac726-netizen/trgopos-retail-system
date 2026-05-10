@@ -39,7 +39,7 @@ interface ClosingReportData {
   total: number; cash: number; card: number; other: number; transactionCount: number; itemCount: number;
 }
 
-export type BORole = 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo';
+export type BORole = 'admin' | 'shop' | 'oddelki' | 'skladisce' | 'nabava' | 'racunovodstvo' | 'prodaja' | 'kadrovska';
 
 interface BackOfficeDashboardProps {
   onLogout: () => void;
