@@ -807,6 +807,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     admin: 'Direktor (Admin)', shop: 'Trgovina',
     oddelki: 'Vodja prodaje', skladisce: 'Vodja skladišča',
     nabava: 'Nabava', racunovodstvo: 'Računovodstvo',
+    prodaja: 'Prodaja', kadrovska: 'Kadrovska',
   };
   const isAdmin = role === 'admin';
 
