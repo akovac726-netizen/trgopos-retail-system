@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BoniKarticeModule from "./BoniKarticeModule";
 import InventuraModule from "./InventuraModule";
 import PrevzemnicaModule from "./PrevzemnicaModule";
+import ShopHomePage from "./ShopHomePage";
 
 interface DBProduct {
   id: string; ean: string; name: string; price: number; stock: number; min_stock: number; category: string;
