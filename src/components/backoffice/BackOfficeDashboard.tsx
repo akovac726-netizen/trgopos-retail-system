@@ -754,12 +754,38 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
     // RAČUNOVODSTVO
     racunovodstvo: [
       { id: 'rac_main', label: 'Računovodstvo', items: [
-        { id: 'finance', label: 'Finance' },
-        { id: 'racuni', label: 'Računi' },
-        { id: 'ddv', label: 'DDV' },
-        { id: 'stroski', label: 'Stroški' },
+        { id: 'racuni', label: 'Izdani / Prejeti računi' },
+        { id: 'finance', label: 'Plačila / Glavna knjiga' },
+        { id: 'ddv', label: 'DDV obračuni' },
+        { id: 'stroski', label: 'Stroški / Plače' },
+        { id: 'porocila', label: 'Finančna poročila' },
+        { id: 'export', label: 'Izvoz / Banka' },
+        { id: 'uporabniki', label: 'Pravice dostopa' },
+      ]},
+    ],
+    // PRODAJA
+    prodaja: [
+      { id: 'prod_main', label: 'Prodaja', items: [
+        { id: 'partnerji', label: 'Stranke / Partnerji' },
+        { id: 'narocila', label: 'Povpraševanja' },
+        { id: 'akcije_top', label: 'Ponudbe' },
+        { id: 'racuni', label: 'Računi / Dobropisi' },
+        { id: 'urnik', label: 'Prodajni koledar' },
         { id: 'porocila', label: 'Poročila' },
-        { id: 'export', label: 'Izvoz podatkov' },
+        { id: 'zaloga', label: 'Zaloga (pregled)' },
+        { id: 'uporabniki', label: 'Pravice dostopa' },
+      ]},
+    ],
+    // KADROVSKA
+    kadrovska: [
+      { id: 'kad_main', label: 'Kadrovska', items: [
+        { id: 'zaposleni_top', label: 'Zaposleni' },
+        { id: 'dokumenti', label: 'Pogodbe / Dokumenti' },
+        { id: 'urnik', label: 'Dopusti / Bolniške / Delovni čas' },
+        { id: 'porocila', label: 'Izobraževanja / Ocenjevanja' },
+        { id: 'stroski', label: 'Plače' },
+        { id: 'analitika', label: 'Kadrovska poročila' },
+        { id: 'uporabniki', label: 'Pravice dostopa (GDPR)' },
       ]},
     ],
   };
