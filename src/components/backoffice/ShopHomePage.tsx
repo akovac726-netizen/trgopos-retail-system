@@ -1,4 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import OtvoritevDialog from "./retro/OtvoritevDialog";
+import ArtikliDialog from "./retro/ArtikliDialog";
+import FinancnaPorocilaDialog from "./retro/FinancnaPorocilaDialog";
+import NalepkeDialog from "./retro/NalepkeDialog";
 
 interface ShopHomePageProps {
   onNavigate: (tab: string) => void;
