@@ -106,7 +106,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'Kliknite-izbiraj naroč.', tab: 'narocila', col: 1, row: 7 },
     { label: 'Reclami qualita', action: () => alert('Reklamacije / kvaliteta'), col: 1, row: 8 },
     // Column 2
-    { label: 'Otvoritev', tab: 'poslovanje', variant: 'green', col: 2, row: 1 },
+    { label: 'Otvoritev', action: () => setDialog('otvoritev'), variant: 'green', col: 2, row: 1 },
     { label: 'Zapiranje', tab: 'zakljucevanje', variant: 'red', col: 2, row: 2 },
     { label: 'Dokumenti', tab: 'dokumenti', col: 2, row: 3 },
     { label: 'Naročila', tab: 'narocila', col: 2, row: 4 },
@@ -116,7 +116,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'F. Izberi Popust', variant: 'disabled', col: 2, row: 8 },
     { label: 'Neprodano vodič za naročilo', tab: 'narocila', variant: 'cyan', col: 2, row: 9 },
     // Column 3
-    { label: 'Finančno\nporočilo', tab: 'financna', col: 3, row: 1 },
+    { label: 'Finančno\nporočilo', action: () => setDialog('financna'), col: 3, row: 1 },
     { label: 'Ponudbe - Akcije', tab: 'akcije_top', col: 3, row: 2 },
     { label: 'Fakture', tab: 'racuni', col: 3, row: 3 },
     { label: 'Prevzemi', tab: 'dokumenti', col: 3, row: 4 },
@@ -126,8 +126,8 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'K. Izberi Popust', variant: 'disabled', col: 3, row: 8 },
     // Column 4
     { label: 'Inventura', tab: 'inventura', col: 4, row: 1 },
-    { label: 'Artikli', tab: 'artikli', col: 4, row: 2 },
-    { label: 'Nalepke', tab: 'nalepke', col: 4, row: 3 },
+    { label: 'Artikli', action: () => setDialog('artikli'), col: 4, row: 2 },
+    { label: 'Nalepke', action: () => setDialog('nalepke'), col: 4, row: 3 },
     { label: 'Prenos blaga\nmed oddelki', tab: 'dokumenti', col: 4, row: 4 },
     { label: 'Izhod\n↵', action: onLogout, variant: 'blue', col: 4, row: 7, rowSpan: 2 },
   ];
