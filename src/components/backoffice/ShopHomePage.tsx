@@ -170,7 +170,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
       </div>
 
       {/* Main area */}
-      <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center p-6" style={{ background: '#c8d4e6' }}>
+      <div className="relative flex-1 min-h-0 overflow-hidden flex items-center justify-center p-6" style={{ background: '#c8d4e6' }}>
         <div
           className="grid w-full max-w-[900px] h-full max-h-[640px]"
           style={{
@@ -200,6 +200,14 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
             </button>
           ))}
         </div>
+
+        {/* Modal dialogs (open as windows over the grid) */}
+        {dialog === 'otvoritev' && (
+          <OtvoritevDialog onClose={() => setDialog(null)} onConfirm={() => { setDialog(null); onNavigate('poslovanje'); }} />
+        )}
+        {dialog === 'artikli' && <ArtikliDialog onClose={() => setDialog(null)} />}
+        {dialog === 'financna' && <FinancnaPorocilaDialog onClose={() => setDialog(null)} />}
+        {dialog === 'nalepke' && <NalepkeDialog onClose={() => setDialog(null)} />}
       </div>
 
       {/* Bottom status bar */}
