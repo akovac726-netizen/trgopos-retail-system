@@ -7,12 +7,15 @@ interface ShopHomePageProps {
   userLabel: string;
 }
 
-interface MenuButton {
+type Variant = 'default' | 'green' | 'red' | 'cyan' | 'yellow' | 'blue' | 'pink' | 'disabled';
+interface Btn {
   label: string;
   tab?: string;
   action?: () => void;
-  variant?: 'default' | 'green' | 'red' | 'cyan' | 'yellow' | 'blue' | 'disabled';
-  className?: string;
+  variant?: Variant;
+  col: number; // 1-4
+  row: number; // 1-9
+  rowSpan?: number;
 }
 
 const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHomePageProps) => {
@@ -20,203 +23,189 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
+    const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenu(null);
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const variantClass = (v?: MenuButton['variant']) => {
+  const variantStyle = (v?: Variant): React.CSSProperties => {
     switch (v) {
-      case 'green': return 'bg-gradient-to-b from-green-200 to-green-300 text-green-900 border-green-500 hover:brightness-95';
-      case 'red': return 'bg-gradient-to-b from-orange-200 to-orange-300 text-red-700 border-orange-400 hover:brightness-95';
-      case 'cyan': return 'bg-cyan-500 text-white border-cyan-700 hover:bg-cyan-600';
-      case 'yellow': return 'bg-yellow-300 text-black border-yellow-500 hover:bg-yellow-400 font-bold';
-      case 'blue': return 'bg-blue-500 text-white border-blue-700 hover:bg-blue-600';
-      case 'disabled': return 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed';
-      default: return 'bg-gradient-to-b from-gray-200 to-gray-300 text-gray-900 border-gray-400 hover:brightness-95';
+      case 'green':
+        return { background: 'linear-gradient(180deg,#b8e0b0 0%,#8fc77f 100%)', color: '#0a5c1a', border: '1px solid #5a9050' };
+      case 'red':
+        return { background: 'linear-gradient(180deg,#f5c8a8 0%,#e9a878 100%)', color: '#b30000', border: '1px solid #a06040' };
+      case 'pink':
+        return { background: 'linear-gradient(180deg,#f0d0d0 0%,#e0b8b8 100%)', color: '#222', border: '1px solid #b08080' };
+      case 'cyan':
+        return { background: 'linear-gradient(180deg,#4cb4c0 0%,#3a98a4 100%)', color: '#fff', border: '1px solid #2a7a86' };
+      case 'yellow':
+        return { background: '#fff200', color: '#b30000', border: '1px solid #c0b800', fontWeight: 700 };
+      case 'blue':
+        return { background: 'linear-gradient(180deg,#4a7fb8 0%,#365e94 100%)', color: '#fff', border: '1px solid #2a4870' };
+      case 'disabled':
+        return { background: 'linear-gradient(180deg,#dcdcdc 0%,#c0c0c0 100%)', color: '#888', border: '1px solid #a0a0a0', cursor: 'not-allowed' };
+      default:
+        return { background: 'linear-gradient(180deg,#e8e8e8 0%,#c8c8c8 100%)', color: '#1a1a1a', border: '1px solid #8a8a8a' };
     }
   };
 
-  const handleClick = (btn: MenuButton) => {
-    if (btn.variant === 'disabled') return;
-    if (btn.action) btn.action();
-    else if (btn.tab) onNavigate(btn.tab);
+  const handleClick = (b: Btn) => {
+    if (b.variant === 'disabled') return;
+    if (b.action) b.action();
+    else if (b.tab) onNavigate(b.tab);
   };
 
-  // Top menu structure
+  // Top menu structure — matching slide labels exactly
   const topMenus: Record<string, { label: string; action: () => void }[]> = {
-    Datoteka: [
-      { label: 'Nov dokument', action: () => onNavigate('dokumenti') },
-      { label: 'Odpri', action: () => onNavigate('dokumenti') },
+    Datoteke: [
+      { label: 'Odpri dokument', action: () => onNavigate('dokumenti') },
       { label: 'Shrani', action: () => {} },
       { label: 'Izhod', action: onLogout },
     ],
-    Pogled: [
-      { label: 'Poslovanje', action: () => onNavigate('poslovanje') },
+    Trgovina: [
+      { label: 'Otvoritev', action: () => onNavigate('poslovanje') },
+      { label: 'Zapiranje', action: () => onNavigate('zakljucevanje') },
       { label: 'Artikli', action: () => onNavigate('artikli') },
       { label: 'Inventura', action: () => onNavigate('inventura') },
+    ],
+    'Tiskanje SLO': [
+      { label: 'Cenovke / Nalepke', action: () => onNavigate('nalepke') },
+      { label: 'Finančno poročilo', action: () => onNavigate('financna') },
+      { label: 'Dnevni promet', action: () => onNavigate('financna') },
+    ],
+    Orodja: [
+      { label: 'TrgoBackEnd', action: onOpenBackend },
+      { label: 'Prenos blaga', action: () => onNavigate('dokumenti') },
+      { label: 'Planogramma', action: () => alert('Planogramma — modul v pripravi') },
+    ],
+    Urniki: [
+      { label: 'Urniki zaposlenih', action: () => onNavigate('urnik') },
       { label: 'Naročila', action: () => onNavigate('narocila') },
     ],
-    Operacije: [
-      { label: 'Otvoritev blagajne', action: () => onNavigate('poslovanje') },
-      { label: 'Zaključevanje', action: () => onNavigate('zakljucevanje') },
-      { label: 'Prevzemi', action: () => onNavigate('dokumenti') },
-      { label: 'Prenos blaga', action: () => onNavigate('dokumenti') },
+    'Izdaje dopustov': [
+      { label: 'Pregled dopustov', action: onOpenBackend },
+      { label: 'Nov zahtevek', action: onOpenBackend },
     ],
-    Poročila: [
-      { label: 'Finančna poročila', action: () => onNavigate('financna') },
-      { label: 'Promet po blagajnah', action: () => onNavigate('financna') },
-      { label: 'Inventurno poročilo', action: () => onNavigate('inventura') },
-    ],
-    Nastavitve: [
-      { label: 'Trgovina', action: () => onNavigate('partnerji') },
-      { label: 'Tiskalnik / Cenovke', action: () => onNavigate('nalepke') },
-      { label: 'Uporabnik', action: onOpenBackend },
-    ],
-    Pomoč: [
-      { label: 'O programu', action: () => alert('TrgoPOS BackOffice — StandBuy s. p. © 2026') },
-      { label: 'Navodila', action: () => window.open('https://standbuy.si', '_blank') },
+    'Tiskanje HR': [
+      { label: 'Kadrovski izpiski', action: onOpenBackend },
+      { label: 'Plačilne liste', action: onOpenBackend },
     ],
   };
 
-  // Grid layout matching Diapozitiv 2
-  const grid: (MenuButton | null)[][] = [
-    // Row 1
-    [
-      { label: 'TrgoBackEnd', action: onOpenBackend, className: 'bg-purple-300 hover:bg-purple-400 text-purple-900 border-purple-500' },
-      { label: 'Otvoritev', tab: 'poslovanje', variant: 'green' },
-      { label: 'Finančno\nporočilo', tab: 'financna' },
-      { label: 'Inventura', tab: 'inventura' },
-    ],
-    // Row 2
-    [
-      null,
-      { label: 'Zapiranje', tab: 'zakljucevanje', variant: 'red' },
-      { label: 'Ponudbe - Akcije', tab: 'akcije_top' },
-      { label: 'Artikli', tab: 'artikli' },
-    ],
-    // Row 3
-    [
-      null,
-      { label: 'Dokumenti', tab: 'dokumenti' },
-      { label: 'Fakture', tab: 'racuni' },
-      { label: 'Nalepke', tab: 'nalepke' },
-    ],
-    // Row 4
-    [
-      { label: 'Urniki', tab: 'urnik' },
-      { label: 'Naročila', tab: 'narocila' },
-      { label: 'Prevzemi', tab: 'dokumenti' },
-      { label: 'Prenos blaga\nmed oddelki', tab: 'dokumenti' },
-    ],
-    // Row 5
-    [
-      null,
-      { label: 'Kavcije', variant: 'disabled' },
-      { label: 'Prejem blag.\ndirek. dob.', tab: 'dokumenti' },
-      null,
-    ],
-    // Row 6
-    [
-      null,
-      { label: 'Prodaja Gift\nCard', tab: 'bonikartice' },
-      { label: 'Prodaja\ntelefonskih vred.', variant: 'disabled' },
-      null,
-    ],
-    // Row 7
-    [
-      { label: 'Klikni-izbiraj naroč.', tab: 'narocila' },
-      { label: 'Sef', action: () => alert('Sef - dostop omejen na PODPORO STANDBUY (00087)') },
-      { label: 'NEW !!\nPlanogramma', action: () => alert('Planogramma — modul v pripravi'), variant: 'yellow' },
-      { label: 'Izhod', action: onLogout, variant: 'blue', className: 'row-span-2 h-full' },
-    ],
-    // Row 8
-    [
-      { label: 'Reclami qualita', action: () => alert('Reklamacije / kvaliteta — odprite Dokumenti → Reklamacije') },
-      { label: 'F. Izberi Popust', variant: 'disabled' },
-      { label: 'K. Izberi Popust', variant: 'disabled' },
-      null,
-    ],
-    // Row 9 (bottom band)
-    [
-      null,
-      { label: 'Neprodano vodič za naročilo', tab: 'narocila', variant: 'cyan', className: 'col-span-2' },
-      null,
-      null,
-    ],
+  const buttons: Btn[] = [
+    // Column 1
+    { label: '„DEDICATA A TE"', action: onOpenBackend, variant: 'pink', col: 1, row: 1 },
+    { label: 'Urniki', tab: 'urnik', col: 1, row: 4 },
+    { label: 'Kliknite-izbiraj naroč.', tab: 'narocila', col: 1, row: 7 },
+    { label: 'Reclami qualita', action: () => alert('Reklamacije / kvaliteta'), col: 1, row: 8 },
+    // Column 2
+    { label: 'Otvoritev', tab: 'poslovanje', variant: 'green', col: 2, row: 1 },
+    { label: 'Zapiranje', tab: 'zakljucevanje', variant: 'red', col: 2, row: 2 },
+    { label: 'Dokumenti', tab: 'dokumenti', col: 2, row: 3 },
+    { label: 'Naročila', tab: 'narocila', col: 2, row: 4 },
+    { label: 'Kavcije', variant: 'disabled', col: 2, row: 5 },
+    { label: 'Prodaja Gift\nCard', tab: 'bonikartice', col: 2, row: 6 },
+    { label: 'Sef', action: () => alert('Sef — dostop omejen na 00087'), variant: 'disabled', col: 2, row: 7 },
+    { label: 'F. Izberi Popust', variant: 'disabled', col: 2, row: 8 },
+    { label: 'Neprodano vodič za naročilo', tab: 'narocila', variant: 'cyan', col: 2, row: 9 },
+    // Column 3
+    { label: 'Finančno\nporočilo', tab: 'financna', col: 3, row: 1 },
+    { label: 'Ponudbe - Akcije', tab: 'akcije_top', col: 3, row: 2 },
+    { label: 'Fakture', tab: 'racuni', col: 3, row: 3 },
+    { label: 'Prevzemi', tab: 'dokumenti', col: 3, row: 4 },
+    { label: 'Prejem blag.\ndirek. dob.', tab: 'dokumenti', col: 3, row: 5 },
+    { label: 'Prodaja\ntelefonskih vred.', variant: 'disabled', col: 3, row: 6 },
+    { label: 'NEW !!\nPlanogramma', action: () => alert('Planogramma — modul v pripravi'), variant: 'yellow', col: 3, row: 7 },
+    { label: 'K. Izberi Popust', variant: 'disabled', col: 3, row: 8 },
+    // Column 4
+    { label: 'Inventura', tab: 'inventura', col: 4, row: 1 },
+    { label: 'Artikli', tab: 'artikli', col: 4, row: 2 },
+    { label: 'Nalepke', tab: 'nalepke', col: 4, row: 3 },
+    { label: 'Prenos blaga\nmed oddelki', tab: 'dokumenti', col: 4, row: 4 },
+    { label: 'Izhod\n↵', action: onLogout, variant: 'blue', col: 4, row: 7, rowSpan: 2 },
   ];
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 overflow-hidden font-backoffice">
-      {/* Top menu bar */}
-      <div ref={menuRef} className="bg-slate-800 text-white flex items-center px-2 h-7 text-sm select-none">
-        <div className="flex">
-          {Object.keys(topMenus).map(menu => (
-            <div key={menu} className="relative">
-              <button
-                onClick={() => setOpenMenu(openMenu === menu ? null : menu)}
-                onMouseEnter={() => openMenu && setOpenMenu(menu)}
-                className={`px-3 h-7 hover:bg-slate-700 ${openMenu === menu ? 'bg-slate-700' : ''}`}
-              >
-                {menu}
-              </button>
-              {openMenu === menu && (
-                <div className="absolute top-full left-0 bg-white text-gray-900 border border-gray-400 shadow-xl min-w-[200px] z-50">
-                  {topMenus[menu].map((item, i) => (
-                    <button
-                      key={i}
-                      onClick={() => { item.action(); setOpenMenu(null); }}
-                      className="block w-full text-left px-4 py-1.5 text-sm hover:bg-blue-500 hover:text-white"
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+    <div className="h-screen flex flex-col overflow-hidden select-none" style={{ fontFamily: '"Tw Cen MT","Century Gothic",system-ui,sans-serif' }}>
+      {/* Window title bar */}
+      <div className="h-6 flex items-center justify-end px-2 text-white text-xs" style={{ background: 'linear-gradient(180deg,#2b3a55 0%,#1a2540 100%)' }}>
+        <span className="px-2 cursor-default">_</span>
+        <span className="px-2 cursor-default">▢</span>
+        <button onClick={onLogout} className="px-2 hover:bg-red-600">X</button>
+      </div>
+
+      {/* Menu bar */}
+      <div ref={menuRef} className="h-7 flex items-center text-sm" style={{ background: 'linear-gradient(180deg,#9098a8 0%,#7a8294 100%)', color: '#e8e8e8' }}>
+        {Object.keys(topMenus).map(m => (
+          <div key={m} className="relative h-full">
+            <button
+              onClick={() => setOpenMenu(openMenu === m ? null : m)}
+              onMouseEnter={() => openMenu && setOpenMenu(m)}
+              className={`px-3 h-full hover:bg-white/20 ${openMenu === m ? 'bg-white/25 text-white' : ''}`}
+            >
+              {m}
+            </button>
+            {openMenu === m && (
+              <div className="absolute top-full left-0 bg-white text-gray-900 border border-gray-500 shadow-xl min-w-[200px] z-50">
+                {topMenus[m].map((it, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { it.action(); setOpenMenu(null); }}
+                    className="block w-full text-left px-4 py-1.5 text-sm hover:bg-blue-600 hover:text-white"
+                  >
+                    {it.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Main area */}
+      <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center p-6" style={{ background: '#c8d4e6' }}>
+        <div
+          className="grid w-full max-w-[900px] h-full max-h-[640px]"
+          style={{
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateRows: 'repeat(9, minmax(0, 1fr))',
+            columnGap: '14px',
+            rowGap: '8px',
+          }}
+        >
+          {buttons.map((b, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleClick(b)}
+              disabled={b.variant === 'disabled'}
+              style={{
+                ...variantStyle(b.variant),
+                gridColumn: b.col,
+                gridRow: b.rowSpan ? `${b.row} / span ${b.rowSpan}` : b.row,
+                whiteSpace: 'pre-line',
+                fontSize: '13px',
+                borderRadius: '3px',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 1px rgba(0,0,0,0.15)',
+              }}
+              className="px-2 py-1 font-medium leading-tight transition-all hover:brightness-105 active:brightness-95"
+            >
+              {b.label}
+            </button>
           ))}
         </div>
-        <div className="flex-1" />
-        <div className="text-xs text-gray-300 px-3">{userLabel}</div>
-        <div className="flex gap-1">
-          <button className="w-7 h-7 hover:bg-slate-700 text-xs">_</button>
-          <button className="w-7 h-7 hover:bg-slate-700 text-xs">▢</button>
-          <button onClick={onLogout} className="w-7 h-7 hover:bg-red-600 text-xs">×</button>
-        </div>
       </div>
 
-      {/* Main grid area */}
-      <div className="flex-1 flex items-center justify-center p-6 min-h-0 overflow-hidden">
-        <div className="grid grid-cols-4 gap-x-3 gap-y-2 max-w-5xl w-full">
-          {grid.flatMap((row, rowIdx) =>
-            row.map((btn, colIdx) => {
-              if (!btn) return <div key={`${rowIdx}-${colIdx}`} />;
-              const isMulti = btn.label.includes('\n');
-              return (
-                <button
-                  key={`${rowIdx}-${colIdx}`}
-                  onClick={() => handleClick(btn)}
-                  disabled={btn.variant === 'disabled'}
-                  className={`min-h-[60px] px-2 py-2 text-sm font-medium border-2 rounded shadow-sm transition-all ${variantClass(btn.variant)} ${btn.className || ''}`}
-                  style={{ whiteSpace: 'pre-line' }}
-                >
-                  {btn.label}
-                </button>
-              );
-            })
-          )}
+      {/* Bottom status bar */}
+      <div className="h-6 flex items-center text-xs text-white" style={{ background: 'linear-gradient(180deg,#7a8294 0%,#5a6274 100%)' }}>
+        <div className="px-3 h-full flex items-center border-r border-black/20" style={{ background: '#a05858' }}>
+          {userLabel.startsWith('Uporabnik:') ? userLabel : `Uporabnik: ${userLabel}`}
         </div>
-      </div>
-
-      {/* Bottom logo */}
-      <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-        <span className="font-black text-base">
-          <span className="text-teal-500">Stand</span>
-          <span className="text-teal-600">Buy</span>
-          <span className="text-orange-400 ml-0.5">★</span>
-        </span>
+        <div className="px-3 h-full flex items-center border-r border-black/20" style={{ background: '#5a8a9a' }}>
+          Negoizo: 900001
+        </div>
+        <div className="px-3 h-full flex items-center flex-1">Funkcije:</div>
       </div>
     </div>
   );
