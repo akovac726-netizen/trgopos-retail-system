@@ -108,23 +108,23 @@ export const IskanjeKarticaDialog = ({
   };
 
   return (
-    <RetroWindow title="Iskanje - kartica artikla" onClose={onClose} width={560} zIndex={60} offsetX={40} offsetY={40}>
+    <RetroWindow title="Iskanje - kartica artikla" onClose={onClose} width={680} zIndex={60} offsetX={0} offsetY={0}>
       <div className="border bg-[#cfdbe9] p-3 mb-3" style={{ borderColor: '#7a8a9a' }}>
         <div className="text-xs font-semibold mb-2" style={{ color: '#1a3a6a' }}>Opcije iskanja</div>
-        <div className="grid grid-cols-[110px_1fr_110px_1fr_70px] gap-2 items-center">
+        <div className="grid grid-cols-[110px_minmax(0,1fr)_120px_minmax(0,1fr)_80px] gap-2 items-center">
           <RetroLabel color="#222">Koda artikla:</RetroLabel>
-          <RetroInput value={koda} onChange={e => setKoda(e.target.value)} />
+          <RetroInput value={koda} onChange={e => setKoda(e.target.value)} className="w-full min-w-0" />
           <RetroLabel color="#222">Dok. davčna št.:</RetroLabel>
-          <RetroInput value={davcna} onChange={e => setDavcna(e.target.value)} />
+          <RetroInput value={davcna} onChange={e => setDavcna(e.target.value)} className="w-full min-w-0" />
           <RetroButton onClick={izvedi} className="row-span-3 h-full">izvedi</RetroButton>
 
           <RetroLabel color="#222">Naziv artikla:</RetroLabel>
-          <RetroInput value={naziv} onChange={e => setNaziv(e.target.value)} />
+          <RetroInput value={naziv} onChange={e => setNaziv(e.target.value)} className="w-full min-w-0" />
           <RetroLabel color="#222">Koda art. IND:</RetroLabel>
-          <RetroInput value={kodaInd} onChange={e => setKodaInd(e.target.value)} />
+          <RetroInput value={kodaInd} onChange={e => setKodaInd(e.target.value)} className="w-full min-w-0" />
 
           <RetroLabel color="#222">Črtna koda:</RetroLabel>
-          <RetroInput value={crtna} onChange={e => setCrtna(e.target.value)} />
+          <RetroInput value={crtna} onChange={e => setCrtna(e.target.value)} className="w-full min-w-0" />
           <span /><span />
         </div>
       </div>
