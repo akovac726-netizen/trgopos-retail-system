@@ -1,22 +1,28 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import RetroWindow, { RetroButton, RetroInput, RetroLabel } from "./RetroWindow";
-
-interface Row { sku?: string; ean: string; name: string; price: number; }
+import KarticaArtiklaDialog, { ArticleRow } from "./KarticaArtiklaDialog";
 
 const ArtikliDialog = ({ onClose }: { onClose: () => void }) => {
-  const [rows, setRows] = useState<Row[]>([]);
+  const [rows, setRows] = useState<ArticleRow[]>([]);
+  const [selected, setSelected] = useState<number>(-1);
   const [showSearch, setShowSearch] = useState(false);
+  const [openCard, setOpenCard] = useState<ArticleRow | null>(null);
 
   useEffect(() => {
     supabase.from('products').select('sku,ean,name,price').limit(20).then(({ data }) => {
-      setRows((data as Row[]) || []);
+      setRows((data as ArticleRow[]) || []);
     });
   }, []);
 
+  const handleRowClick = (i: number) => {
+    if (selected === i) setOpenCard(rows[i]);
+    else setSelected(i);
+  };
+
   return (
     <>
-      <RetroWindow title="Artikli" onClose={onClose} width={620}>
+      <RetroWindow title="Artikli" onClose={onClose} width={580}>
         <div className="mb-3"><RetroLabel>Podatki o artiklih:</RetroLabel></div>
         <div className="bg-white border" style={{ borderColor: '#7a8a9a' }}>
           <div className="h-3 border-b" style={{ background: '#cfdbe9', borderColor: '#7a8a9a' }} />
@@ -26,7 +32,7 @@ const ArtikliDialog = ({ onClose }: { onClose: () => void }) => {
                 <th className="w-8" />
                 <th className="px-2 py-1 border-r" style={{ borderColor: '#c8c8c8' }}>Šifra artikla</th>
                 <th className="px-2 py-1 border-r" style={{ borderColor: '#c8c8c8' }}>Ime artikla</th>
-                <th className="px-2 py-1 w-28">Cena</th>
+                <th className="px-2 py-1 w-24">Cena</th>
               </tr>
             </thead>
             <tbody>
@@ -34,11 +40,18 @@ const ArtikliDialog = ({ onClose }: { onClose: () => void }) => {
                 <tr><td colSpan={4} className="px-2 py-3 text-center text-gray-500">Ni podatkov</td></tr>
               )}
               {rows.map((r, i) => (
-                <tr key={i} className="border-t" style={{ borderColor: '#e0e0e0' }}>
-                  <td className="text-center bg-[#e4e8ee] text-[#1a3a6a]">{i === 0 ? '▶' : ''}</td>
+                <tr
+                  key={i}
+                  onClick={() => handleRowClick(i)}
+                  onDoubleClick={() => setOpenCard(r)}
+                  className={`border-t cursor-pointer ${selected === i ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+                  style={{ borderColor: '#e0e0e0' }}
+                  title="Klikni za izbor, ponovni klik odpre kartico artikla"
+                >
+                  <td className="text-center bg-[#e4e8ee] text-[#1a3a6a] font-bold">{selected === i ? '▶' : ''}</td>
                   <td className="px-2 py-1">{r.sku || r.ean}</td>
                   <td className="px-2 py-1">{r.name}</td>
-                  <td className="px-2 py-1">{Number(r.price).toFixed(2)} EUR</td>
+                  <td className="px-2 py-1">{r.price != null ? `${Number(r.price).toFixed(2)} EUR` : ''}</td>
                 </tr>
               ))}
               {Array.from({ length: Math.max(0, 7 - rows.length) }).map((_, i) => (
@@ -58,22 +71,30 @@ const ArtikliDialog = ({ onClose }: { onClose: () => void }) => {
       {showSearch && (
         <IskanjeKarticaDialog
           onClose={() => setShowSearch(false)}
-          onSelect={(r) => { setRows([r, ...rows.filter(x => x.ean !== r.ean)]); setShowSearch(false); }}
+          onConfirm={(r) => {
+            setRows([r, ...rows.filter(x => x.ean !== r.ean)]);
+            setSelected(0);
+            setShowSearch(false);
+            setOpenCard(r);
+          }}
         />
       )}
+
+      {openCard && <KarticaArtiklaDialog article={openCard} onClose={() => setOpenCard(null)} />}
     </>
   );
 };
 
 export const IskanjeKarticaDialog = ({
-  onClose, onSelect,
-}: { onClose: () => void; onSelect: (r: Row) => void }) => {
+  onClose, onConfirm,
+}: { onClose: () => void; onConfirm: (r: ArticleRow) => void }) => {
   const [koda, setKoda] = useState('');
   const [naziv, setNaziv] = useState('');
   const [crtna, setCrtna] = useState('');
   const [davcna, setDavcna] = useState('');
   const [kodaInd, setKodaInd] = useState('');
-  const [results, setResults] = useState<Row[]>([]);
+  const [results, setResults] = useState<ArticleRow[]>([]);
+  const [sel, setSel] = useState<number>(-1);
 
   const izvedi = async () => {
     let q = supabase.from('products').select('sku,ean,name,price').limit(25);
@@ -81,7 +102,9 @@ export const IskanjeKarticaDialog = ({
     if (naziv) q = q.ilike('name', `%${naziv}%`);
     if (crtna) q = q.ilike('ean', `%${crtna}%`);
     const { data } = await q;
-    setResults((data as Row[]) || []);
+    const r = (data as ArticleRow[]) || [];
+    setResults(r);
+    setSel(r.length ? 0 : -1);
   };
 
   return (
@@ -93,7 +116,7 @@ export const IskanjeKarticaDialog = ({
           <RetroInput value={koda} onChange={e => setKoda(e.target.value)} />
           <RetroLabel color="#222">Dok. davčna št.:</RetroLabel>
           <RetroInput value={davcna} onChange={e => setDavcna(e.target.value)} />
-          <RetroButton onClick={izvedi} className="row-span-3 h-full" >izvedi</RetroButton>
+          <RetroButton onClick={izvedi} className="row-span-3 h-full">izvedi</RetroButton>
 
           <RetroLabel color="#222">Naziv artikla:</RetroLabel>
           <RetroInput value={naziv} onChange={e => setNaziv(e.target.value)} />
@@ -110,11 +133,17 @@ export const IskanjeKarticaDialog = ({
         <table className="w-full text-sm">
           <tbody>
             {results.length === 0 && (
-              <tr><td className="w-8 bg-[#e4e8ee] text-center text-[#1a3a6a]">▶</td><td className="px-2 py-1 text-gray-400">— pritisnite izvedi —</td></tr>
+              <tr><td className="w-8 bg-[#e4e8ee] text-center text-[#1a3a6a]" /><td className="px-2 py-1 text-gray-400">— pritisnite izvedi —</td></tr>
             )}
             {results.map((r, i) => (
-              <tr key={i} className="border-t cursor-pointer hover:bg-blue-50" style={{ borderColor: '#e0e0e0' }} onClick={() => onSelect(r)}>
-                <td className="w-8 bg-[#e4e8ee] text-center text-[#1a3a6a]">▶</td>
+              <tr
+                key={i}
+                className={`border-t cursor-pointer ${sel === i ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+                style={{ borderColor: '#e0e0e0' }}
+                onClick={() => setSel(i)}
+                onDoubleClick={() => onConfirm(r)}
+              >
+                <td className="w-8 bg-[#e4e8ee] text-center text-[#1a3a6a]">{sel === i ? '▶' : ''}</td>
                 <td className="px-2 py-1">{r.name}</td>
               </tr>
             ))}
@@ -127,7 +156,7 @@ export const IskanjeKarticaDialog = ({
         </table>
       </div>
       <div className="flex justify-end gap-2 mt-4">
-        <RetroButton onClick={() => results[0] && onSelect(results[0])}>Potrdi</RetroButton>
+        <RetroButton onClick={() => sel >= 0 && onConfirm(results[sel])}>Potrdi</RetroButton>
         <RetroButton onClick={onClose}>Izhod</RetroButton>
       </div>
     </RetroWindow>
