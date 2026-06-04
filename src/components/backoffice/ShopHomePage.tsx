@@ -209,6 +209,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
         {dialog === 'artikli' && <ArtikliDialog onClose={() => setDialog(null)} />}
         {dialog === 'financna' && <FinancnaPorocilaDialog onClose={() => setDialog(null)} />}
         {dialog === 'nalepke' && <NalepkeDialog onClose={() => setDialog(null)} />}
+        {dialog === 'planograma' && <PlanogrammaDialog onClose={() => setDialog(null)} />}
       </div>
 
       {/* Bottom status bar */}
