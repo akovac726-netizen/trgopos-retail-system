@@ -1,5 +1,6 @@
 import { useState } from "react";
 import RetroWindow, { RetroButton, RetroInput } from "./RetroWindow";
+import jsPDF from "jspdf";
 
 export interface ArticleRow {
   sku?: string;
@@ -11,6 +12,8 @@ export interface ArticleRow {
   country?: string | null;
   size_info?: string | null;
   image_url?: string | null;
+  stock?: number | null;
+  vat_rate?: number | null;
 }
 
 interface Props {
@@ -18,61 +21,92 @@ interface Props {
   onClose: () => void;
 }
 
-type ViewMode = 'ean' | 'sku' | 'ind';
+type ViewMode = 'ean' | 'sku' | 'ind' | 'zaloga';
 
 const KarticaArtiklaDialog = ({ article, onClose }: Props) => {
   const [view, setView] = useState<ViewMode>('ean');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
-  const exportCsv = () => {
-    const csv = `Naziv;EAN;Šifra;Cena\n"${article.name}";${article.ean};${article.sku || ''};${article.price ?? ''}\n`;
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `${article.sku || article.ean}.csv`; a.click();
-    URL.revokeObjectURL(url);
+  const izvoziPdf = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text(`Kartica artikla: ${article.name}`, 14, 18);
+    doc.setFontSize(10);
+    doc.text(`EAN: ${article.ean}`, 14, 28);
+    doc.text(`Šifra: ${article.sku || '-'}`, 14, 35);
+    doc.text(`Cena: ${article.price?.toFixed(2) ?? '-'} EUR`, 14, 42);
+    doc.text(`Zaloga: ${article.stock ?? 0}`, 14, 49);
+    doc.text(`DDV: ${article.vat_rate ?? 22}%`, 14, 56);
+    if (from || to) doc.text(`Obdobje: ${from || '...'} - ${to || '...'}`, 14, 63);
+    doc.save(`kartica-${article.sku || article.ean}.pdf`);
   };
 
   return (
     <RetroWindow title="Kartica Artiklov" onClose={onClose} width={520} zIndex={70} offsetX={-30} offsetY={-30}>
       <div className="flex gap-3">
-        {/* Image */}
-        <div className="w-[130px] h-[130px] bg-white border flex items-center justify-center text-center text-sm font-semibold text-[#444]" style={{ borderColor: '#7a8a9a' }}>
+        {/* Slika */}
+        <div className="w-[130px] h-[130px] bg-white border flex items-center justify-center text-center text-sm font-semibold text-[#444] flex-shrink-0" style={{ borderColor: '#7a8a9a' }}>
           {article.image_url ? <img src={article.image_url} alt={article.name} className="max-w-full max-h-full" /> : <>SLIKA<br />ARTIKLA</>}
         </div>
-        <div className="flex-1 space-y-2">
-          <RetroInput value={article.name} readOnly />
+        <div className="flex-1 min-w-0 space-y-2">
+          <RetroInput value={article.name} readOnly className="w-full" />
           <div className="text-sm font-semibold" style={{ color: '#1a3a6a' }}>Promet po datumu:</div>
-          <div className="flex gap-2">
-            <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="flex-1 px-2 py-1 text-sm bg-white border" style={{ borderColor: '#6a7a8a' }} />
-            <input type="date" value={to} onChange={e => setTo(e.target.value)} className="flex-1 px-2 py-1 text-sm bg-white border" style={{ borderColor: '#6a7a8a' }} />
+          <div className="flex gap-2 items-start">
+            <div className="flex-1 grid grid-cols-2 gap-2 min-w-0">
+              <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="px-2 py-1 text-sm bg-white border w-full min-w-0" style={{ borderColor: '#6a7a8a', boxSizing: 'border-box' }} />
+              <input type="date" value={to} onChange={e => setTo(e.target.value)} className="px-2 py-1 text-sm bg-white border w-full min-w-0" style={{ borderColor: '#6a7a8a', boxSizing: 'border-box' }} />
+            </div>
+            <RetroButton onClick={izvoziPdf} className="!px-2 leading-tight text-xs">Izvozi<br/>PDF</RetroButton>
+          </div>
+          <div>
+            <button className="px-3 py-0.5 text-xs border" style={{ background: 'linear-gradient(180deg,#f0f0f0 0%,#c8c8c8 100%)', borderColor: '#7a7a7a' }}>Opombe</button>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-2 mt-3">
+      <div className="grid grid-cols-4 gap-2 mt-3">
         <TabBtn active={view === 'ean'} onClick={() => setView('ean')}>EAN artikla</TabBtn>
         <TabBtn active={view === 'sku'} onClick={() => setView('sku')}>Šifra artikla</TabBtn>
         <TabBtn active={view === 'ind'} onClick={() => setView('ind')} disabled>Koda art. IND:</TabBtn>
+        <TabBtn active={view === 'zaloga'} onClick={() => setView('zaloga')}>Zaloga</TabBtn>
       </div>
 
-      <div className="mt-2 bg-[#dcdcdc] border min-h-[120px]" style={{ borderColor: '#7a8a9a' }}>
-        <table className="w-full text-sm">
-          <tbody>
-            <tr className="bg-white">
-              <td className="w-8 text-center bg-[#e4e8ee] text-[#1a3a6a]">▶</td>
-              <td className="px-2 py-1 w-[180px] border-r" style={{ borderColor: '#c8c8c8' }}>
-                {view === 'ean' ? article.ean : view === 'sku' ? (article.sku || '—') : '—'}
-              </td>
-              <td className="px-2 py-1">{article.name}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="mt-2 bg-[#dcdcdc] border min-h-[140px] max-h-[200px] overflow-auto" style={{ borderColor: '#7a8a9a' }}>
+        {view === 'zaloga' ? (
+          <table className="w-1/2 text-sm">
+            <tbody>
+              {[
+                ['Trenutna zaloga:', String(article.stock ?? 0)],
+                ['Nabavljena kol.:', '-'],
+                ['Prodana kol.:', '-'],
+                ['DDV:', `${article.vat_rate ?? 22}%`],
+                ['Prodajna cena:', article.price != null ? `${article.price.toFixed(2)} €` : '-'],
+              ].map(([k, v]) => (
+                <tr key={k} className="border-b" style={{ borderColor: '#bfbfbf' }}>
+                  <td className="px-2 py-1 bg-[#e4e8ee] font-semibold w-[55%]" style={{ color: '#222' }}>{k}</td>
+                  <td className="px-2 py-1 bg-white">{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <table className="w-full text-sm">
+            <tbody>
+              <tr className="bg-white">
+                <td className="w-8 text-center bg-[#e4e8ee] text-[#1a3a6a]">▶</td>
+                <td className="px-2 py-1 w-[180px] border-r" style={{ borderColor: '#c8c8c8' }}>
+                  {view === 'ean' ? article.ean : view === 'sku' ? (article.sku || '—') : '—'}
+                </td>
+                <td className="px-2 py-1">{article.name}</td>
+              </tr>
+            </tbody>
+          </table>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 mt-4">
-        <RetroButton onClick={exportCsv}>Izvozi</RetroButton>
+        <RetroButton onClick={izvoziPdf}>Izvozi</RetroButton>
         <RetroButton onClick={onClose}>Potrdi</RetroButton>
         <RetroButton onClick={onClose}>Izhod</RetroButton>
       </div>
@@ -84,7 +118,7 @@ const TabBtn = ({ children, active, onClick, disabled }: { children: React.React
   <button
     onClick={onClick}
     disabled={disabled}
-    className="px-3 py-1 text-sm border"
+    className="px-2 py-1 text-sm border w-full"
     style={{
       background: active ? 'linear-gradient(180deg,#b8b8b8 0%,#909090 100%)' : 'linear-gradient(180deg,#f0f0f0 0%,#c8c8c8 100%)',
       borderColor: '#7a7a7a',
