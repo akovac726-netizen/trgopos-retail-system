@@ -84,7 +84,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     Orodja: [
       { label: 'TrgoBackEnd', action: onOpenBackend },
       { label: 'Prenos blaga', action: () => onNavigate('dokumenti') },
-      { label: 'Planogramma', action: () => alert('Planogramma — modul v pripravi') },
+      { label: 'Planogramma', action: () => setDialog('planograma') },
     ],
     Urniki: [
       { label: 'Urniki zaposlenih', action: () => onNavigate('urnik') },
@@ -123,7 +123,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'Prevzemi', tab: 'dokumenti', col: 3, row: 4 },
     { label: 'Prejem blag.\ndirek. dob.', tab: 'dokumenti', col: 3, row: 5 },
     { label: 'Prodaja\ntelefonskih vred.', variant: 'disabled', col: 3, row: 6 },
-    { label: 'NEW !!\nPlanogramma', action: () => alert('Planogramma — modul v pripravi'), variant: 'yellow', col: 3, row: 7 },
+    { label: 'NEW !!\nPlanogramma', action: () => setDialog('planograma'), variant: 'yellow', col: 3, row: 7 },
     { label: 'K. Izberi Popust', variant: 'disabled', col: 3, row: 8 },
     // Column 4
     { label: 'Inventura', tab: 'inventura', col: 4, row: 1 },
