@@ -101,15 +101,25 @@ const KarticaArtiklaDialog = ({ article, onClose }: Props) => {
 
       <div className="mt-2 bg-[#dcdcdc] border min-h-[140px] max-h-[200px] overflow-auto" style={{ borderColor: '#7a8a9a' }}>
         {view === 'zaloga' ? (
-          <table className="w-1/2 text-sm">
+          <table className="w-full text-sm">
             <tbody>
               {[
-                ['Trenutna zaloga:', String(article.stock ?? 0)],
+                ['Zaloga Trgovina:', trgStock != null ? String(trgStock) : '...'],
+                ['Zaloga Skladišče:', sklStock != null ? String(sklStock) : '...'],
+                ['Skupna zaloga:', String((trgStock ?? 0) + (sklStock ?? 0))],
                 ['Nabavljena kol.:', '-'],
                 ['Prodana kol.:', '-'],
                 ['DDV:', `${article.vat_rate ?? 22}%`],
                 ['Prodajna cena:', article.price != null ? `${article.price.toFixed(2)} €` : '-'],
               ].map(([k, v]) => (
+                <tr key={k} className="border-b" style={{ borderColor: '#bfbfbf' }}>
+                  <td className="px-2 py-1 bg-[#e4e8ee] font-semibold w-[55%]" style={{ color: '#222' }}>{k}</td>
+                  <td className="px-2 py-1 bg-white">{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
                 <tr key={k} className="border-b" style={{ borderColor: '#bfbfbf' }}>
                   <td className="px-2 py-1 bg-[#e4e8ee] font-semibold w-[55%]" style={{ color: '#222' }}>{k}</td>
                   <td className="px-2 py-1 bg-white">{v}</td>
