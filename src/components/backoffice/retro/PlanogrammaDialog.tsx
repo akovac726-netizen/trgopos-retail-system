@@ -181,7 +181,7 @@ const UploadPlanogramDialog = ({
       });
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from('planograms').getPublicUrl(path);
-      const { error: insErr } = await supabase.from('planograms').insert({
+      const { error: insErr } = await (supabase as any).from('planograms').insert({
         title: file.name, layout, period_label: label, period_date: date,
         file_url: urlData.publicUrl, uploaded_by: 'Direktor',
       });
