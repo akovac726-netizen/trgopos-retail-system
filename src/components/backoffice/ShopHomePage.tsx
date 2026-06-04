@@ -3,6 +3,7 @@ import OtvoritevDialog from "./retro/OtvoritevDialog";
 import ArtikliDialog from "./retro/ArtikliDialog";
 import FinancnaPorocilaDialog from "./retro/FinancnaPorocilaDialog";
 import NalepkeDialog from "./retro/NalepkeDialog";
+import PlanogrammaDialog from "./retro/PlanogrammaDialog";
 
 interface ShopHomePageProps {
   onNavigate: (tab: string) => void;
