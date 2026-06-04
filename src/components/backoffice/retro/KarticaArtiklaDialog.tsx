@@ -120,14 +120,6 @@ const KarticaArtiklaDialog = ({ article, onClose }: Props) => {
             </tbody>
           </table>
         ) : (
-                <tr key={k} className="border-b" style={{ borderColor: '#bfbfbf' }}>
-                  <td className="px-2 py-1 bg-[#e4e8ee] font-semibold w-[55%]" style={{ color: '#222' }}>{k}</td>
-                  <td className="px-2 py-1 bg-white">{v}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
           <table className="w-full text-sm">
             <tbody>
               <tr className="bg-white">
