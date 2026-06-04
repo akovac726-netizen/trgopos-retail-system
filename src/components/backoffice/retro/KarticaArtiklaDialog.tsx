@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import RetroWindow, { RetroButton, RetroInput } from "./RetroWindow";
 import jsPDF from "jspdf";
 
@@ -27,6 +28,32 @@ const KarticaArtiklaDialog = ({ article, onClose }: Props) => {
   const [view, setView] = useState<ViewMode>('ean');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [trgStock, setTrgStock] = useState<number | null>(null);
+  const [sklStock, setSklStock] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // Find product id by EAN
+      const { data: prod } = await supabase.from('products').select('id').eq('ean', article.ean).maybeSingle();
+      if (!prod) return;
+      const { data: stocks } = await supabase
+        .from('location_stock')
+        .select('stock, location_id, locations:locations!inner(type)')
+        .eq('product_id', (prod as any).id);
+      if (cancelled || !stocks) return;
+      let trg = 0, skl = 0;
+      (stocks as any[]).forEach(r => {
+        const t = r.locations?.type;
+        if (t === 'pe') trg += Number(r.stock || 0);
+        else if (t === 'gl_skl' || t === 'skladisce') skl += Number(r.stock || 0);
+      });
+      setTrgStock(trg);
+      setSklStock(skl);
+    })();
+    return () => { cancelled = true; };
+  }, [article.ean]);
+
 
   const izvoziPdf = () => {
     const doc = new jsPDF();
@@ -74,10 +101,12 @@ const KarticaArtiklaDialog = ({ article, onClose }: Props) => {
 
       <div className="mt-2 bg-[#dcdcdc] border min-h-[140px] max-h-[200px] overflow-auto" style={{ borderColor: '#7a8a9a' }}>
         {view === 'zaloga' ? (
-          <table className="w-1/2 text-sm">
+          <table className="w-full text-sm">
             <tbody>
               {[
-                ['Trenutna zaloga:', String(article.stock ?? 0)],
+                ['Zaloga Trgovina:', trgStock != null ? String(trgStock) : '...'],
+                ['Zaloga Skladišče:', sklStock != null ? String(sklStock) : '...'],
+                ['Skupna zaloga:', String((trgStock ?? 0) + (sklStock ?? 0))],
                 ['Nabavljena kol.:', '-'],
                 ['Prodana kol.:', '-'],
                 ['DDV:', `${article.vat_rate ?? 22}%`],

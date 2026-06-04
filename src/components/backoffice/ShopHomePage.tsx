@@ -3,6 +3,7 @@ import OtvoritevDialog from "./retro/OtvoritevDialog";
 import ArtikliDialog from "./retro/ArtikliDialog";
 import FinancnaPorocilaDialog from "./retro/FinancnaPorocilaDialog";
 import NalepkeDialog from "./retro/NalepkeDialog";
+import PlanogrammaDialog from "./retro/PlanogrammaDialog";
 
 interface ShopHomePageProps {
   onNavigate: (tab: string) => void;
@@ -24,7 +25,7 @@ interface Btn {
 
 const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHomePageProps) => {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<null | 'otvoritev' | 'artikli' | 'financna' | 'nalepke'>(null);
+  const [dialog, setDialog] = useState<null | 'otvoritev' | 'artikli' | 'financna' | 'nalepke' | 'planograma'>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -83,7 +84,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     Orodja: [
       { label: 'TrgoBackEnd', action: onOpenBackend },
       { label: 'Prenos blaga', action: () => onNavigate('dokumenti') },
-      { label: 'Planogramma', action: () => alert('Planogramma — modul v pripravi') },
+      { label: 'Planogramma', action: () => setDialog('planograma') },
     ],
     Urniki: [
       { label: 'Urniki zaposlenih', action: () => onNavigate('urnik') },
@@ -122,7 +123,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'Prevzemi', tab: 'dokumenti', col: 3, row: 4 },
     { label: 'Prejem blag.\ndirek. dob.', tab: 'dokumenti', col: 3, row: 5 },
     { label: 'Prodaja\ntelefonskih vred.', variant: 'disabled', col: 3, row: 6 },
-    { label: 'NEW !!\nPlanogramma', action: () => alert('Planogramma — modul v pripravi'), variant: 'yellow', col: 3, row: 7 },
+    { label: 'NEW !!\nPlanogramma', action: () => setDialog('planograma'), variant: 'yellow', col: 3, row: 7 },
     { label: 'K. Izberi Popust', variant: 'disabled', col: 3, row: 8 },
     // Column 4
     { label: 'Inventura', tab: 'inventura', col: 4, row: 1 },
@@ -208,6 +209,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
         {dialog === 'artikli' && <ArtikliDialog onClose={() => setDialog(null)} />}
         {dialog === 'financna' && <FinancnaPorocilaDialog onClose={() => setDialog(null)} />}
         {dialog === 'nalepke' && <NalepkeDialog onClose={() => setDialog(null)} />}
+        {dialog === 'planograma' && <PlanogrammaDialog onClose={() => setDialog(null)} />}
       </div>
 
       {/* Bottom status bar */}
