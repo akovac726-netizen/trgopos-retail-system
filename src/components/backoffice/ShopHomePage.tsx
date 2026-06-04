@@ -25,7 +25,7 @@ interface Btn {
 
 const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHomePageProps) => {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<null | 'otvoritev' | 'artikli' | 'financna' | 'nalepke'>(null);
+  const [dialog, setDialog] = useState<null | 'otvoritev' | 'artikli' | 'financna' | 'nalepke' | 'planograma'>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
