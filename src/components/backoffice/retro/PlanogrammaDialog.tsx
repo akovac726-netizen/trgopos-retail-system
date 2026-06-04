@@ -35,7 +35,7 @@ const PlanogrammaDialog = ({ onClose, isDirector = false }: Props) => {
   const [showUpload, setShowUpload] = useState(false);
 
   const refresh = async () => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('planograms')
       .select('*')
       .order('period_date', { ascending: false });
