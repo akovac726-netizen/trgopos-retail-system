@@ -28,6 +28,32 @@ const KarticaArtiklaDialog = ({ article, onClose }: Props) => {
   const [view, setView] = useState<ViewMode>('ean');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [trgStock, setTrgStock] = useState<number | null>(null);
+  const [sklStock, setSklStock] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // Find product id by EAN
+      const { data: prod } = await supabase.from('products').select('id').eq('ean', article.ean).maybeSingle();
+      if (!prod) return;
+      const { data: stocks } = await supabase
+        .from('location_stock')
+        .select('stock, location_id, locations:locations!inner(type)')
+        .eq('product_id', (prod as any).id);
+      if (cancelled || !stocks) return;
+      let trg = 0, skl = 0;
+      (stocks as any[]).forEach(r => {
+        const t = r.locations?.type;
+        if (t === 'pe') trg += Number(r.stock || 0);
+        else if (t === 'gl_skl' || t === 'skladisce') skl += Number(r.stock || 0);
+      });
+      setTrgStock(trg);
+      setSklStock(skl);
+    })();
+    return () => { cancelled = true; };
+  }, [article.ean]);
+
 
   const izvoziPdf = () => {
     const doc = new jsPDF();
