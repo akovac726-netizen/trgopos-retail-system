@@ -13,11 +13,6 @@ interface ShopHomePageProps {
   userLabel: string;
 }
 
-  onNavigate: (tab: string) => void;
-  onOpenBackend: () => void;
-  onLogout: () => void;
-  userLabel: string;
-}
 
 type Variant = 'default' | 'green' | 'red' | 'cyan' | 'yellow' | 'blue' | 'pink' | 'disabled';
 interface Btn {
