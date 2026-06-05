@@ -71,6 +71,9 @@ interface Promotion {
 
 const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], role }: BackOfficeDashboardProps) => {
   const [activeTab, setActiveTab] = useState<Tab>('poslovanje');
+  const [showSklTrg, setShowSklTrg] = useState(false);
+  const [showPrejNar, setShowPrejNar] = useState(false);
+
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
