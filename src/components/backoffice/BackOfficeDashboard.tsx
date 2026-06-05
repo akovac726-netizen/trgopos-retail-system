@@ -6,6 +6,9 @@ import BoniKarticeModule from "./BoniKarticeModule";
 import InventuraModule from "./InventuraModule";
 import PrevzemnicaModule from "./PrevzemnicaModule";
 import ShopHomePage from "./ShopHomePage";
+import SkladiscaTrgovinDialog from "./retro/SkladiscaTrgovinDialog";
+import PrejetaNarocilaDialog from "./retro/PrejetaNarocilaDialog";
+
 
 interface DBProduct {
   id: string; ean: string; name: string; price: number; stock: number; min_stock: number; category: string;
