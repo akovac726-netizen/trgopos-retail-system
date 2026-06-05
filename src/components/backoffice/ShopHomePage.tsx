@@ -4,6 +4,7 @@ import ArtikliDialog from "./retro/ArtikliDialog";
 import FinancnaPorocilaDialog from "./retro/FinancnaPorocilaDialog";
 import NalepkeDialog from "./retro/NalepkeDialog";
 import PlanogrammaDialog from "./retro/PlanogrammaDialog";
+import DocumentDialog, { DocMode } from "./retro/DocumentDialog";
 
 interface ShopHomePageProps {
   onNavigate: (tab: string) => void;
@@ -11,6 +12,7 @@ interface ShopHomePageProps {
   onLogout: () => void;
   userLabel: string;
 }
+
 
 type Variant = 'default' | 'green' | 'red' | 'cyan' | 'yellow' | 'blue' | 'pink' | 'disabled';
 interface Btn {
@@ -26,6 +28,8 @@ interface Btn {
 const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHomePageProps) => {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [dialog, setDialog] = useState<null | 'otvoritev' | 'artikli' | 'financna' | 'nalepke' | 'planograma'>(null);
+  const [docDialog, setDocDialog] = useState<DocMode | null>(null);
+
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,8 +113,9 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     // Column 2
     { label: 'Otvoritev', action: () => setDialog('otvoritev'), variant: 'green', col: 2, row: 1 },
     { label: 'Zapiranje', tab: 'zakljucevanje', variant: 'red', col: 2, row: 2 },
-    { label: 'Dokumenti', tab: 'dokumenti', col: 2, row: 3 },
-    { label: 'Naročila', tab: 'narocila', col: 2, row: 4 },
+    { label: 'Dokumenti', action: () => setDocDialog('vracilo'), col: 2, row: 3 },
+    { label: 'Naročila', action: () => setDocDialog('narocilo'), col: 2, row: 4 },
+
     { label: 'Kavcije', variant: 'disabled', col: 2, row: 5 },
     { label: 'Prodaja Gift\nCard', tab: 'bonikartice', col: 2, row: 6 },
     { label: 'Sef', action: () => alert('Sef — dostop omejen na 00087'), variant: 'disabled', col: 2, row: 7 },
@@ -120,8 +125,9 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'Finančno\nporočilo', action: () => setDialog('financna'), col: 3, row: 1 },
     { label: 'Ponudbe - Akcije', tab: 'akcije_top', col: 3, row: 2 },
     { label: 'Fakture', tab: 'racuni', col: 3, row: 3 },
-    { label: 'Prevzemi', tab: 'dokumenti', col: 3, row: 4 },
-    { label: 'Prejem blag.\ndirek. dob.', tab: 'dokumenti', col: 3, row: 5 },
+    { label: 'Prevzemi', action: () => setDocDialog('prevzem'), col: 3, row: 4 },
+    { label: 'Prejem blag.\ndirek. dob.', action: () => setDocDialog('prevzem'), col: 3, row: 5 },
+
     { label: 'Prodaja\ntelefonskih vred.', variant: 'disabled', col: 3, row: 6 },
     { label: 'NEW !!\nPlanogramma', action: () => setDialog('planograma'), variant: 'yellow', col: 3, row: 7 },
     { label: 'K. Izberi Popust', variant: 'disabled', col: 3, row: 8 },
@@ -129,7 +135,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'Inventura', tab: 'inventura', col: 4, row: 1 },
     { label: 'Artikli', action: () => setDialog('artikli'), col: 4, row: 2 },
     { label: 'Nalepke', action: () => setDialog('nalepke'), col: 4, row: 3 },
-    { label: 'Prenos blaga\nmed oddelki', tab: 'dokumenti', col: 4, row: 4 },
+    { label: 'Prenos blaga\nmed oddelki', action: () => setDocDialog('vracilo'), col: 4, row: 4 },
     { label: 'Izhod\n↵', action: onLogout, variant: 'blue', col: 4, row: 7, rowSpan: 2 },
   ];
 
@@ -210,7 +216,9 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
         {dialog === 'financna' && <FinancnaPorocilaDialog onClose={() => setDialog(null)} />}
         {dialog === 'nalepke' && <NalepkeDialog onClose={() => setDialog(null)} />}
         {dialog === 'planograma' && <PlanogrammaDialog onClose={() => setDialog(null)} />}
+        {docDialog && <DocumentDialog mode={docDialog} onClose={() => setDocDialog(null)} />}
       </div>
+
 
       {/* Bottom status bar */}
       <div className="h-6 flex items-center text-xs text-white" style={{ background: 'linear-gradient(180deg,#7a8294 0%,#5a6274 100%)' }}>
