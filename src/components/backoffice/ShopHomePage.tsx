@@ -4,8 +4,15 @@ import ArtikliDialog from "./retro/ArtikliDialog";
 import FinancnaPorocilaDialog from "./retro/FinancnaPorocilaDialog";
 import NalepkeDialog from "./retro/NalepkeDialog";
 import PlanogrammaDialog from "./retro/PlanogrammaDialog";
+import DocumentDialog, { DocMode } from "./retro/DocumentDialog";
 
 interface ShopHomePageProps {
+  onNavigate: (tab: string) => void;
+  onOpenBackend: () => void;
+  onLogout: () => void;
+  userLabel: string;
+}
+
   onNavigate: (tab: string) => void;
   onOpenBackend: () => void;
   onLogout: () => void;
