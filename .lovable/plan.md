@@ -1,70 +1,41 @@
-# Prenova BackOffice programa
 
-Glede na obseg dela (cca. 5000+ vrstic kode + nove tabele) razdelim implementacijo v 4 zaporedne korake. Po vsakem koraku lahko preverite rezultat.
+## 1. Otvoritev – klikljivi koraki + potrditveno okno
+- Vsak od 7 korakov v `OtvoritevDialog.tsx` postane klikljiv (gumb v vrstici "Funkcija").
+- Klik odpre majhno potrditveno okno (točno po sliki Diapozitiv47): naslov "Otvoritev", besedilo "Ali ste prepričani, da želite nadaljevati?", gumba **SI** / **NEIN**. Klik SI = korak označen kot izveden + odpre poročilo/akcijo (npr. izvleček cen, tiskanje etiket, posodobitev blagajne) – uporabili bomo obstoječe dialoge/PDF generatorje, kjer obstajajo, sicer placeholder PDF poročilo o prejšnji akciji.
 
-## 1. Profil TRGOVINA — nov dizajn po Diapozitivu 2
+## 2. Skupni "DocumentDialog" (Vračilo / Naročilo / Prevzem)
+Nov komponent `src/components/backoffice/retro/DocumentDialog.tsx` po Diapozitiv22/23/24:
+- **Glava**: Interna koda (številka poslovalnice, auto iz profila), Št. dokumenta (zaporedna, auto), Datum (today, auto), Naziv, Naslov (dropdown lokacij), Status dok. (▮ rdeč = Odprto, zelen = Zaprto), Št. dok. (free-text, **dovoljene črke**, default VRAČILO/Naročilo/Prevzem), Datum dok. (ročni vnos).
+- **Podrobnosti**: input "Koda artikla" (EAN), "Kosi" (količina) – Enter doda vrstico v tabelo (Vrsta, Koda, Naziv, Paket, Količina, Skupna vrednost, Popust, Cena). Klik na vrstico = temno modro označena.
+- **Spodaj**: tabi Dokument / Fakture / Prejem / Naročilo / Opomba (po sliki).
+- Gumba **Spremeni** / **Nov**, **Izhod**.
+- Prop `mode: 'vracilo' | 'narocilo' | 'prevzem'` določa naslov, default "Št. dok." in zapis v bazo (`orders` za naročilo, `prevzemnice` za prevzem, `dispatches` za vračilo).
 
-Popolna preoblikovanje home strani profila TRGOVINA tako, da posnema vizualno postavitev z diapozitiva:
+## 3. Workflow Naročilo → Skladišče → Prevzem
+- Trgovina ustvari Naročilo (status `Poslano`, `to_profile='skladisce'`) → zapis v `orders`.
+- Skladišče (`WarehouseHomePage`) dobi seznam prejetih naročil → potrdi → kreira **dobavnico** (zapis v `dispatches` z `delivery_note_number`).
+- V Trgovini se v modulu **Prevzemi** prikažejo dobavnice; odpre se isti DocumentDialog v `prevzem` načinu, kjer trgovina v "Št. dokumenta" vpiše št. dobavnice za prevzem.
 
-- **Zgornji menijski trak** (na celotnem zaslonu): spustni meniji
-  - Datoteka, Pogled, Operacije, Poročila, Nastavitve, Pomoč
-- **Gridna postavitev gumbov** (4 stolpci) v točno enakem vrstnem redu kot na sliki:
-  - Stolpec 1: TrgoBackEnd · (prazno) · (prazno) · Urniki · Klikni-izbiraj naroč. · Reclami qualita
-  - Stolpec 2: Otvoritev (zelena) · Zapiranje (oranžna/rdeča) · Dokumenti · Naročila · Kavcije (siva, disabled) · Prodaja Gift Card · Sef · F. Izberi Popust · Neprodano vodič za naročilo (cyan)
-  - Stolpec 3: Finančno poročilo · Ponudbe-Akcije · Fakture · Prevzemi · Prejem blag. direk. dob. · Prodaja telefonskih vred. (disabled) · NEW!! Planogramma (rumeno) · K. Izberi Popust
-  - Stolpec 4: Inventura · Artikli · Nalepke · Prenos blaga med oddelki · Izhod (modri velik gumb)
-- Vsak gumb odpre ustrezni modul (vse stare funkcije ohranjene + povezane)
-- Tipografija Tw Cen MT, temna tema BackOffice ostaja
+## 4. Skladišče: nov modul "SKLADIŠČA TRGOVIN"
+- Dodam gumb v `WarehouseHomePage` → odpre `SkladiscaTrgovinDialog`.
+- Tabela: za vsako lokacijo tipa `pe` prikaže agregat zalog iz `location_stock` (artikel, koda, količina). Iskanje po EAN/nazivu/lokaciji.
 
-## 2. TrgoBackEnd → Kartice zaposlenih
+## 5. Prijavni podatki
+- Posodobim seznam dovoljenih uporabnikov (verjetno v `LoginScreen.tsx` ali konfiguraciji profilov):
+  - **Spremeni**: prejšnje "ivancna_gorica" → `ivancnag` / `TR-IVO-001`.
+  - **Dodaj**: `domzale` / `TR-DOM-002` (nova trgovina – ustvarim tudi lokacijo Domžale).
 
-Ob kliku na **TrgoBackEnd** se odpre nov modul s karticami zaposlenih:
-- Lista zaposlenih iz `staff` tabele (kartice s sliko, imenom, vlogo, statusom)
-- Klik na kartico → detajl: osebni podatki, dokumenti, dopusti, ure, plača
-- Možnost dodajanja/urejanja zaposlenega
+## 6. Tehnične opombe
+- Brez sprememb sheme – uporabimo obstoječe tabele `orders`, `dispatches`, `prevzemnice`, `locations`, `location_stock`.
+- Stil dialogov: enak retro vzorec (`RetroWindow`), notranji scroll, `max-h 92vh`.
+- Status barva: `bg-red-500` (odprt), `bg-green-600` (zaprt), z neon-stil okvirjem.
 
-## 3. Dva nova profila + popravki obstoječih
-
-### Novi profili (z začasnimi prijavnimi podatki, urejanje preko 00087):
-
-**PRODAJA** (`prodaja@trgovina.si` / `prodaja2026`)
-Sidebar: Stranke · Povpraševanja · Ponudbe · Računi · Prodajni koledar · Poročila · Zaloga (read) · Pravice
-
-**KADROVSKA** (`kadrovska@trgovina.si` / `kadr2026`)
-Sidebar: Zaposleni · Pogodbe · Dopusti · Bolniške · Delovni čas · Izobraževanja · Ocenjevanja · Plače · Poročila · Pravice
-
-### Popravljeni profili:
-
-**NABAVA**: Naročilnice · Prejeti računi · Povpraševanja · Analitika nabave · Integracija skladišča · Pravice
-**RAČUNOVODSTVO**: Izdani/Prejeti računi · Plačila · Glavna knjiga · DDV · Plače · Finančna poročila · Banka · Pravice
-**SKLADIŠČE**: Zaloga · Prevzemi · Izdaje · Inventura · Premiki · Loti · Poročila · Integracija prodaje · Pravice
-**DIREKTOR**: vsi moduli vseh profilov združeni
-
-### Upravljanje prijavnih podatkov
-Nov modul **Uporabniki** v Direktor/00087 profilu — uredi geslo, e-mail, vlogo za vsak profil.
-
-## 4. Implementacija novih/popravljenih modulov
-
-- **Akcije** — promocije s časovnico, popusti na artikle/skupine, izvoz na POS
-- **Cenovke** — izbira artiklov + dejansko generiranje PDF (jspdf)
-- **Dokumenti** — vsi pod-moduli funkcionalni (Računi izdani/prejeti, Dobavnice, Prevzemnice, Odpremnice, Stornoji)
-- **Koda artikla = Šifra artikla** — poenotenje: en SKU stolpec, iskanje po njem v vseh modulih (POS iskanje, Prevzemnica, Inventura, Artikli)
-
-## Tehnične podrobnosti
-
-- **DB migracija**: nove tabele `customers`, `inquiries`, `quotations`, `sales_calendar`, `contracts`, `leave_requests` (extend), `time_records`, `trainings`, `evaluations`, `salaries`, `purchase_orders`, `accounting_entries`, `vat_reports`, `bank_imports`, `warehouse_movements`, `lots`, `promotions`, `price_tags`. Vse z RLS (public read/write — interna aplikacija brez auth.uid).
-- **Profili v `profiles` tabeli**: dodaj `prodaja` in `kadrovska` z `is_active=true`.
-- **Iskanje po SKU**: posodobi `ProductSearchDialog` in `BlagajnaTab` da iščeta še po `sku`.
-- **Routing**: nove komponente `ProdajaProfile.tsx`, `KadrovskaProfile.tsx`, `EmployeeCardsModule.tsx`, `AkcijeModule.tsx`, `CenovkeModule.tsx`, `DokumentiHub.tsx`. Refaktor `BackOfficeDashboard.tsx` na manjše profile-komponente.
-- **PDF**: `jspdf` že nameščen, uporabim za Cenovke/Ponudbe/Računi.
-
-## Vrstni red izvedbe
-
-Ker je obseg velik in en odgovor ne more vsega narediti naenkrat, predlagam **sledeč vrstni red v zaporednih sporočilih**:
-
-1. **To sporočilo**: DB migracija (vse nove tabele) + poenotenje SKU/Koda + nova TRGOVINA home stran po Diapozitivu 2 + TrgoBackEnd kartice zaposlenih
-2. **Naslednje**: profila PRODAJA in KADROVSKA + modul Uporabniki (urejanje gesel)
-3. **Naslednje**: popravki NABAVA/RAČUNOVODSTVO/SKLADIŠČE + DIREKTOR združitev
-4. **Zadnje**: Akcije + Cenovke (PDF) + Dokumenti hub
-
-Potrdite plan in začnem s korakom 1.
+## Datoteke
+- new: `src/components/backoffice/retro/DocumentDialog.tsx`
+- new: `src/components/backoffice/retro/SkladiscaTrgovinDialog.tsx`
+- new: `src/components/backoffice/retro/ConfirmDialog.tsx` (SI/NEIN)
+- edit: `src/components/backoffice/retro/OtvoritevDialog.tsx` (klikljivi koraki, ConfirmDialog)
+- edit: `src/components/backoffice/ShopHomePage.tsx` (poveži Naročilo/Prevzem/Vračilo z DocumentDialog)
+- edit: warehouse home (najdem) — dodaj "Skladišča trgovin" + sprejem naročil
+- edit: `LoginScreen` / profil seznam (nov user domzale, preimenovan ivancnag)
+- migration: insert lokacije za Domžale (če manjka)
