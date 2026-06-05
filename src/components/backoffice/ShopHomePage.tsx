@@ -135,7 +135,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'Inventura', tab: 'inventura', col: 4, row: 1 },
     { label: 'Artikli', action: () => setDialog('artikli'), col: 4, row: 2 },
     { label: 'Nalepke', action: () => setDialog('nalepke'), col: 4, row: 3 },
-    { label: 'Prenos blaga\nmed oddelki', tab: 'dokumenti', col: 4, row: 4 },
+    { label: 'Prenos blaga\nmed oddelki', action: () => setDocDialog('vracilo'), col: 4, row: 4 },
     { label: 'Izhod\n↵', action: onLogout, variant: 'blue', col: 4, row: 7, rowSpan: 2 },
   ];
 
