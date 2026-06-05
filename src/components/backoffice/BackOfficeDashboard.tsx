@@ -1240,6 +1240,17 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   // ===== MAIN BACKOFFICE =====
   return (
     <div className="h-screen flex relative overflow-hidden" style={{ background: 'radial-gradient(ellipse at center, #3a3a3a 0%, #1a1a1a 50%, #0d0d0d 100%)' }}>
+      {role === 'skladisce' && (
+        <>
+          <div className="absolute top-2 right-4 z-[60] flex gap-2">
+            <button onClick={() => setShowPrejNar(true)} className="px-3 py-1.5 text-xs font-bold rounded bg-amber-500 hover:bg-amber-600 text-white shadow">PREJETA NAROČILA</button>
+            <button onClick={() => setShowSklTrg(true)} className="px-3 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white shadow">SKLADIŠČA TRGOVIN</button>
+          </div>
+          {showSklTrg && <div className="absolute inset-0 z-[70]"><SkladiscaTrgovinDialog onClose={() => setShowSklTrg(false)} /></div>}
+          {showPrejNar && <div className="absolute inset-0 z-[70]"><PrejetaNarocilaDialog onClose={() => setShowPrejNar(false)} /></div>}
+        </>
+      )}
+
       {/* Water drops decoration */}
       <div className="absolute top-8 left-[260px] w-6 h-8 rounded-full bg-gradient-to-b from-white/10 to-white/5 blur-sm" />
       <div className="absolute top-20 right-20 w-10 h-14 rounded-full bg-gradient-to-b from-white/8 to-white/3 blur-sm" />
