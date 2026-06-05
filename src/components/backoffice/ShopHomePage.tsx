@@ -216,7 +216,9 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
         {dialog === 'financna' && <FinancnaPorocilaDialog onClose={() => setDialog(null)} />}
         {dialog === 'nalepke' && <NalepkeDialog onClose={() => setDialog(null)} />}
         {dialog === 'planograma' && <PlanogrammaDialog onClose={() => setDialog(null)} />}
+        {docDialog && <DocumentDialog mode={docDialog} onClose={() => setDocDialog(null)} />}
       </div>
+
 
       {/* Bottom status bar */}
       <div className="h-6 flex items-center text-xs text-white" style={{ background: 'linear-gradient(180deg,#7a8294 0%,#5a6274 100%)' }}>
