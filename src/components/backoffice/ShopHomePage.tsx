@@ -113,8 +113,9 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     // Column 2
     { label: 'Otvoritev', action: () => setDialog('otvoritev'), variant: 'green', col: 2, row: 1 },
     { label: 'Zapiranje', tab: 'zakljucevanje', variant: 'red', col: 2, row: 2 },
-    { label: 'Dokumenti', tab: 'dokumenti', col: 2, row: 3 },
-    { label: 'Naročila', tab: 'narocila', col: 2, row: 4 },
+    { label: 'Dokumenti', action: () => setDocDialog('vracilo'), col: 2, row: 3 },
+    { label: 'Naročila', action: () => setDocDialog('narocilo'), col: 2, row: 4 },
+
     { label: 'Kavcije', variant: 'disabled', col: 2, row: 5 },
     { label: 'Prodaja Gift\nCard', tab: 'bonikartice', col: 2, row: 6 },
     { label: 'Sef', action: () => alert('Sef — dostop omejen na 00087'), variant: 'disabled', col: 2, row: 7 },
