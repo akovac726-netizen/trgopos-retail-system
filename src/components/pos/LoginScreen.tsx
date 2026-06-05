@@ -53,10 +53,14 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
         setPassword("");
       }
     } else {
-      // BackOffice login - 4 profili
-      if (username === 'TR-IVO-001' && password === 'StandBuyIVO-001') {
+      // BackOffice login - profili
+      if (username === 'ivancnag' && password === 'TR-IVO-001') {
         onBackOfficeLogin('shop');
-        toast.success('Dobrodošli v BackOffice (Trgovina)!');
+        toast.success('Dobrodošli v BackOffice (Trgovina Ivančna Gorica)!');
+      } else if (username === 'domzale' && password === 'TR-DOM-002') {
+        onBackOfficeLogin('shop');
+        toast.success('Dobrodošli v BackOffice (Trgovina Domžale)!');
+        try { localStorage.setItem('trgopos_shop_label', 'Trgovina Domžale'); } catch (_e) { /* noop */ }
       } else if ((username === 'StBy-core' && password === 'Adm!@SB-core') ||
                  (username === 'BB.admin' && password === 'S!RQB!XX!') ||
                  (username === 'SB-admin' && password === 'StB@71X!')) {
@@ -84,6 +88,7 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
         toast.error('Napačno uporabniško ime ali geslo');
         setPassword("");
       }
+
     }
   };
 
