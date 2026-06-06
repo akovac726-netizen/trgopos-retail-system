@@ -99,66 +99,81 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
     setActiveField('username');
   };
 
-  // ── BackOffice login ──
+  // ── BackOffice login — retro Windows look (slide 1) ──
   if (mode === 'backoffice') {
+    const negoizo = (() => {
+      const u = username.toLowerCase();
+      if (u.includes('domzale')) return '900002';
+      if (u.includes('ivancnag') || u.startsWith('iv')) return '900001';
+      return '300083';
+    })();
+    const userBadge = (() => {
+      const u = username.toLowerCase();
+      if (u.includes('domzale')) return 'Trgovina Domžale';
+      if (u.includes('ivancnag')) return 'Trgovina Ivančna Gorica';
+      return 'Trgovina Ivančna Gorica';
+    })();
     return (
-      <div className="h-screen flex items-center justify-center relative overflow-hidden" style={{ background: 'radial-gradient(ellipse at center, #3a3a3a 0%, #1a1a1a 50%, #0d0d0d 100%)' }}>
-        {/* Water droplets background */}
-        <div className="absolute inset-0 pointer-events-none opacity-30" style={{
-          backgroundImage: `radial-gradient(circle at 15% 15%, rgba(255,255,255,0.08) 0%, transparent 50%),
-                           radial-gradient(circle at 85% 25%, rgba(255,255,255,0.06) 0%, transparent 40%),
-                           radial-gradient(circle at 70% 80%, rgba(255,255,255,0.1) 0%, transparent 45%),
-                           radial-gradient(circle at 30% 70%, rgba(255,255,255,0.05) 0%, transparent 35%),
-                           radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 60%)`
-        }} />
-
-        {/* Mode switch */}
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-black/40 backdrop-blur rounded-lg px-1 py-1 border border-gray-600">
-          <button onClick={() => handleModeSwitch('trgopos')} className="px-4 py-1.5 rounded-md text-sm font-medium text-gray-400 hover:text-gray-200">TrgoPOS</button>
-          <button className="px-4 py-1.5 rounded-md text-sm font-medium bg-violet-600 text-white shadow">BackOffice</button>
+      <div className="h-screen flex flex-col overflow-hidden select-none"
+           style={{ background: '#c8d4e6', fontFamily: '"Tw Cen MT","Century Gothic",system-ui,sans-serif' }}>
+        {/* Title bar */}
+        <div className="h-6 flex items-center justify-end px-2 text-white text-xs"
+             style={{ background: 'linear-gradient(180deg,#2b3a55 0%,#1a2540 100%)' }}>
+          <span className="px-2 cursor-default">_</span>
+          <span className="px-2 cursor-default">▢</span>
+          <span className="px-2 font-bold">X</span>
+        </div>
+        {/* Menu bar */}
+        <div className="h-7 flex items-center text-sm" style={{ background: 'linear-gradient(180deg,#9098a8 0%,#7a8294 100%)', color: '#e8e8e8' }}>
+          {['Datoteke','Trgovina','Tiskanje SLO','Orodja','Urniki','Izdaje dopustov','Tiskanje HR'].map(m => (
+            <button key={m} className="px-3 h-full hover:bg-white/20">{m}</button>
+          ))}
+          <div className="ml-auto pr-2">
+            <button onClick={() => handleModeSwitch('trgopos')}
+                    className="text-xs px-2 py-0.5 bg-black/30 hover:bg-black/50 rounded">↩ TrgoPOS</button>
+          </div>
         </div>
 
-        {/* Login card */}
-        <div className="relative z-10 w-[420px] bg-gradient-to-b from-gray-700/80 to-gray-800/90 border border-gray-500/40 rounded-2xl p-8 shadow-2xl">
-          {/* User icon */}
-          <div className="flex justify-center mb-3">
-            <div className="w-24 h-24 bg-gray-800 border-2 border-gray-500 rounded-lg flex items-center justify-center">
-              <svg viewBox="0 0 64 64" className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="32" cy="20" r="8" />
-                <path d="M20 44c0-8 5-14 12-14s12 6 12 14" />
-                <circle cx="32" cy="32" r="28" />
-              </svg>
+        {/* Main area */}
+        <div className="flex-1 min-h-0 flex items-center justify-center" style={{ background: '#c8d4e6' }}>
+          <div className="bg-[#d5e0ee] border-2 px-12 py-8" style={{ borderColor: '#1a2540', minWidth: 520 }}>
+            <h1 className="text-center font-bold mb-8" style={{ fontSize: 36, color: '#0a0a0a' }}>BackOffice</h1>
+            <div className="grid grid-cols-[160px_1fr] gap-y-6 gap-x-4 items-center mb-6">
+              <label className="text-sm font-bold" style={{ color: '#0a0a0a' }}>Uporabniško ime:</label>
+              <input type="text" value={username} onChange={e => setUsername(e.target.value)}
+                     onKeyDown={e => { if (e.key === 'Enter') handleEnter(); }}
+                     autoFocus
+                     className="h-7 px-2 bg-white border text-sm" style={{ borderColor: '#1a2540' }} />
+              <label className="text-sm font-bold" style={{ color: '#0a0a0a' }}>Geslo:</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                     onKeyDown={e => { if (e.key === 'Enter') handleEnter(); }}
+                     className="h-7 px-2 bg-white border text-sm" style={{ borderColor: '#1a2540' }} />
+            </div>
+            <div className="flex justify-center gap-4 mt-4">
+              <button onClick={handleEnter}
+                      className="px-6 py-1 text-sm border font-medium"
+                      style={{ background: 'linear-gradient(180deg,#f0f0f0 0%,#c8c8c8 100%)', borderColor: '#7a7a7a', color: '#111', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)', minWidth: 80 }}>
+                Login
+              </button>
+              <button onClick={() => { setUsername(''); setPassword(''); }}
+                      className="px-6 py-1 text-sm border font-medium"
+                      style={{ background: 'linear-gradient(180deg,#f0f0f0 0%,#c8c8c8 100%)', borderColor: '#7a7a7a', color: '#111', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)', minWidth: 80 }}>
+                Prekliči
+              </button>
             </div>
           </div>
-
-          <h2 className="text-center text-white font-bold text-xl mb-5">TrgoPOS - BackOffice</h2>
-
-          <div className="space-y-3 mb-5">
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
-              onClick={() => setActiveField('username')} placeholder="Uporabniško ime:"
-              className="w-full h-10 px-4 bg-gray-300/80 text-gray-900 font-medium placeholder:text-gray-600 focus:outline-none text-sm border rounded border-gray-500" />
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              onClick={() => setActiveField('password')} placeholder="Geslo:"
-              className="w-full h-10 px-4 bg-gray-300/80 text-gray-900 font-medium placeholder:text-gray-600 focus:outline-none text-sm border rounded border-gray-500" />
-          </div>
-
-          <div className="flex justify-center mb-5">
-            <button onClick={handleEnter} className="px-10 py-2.5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-base rounded-lg transition-colors shadow-lg">
-              PRIJAVA
-            </button>
-          </div>
-
-          <div className="text-center">
-            <h3 className="text-4xl font-black tracking-wide">
-              <span className="text-teal-400">Stand</span><span className="text-teal-500">Buy</span>
-              <span className="text-orange-400 text-3xl ml-1">★</span>
-            </h3>
-          </div>
         </div>
 
-        <p className="absolute bottom-3 left-0 right-0 text-center text-xs text-gray-500">
-          TrgoPOS © 2026 StandBuy s. p., vse pravice pridržane
-        </p>
+        {/* Bottom status bar */}
+        <div className="h-6 flex items-center text-xs text-white" style={{ background: 'linear-gradient(180deg,#7a8294 0%,#5a6274 100%)' }}>
+          <div className="px-3 h-full flex items-center border-r border-black/20" style={{ background: '#a05858' }}>
+            Uporabnik: {userBadge}
+          </div>
+          <div className="px-3 h-full flex items-center border-r border-black/20" style={{ background: '#5a8a9a' }}>
+            Negoizo: {negoizo}
+          </div>
+          <div className="px-3 h-full flex items-center flex-1">Funkcije:</div>
+        </div>
       </div>
     );
   }

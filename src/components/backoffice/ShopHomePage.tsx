@@ -5,6 +5,13 @@ import FinancnaPorocilaDialog from "./retro/FinancnaPorocilaDialog";
 import NalepkeDialog from "./retro/NalepkeDialog";
 import PlanogrammaDialog from "./retro/PlanogrammaDialog";
 import DocumentDialog, { DocMode } from "./retro/DocumentDialog";
+import DokumentiListDialog from "./retro/DokumentiListDialog";
+
+const getNegoizo = (label: string): string => {
+  const l = (label || '').toLowerCase();
+  if (l.includes('domžale') || l.includes('domzale')) return '900002';
+  return '900001';
+};
 
 interface ShopHomePageProps {
   onNavigate: (tab: string) => void;
@@ -29,6 +36,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [dialog, setDialog] = useState<null | 'otvoritev' | 'artikli' | 'financna' | 'nalepke' | 'planograma'>(null);
   const [docDialog, setDocDialog] = useState<DocMode | null>(null);
+  const [docList, setDocList] = useState<DocMode | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -113,8 +121,8 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     // Column 2
     { label: 'Otvoritev', action: () => setDialog('otvoritev'), variant: 'green', col: 2, row: 1 },
     { label: 'Zapiranje', tab: 'zakljucevanje', variant: 'red', col: 2, row: 2 },
-    { label: 'Dokumenti', action: () => setDocDialog('vracilo'), col: 2, row: 3 },
-    { label: 'Naročila', action: () => setDocDialog('narocilo'), col: 2, row: 4 },
+    { label: 'Dokumenti', action: () => setDocList('vracilo'), col: 2, row: 3 },
+    { label: 'Naročila', action: () => setDocList('narocilo'), col: 2, row: 4 },
 
     { label: 'Kavcije', variant: 'disabled', col: 2, row: 5 },
     { label: 'Prodaja Gift\nCard', tab: 'bonikartice', col: 2, row: 6 },
@@ -125,8 +133,8 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'Finančno\nporočilo', action: () => setDialog('financna'), col: 3, row: 1 },
     { label: 'Ponudbe - Akcije', tab: 'akcije_top', col: 3, row: 2 },
     { label: 'Fakture', tab: 'racuni', col: 3, row: 3 },
-    { label: 'Prevzemi', action: () => setDocDialog('prevzem'), col: 3, row: 4 },
-    { label: 'Prejem blag.\ndirek. dob.', action: () => setDocDialog('prevzem'), col: 3, row: 5 },
+    { label: 'Prevzemi', action: () => setDocList('prevzem'), col: 3, row: 4 },
+    { label: 'Prejem blag.\ndirek. dob.', action: () => setDocList('prevzem'), col: 3, row: 5 },
 
     { label: 'Prodaja\ntelefonskih vred.', variant: 'disabled', col: 3, row: 6 },
     { label: 'NEW !!\nPlanogramma', action: () => setDialog('planograma'), variant: 'yellow', col: 3, row: 7 },
@@ -217,6 +225,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
         {dialog === 'nalepke' && <NalepkeDialog onClose={() => setDialog(null)} />}
         {dialog === 'planograma' && <PlanogrammaDialog onClose={() => setDialog(null)} />}
         {docDialog && <DocumentDialog mode={docDialog} onClose={() => setDocDialog(null)} />}
+        {docList && <DokumentiListDialog mode={docList} onClose={() => setDocList(null)} />}
       </div>
 
 
@@ -226,7 +235,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
           {userLabel.startsWith('Uporabnik:') ? userLabel : `Uporabnik: ${userLabel}`}
         </div>
         <div className="px-3 h-full flex items-center border-r border-black/20" style={{ background: '#5a8a9a' }}>
-          Negoizo: 900001
+          Negoizo: {getNegoizo(userLabel)}
         </div>
         <div className="px-3 h-full flex items-center flex-1">Funkcije:</div>
       </div>
