@@ -5,6 +5,13 @@ import FinancnaPorocilaDialog from "./retro/FinancnaPorocilaDialog";
 import NalepkeDialog from "./retro/NalepkeDialog";
 import PlanogrammaDialog from "./retro/PlanogrammaDialog";
 import DocumentDialog, { DocMode } from "./retro/DocumentDialog";
+import DokumentiListDialog from "./retro/DokumentiListDialog";
+
+const getNegoizo = (label: string): string => {
+  const l = (label || '').toLowerCase();
+  if (l.includes('domžale') || l.includes('domzale')) return '900002';
+  return '900001';
+};
 
 interface ShopHomePageProps {
   onNavigate: (tab: string) => void;
