@@ -121,8 +121,8 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     // Column 2
     { label: 'Otvoritev', action: () => setDialog('otvoritev'), variant: 'green', col: 2, row: 1 },
     { label: 'Zapiranje', tab: 'zakljucevanje', variant: 'red', col: 2, row: 2 },
-    { label: 'Dokumenti', action: () => setDocDialog('vracilo'), col: 2, row: 3 },
-    { label: 'Naročila', action: () => setDocDialog('narocilo'), col: 2, row: 4 },
+    { label: 'Dokumenti', action: () => setDocList('vracilo'), col: 2, row: 3 },
+    { label: 'Naročila', action: () => setDocList('narocilo'), col: 2, row: 4 },
 
     { label: 'Kavcije', variant: 'disabled', col: 2, row: 5 },
     { label: 'Prodaja Gift\nCard', tab: 'bonikartice', col: 2, row: 6 },
