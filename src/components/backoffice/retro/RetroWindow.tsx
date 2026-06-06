@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 interface RetroWindowProps {
   title: string;
@@ -21,17 +21,19 @@ const RetroWindow = ({
   offsetY = 0,
   maxHeightVh = 92,
 }: RetroWindowProps) => {
+  const [minimized, setMinimized] = useState(false);
   return (
     <div
       className="absolute"
       style={{
         zIndex,
         left: `calc(50% + ${offsetX}px)`,
-        top: `calc(50% + ${offsetY}px)`,
-        transform: 'translate(-50%, -50%)',
-        width,
+        top: minimized ? 'auto' : `calc(50% + ${offsetY}px)`,
+        bottom: minimized ? 28 : 'auto',
+        transform: minimized ? 'translateX(-50%)' : 'translate(-50%, -50%)',
+        width: minimized ? 280 : width,
         maxWidth: '96vw',
-        maxHeight: `${maxHeightVh}vh`,
+        maxHeight: minimized ? 28 : `${maxHeightVh}vh`,
         display: 'flex',
         flexDirection: 'column',
         boxSizing: 'border-box',
@@ -43,30 +45,32 @@ const RetroWindow = ({
         className="h-7 flex items-center justify-between px-2 text-white text-xs flex-shrink-0"
         style={{ background: 'linear-gradient(180deg,#2b3a55 0%,#1a2540 100%)', borderTopLeftRadius: 3, borderTopRightRadius: 3, boxSizing: 'border-box' }}
       >
-        <span className="px-1">{title}</span>
+        <span className="px-1 truncate">{title}</span>
         <div className="flex items-center gap-1">
-          <button className="w-5 h-5 hover:bg-white/20 leading-none">_</button>
+          <button onClick={() => setMinimized(m => !m)} className="w-5 h-5 hover:bg-white/20 leading-none">_</button>
           <button className="w-5 h-5 hover:bg-white/20 leading-none text-[10px]">▢</button>
           <button onClick={onClose} className="w-5 h-5 hover:bg-red-600 leading-none">×</button>
         </div>
       </div>
       {/* Body */}
-      <div
-        className="p-5 overflow-auto"
-        style={{
-          background: '#cfdbe9',
-          border: '1px solid #2b3a55',
-          borderTop: 'none',
-          borderBottomLeftRadius: 3,
-          borderBottomRightRadius: 3,
-          boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
-          boxSizing: 'border-box',
-          flex: '1 1 auto',
-          minHeight: 0,
-        }}
-      >
-        {children}
-      </div>
+      {!minimized && (
+        <div
+          className="p-5 overflow-auto"
+          style={{
+            background: '#cfdbe9',
+            border: '1px solid #2b3a55',
+            borderTop: 'none',
+            borderBottomLeftRadius: 3,
+            borderBottomRightRadius: 3,
+            boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+            boxSizing: 'border-box',
+            flex: '1 1 auto',
+            minHeight: 0,
+          }}
+        >
+          {children}
+        </div>
+      )}
     </div>
   );
 };
