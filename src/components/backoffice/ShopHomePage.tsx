@@ -36,6 +36,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [dialog, setDialog] = useState<null | 'otvoritev' | 'artikli' | 'financna' | 'nalepke' | 'planograma'>(null);
   const [docDialog, setDocDialog] = useState<DocMode | null>(null);
+  const [docList, setDocList] = useState<DocMode | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
