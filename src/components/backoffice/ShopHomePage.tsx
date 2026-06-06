@@ -133,8 +133,8 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
     { label: 'Finančno\nporočilo', action: () => setDialog('financna'), col: 3, row: 1 },
     { label: 'Ponudbe - Akcije', tab: 'akcije_top', col: 3, row: 2 },
     { label: 'Fakture', tab: 'racuni', col: 3, row: 3 },
-    { label: 'Prevzemi', action: () => setDocDialog('prevzem'), col: 3, row: 4 },
-    { label: 'Prejem blag.\ndirek. dob.', action: () => setDocDialog('prevzem'), col: 3, row: 5 },
+    { label: 'Prevzemi', action: () => setDocList('prevzem'), col: 3, row: 4 },
+    { label: 'Prejem blag.\ndirek. dob.', action: () => setDocList('prevzem'), col: 3, row: 5 },
 
     { label: 'Prodaja\ntelefonskih vred.', variant: 'disabled', col: 3, row: 6 },
     { label: 'NEW !!\nPlanogramma', action: () => setDialog('planograma'), variant: 'yellow', col: 3, row: 7 },
