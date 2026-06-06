@@ -235,7 +235,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
           {userLabel.startsWith('Uporabnik:') ? userLabel : `Uporabnik: ${userLabel}`}
         </div>
         <div className="px-3 h-full flex items-center border-r border-black/20" style={{ background: '#5a8a9a' }}>
-          Negoizo: 900001
+          Negoizo: {getNegoizo(userLabel)}
         </div>
         <div className="px-3 h-full flex items-center flex-1">Funkcije:</div>
       </div>
