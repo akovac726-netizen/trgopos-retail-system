@@ -225,6 +225,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
         {dialog === 'nalepke' && <NalepkeDialog onClose={() => setDialog(null)} />}
         {dialog === 'planograma' && <PlanogrammaDialog onClose={() => setDialog(null)} />}
         {docDialog && <DocumentDialog mode={docDialog} onClose={() => setDocDialog(null)} />}
+        {docList && <DokumentiListDialog mode={docList} onClose={() => setDocList(null)} />}
       </div>
 
 
