@@ -16,10 +16,17 @@ interface LoginScreenProps {
 }
 
 const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registerLocked, onSelectRegister, onOpenTerminal }: LoginScreenProps) => {
-  const [mode, setMode] = useState<AppMode>('trgopos');
+  const [mode, setMode] = useState<AppMode>(() => {
+    try {
+      const locked = localStorage.getItem('device_locked_mode');
+      if (locked === 'backoffice') return 'backoffice';
+    } catch { /* noop */ }
+    return 'trgopos';
+  });
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [activeField, setActiveField] = useState<'username' | 'password'>('username');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const handleKey = (key: string) => {
     if (activeField === 'username') setUsername(prev => prev + key);
@@ -116,15 +123,50 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
     return (
       <div className="h-screen flex flex-col overflow-hidden select-none"
            style={{ background: '#c8d4e6', fontFamily: '"Tw Cen MT","Century Gothic",system-ui,sans-serif' }}>
-        {/* Title bar */}
-        <div className="h-6 flex items-center justify-end px-2 text-white text-xs"
+        {/* Title bar with clickable mode-switch icon (slika cs) */}
+        <div className="h-7 flex items-center justify-between text-white text-xs"
              style={{ background: 'linear-gradient(180deg,#2b3a55 0%,#1a2540 100%)' }}>
-          <span className="px-2 cursor-default">_</span>
-          <span className="px-2 cursor-default">▢</span>
-          <span className="px-2 font-bold">X</span>
+          <button
+            title="Klik: odkleni / zamenjaj način (POS ↔ BackOffice)"
+            onClick={() => {
+              try { localStorage.removeItem('device_locked_mode'); } catch { /* noop */ }
+              handleModeSwitch('trgopos');
+            }}
+            className="ml-1 h-6 w-10 flex items-center justify-center border border-white/40 hover:bg-white/20"
+            style={{ background: 'linear-gradient(180deg,#b3d1ec,#7aa6c8)' }}
+          >
+            <span className="text-[#1a2540] font-bold text-sm italic">œ</span>
+          </button>
+          <div className="flex items-center">
+            <span className="px-2 cursor-default">_</span>
+            <span className="px-2 cursor-default">▢</span>
+            <span className="px-2 font-bold">X</span>
+          </div>
         </div>
         {/* Menu bar */}
-        <div className="h-7 flex items-center text-sm" style={{ background: 'linear-gradient(180deg,#9098a8 0%,#7a8294 100%)', color: '#e8e8e8' }}>
+        <div className="h-7 flex items-center text-sm relative" style={{ background: 'linear-gradient(180deg,#9098a8 0%,#7a8294 100%)', color: '#e8e8e8' }}>
+          {/* Nastavitve dropdown */}
+          <div className="relative h-full">
+            <button onClick={() => setSettingsOpen(o => !o)} className="px-3 h-full hover:bg-white/20">Nastavitve</button>
+            {settingsOpen && (
+              <div className="absolute top-full left-0 bg-white text-gray-900 border border-gray-500 shadow-xl min-w-[220px] z-50">
+                <div className="px-3 py-1 text-xs text-gray-500 border-b">Način te naprave</div>
+                {[
+                  { key: 'backoffice', label: 'Nastavi kot BackOffice' },
+                  { key: 'pos', label: 'Nastavi kot POS' },
+                ].map(opt => (
+                  <button key={opt.key}
+                          onClick={() => { try { localStorage.setItem('device_locked_mode', opt.key); } catch { /* noop */ } setSettingsOpen(false); if (opt.key === 'pos') handleModeSwitch('trgopos'); }}
+                          className="block w-full text-left px-4 py-1.5 text-sm hover:bg-blue-600 hover:text-white">{opt.label}</button>
+                ))}
+                <div className="border-t" />
+                <button onClick={() => { try { localStorage.setItem('device_locked_mode', 'backoffice'); } catch { /* noop */ } setSettingsOpen(false); toast.success('BackOffice je zaklenjen na tej napravi'); }}
+                        className="block w-full text-left px-4 py-1.5 text-sm hover:bg-blue-600 hover:text-white font-semibold">zakleni BackOffice</button>
+                <button onClick={() => { try { localStorage.setItem('device_locked_mode', 'pos'); } catch { /* noop */ } setSettingsOpen(false); handleModeSwitch('trgopos'); toast.success('POS je zaklenjen na tej napravi'); }}
+                        className="block w-full text-left px-4 py-1.5 text-sm hover:bg-blue-600 hover:text-white font-semibold">zakleni POS</button>
+              </div>
+            )}
+          </div>
           {['Datoteke','Trgovina','Tiskanje SLO','Orodja','Urniki','Izdaje dopustov','Tiskanje HR'].map(m => (
             <button key={m} className="px-3 h-full hover:bg-white/20">{m}</button>
           ))}

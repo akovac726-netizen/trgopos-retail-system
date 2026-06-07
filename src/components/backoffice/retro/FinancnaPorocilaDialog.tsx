@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import RetroWindow, { RetroButton, RetroInput, RetroLabel } from "./RetroWindow";
 import jsPDF from "jspdf";
+import { fmtSI, parseSI, setFunkcije, clearFunkcije } from "@/lib/sloFormat";
 
 interface RegisterRow {
   register_id: number;
@@ -62,7 +63,11 @@ const FinancnaPorocilaDialog = ({ onClose }: { onClose: () => void }) => {
     setReports(rs);
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    setFunkcije('Finančna poročila — Ustvari odpre dnevno poročilo, vnos zneskov mora biti z decimalno vejico (npr. 2.360,77). Po zaklepu vnosov ni mogoče več spreminjati. Dvoklik na vrstico izpiše PDF.');
+    return () => clearFunkcije();
+  }, []);
 
   const ustvari = async () => {
     const date = todayIso();
@@ -152,7 +157,7 @@ export const DnevnoPorociloBlagajneDialog = ({ date, report, onClose, onSaved }:
 
   const update = (idx: number, field: keyof RegisterRow, val: string) => {
     if (locked) return;
-    const v = parseFloat(val.replace(',', '.')) || 0;
+    const v = parseSI(val);
     setRegs(rs => rs.map((r, i) => {
       if (i !== idx) return r;
       const nr = { ...r, [field]: v };
@@ -160,6 +165,8 @@ export const DnevnoPorociloBlagajneDialog = ({ date, report, onClose, onSaved }:
       return nr;
     }));
   };
+
+  const dispVal = (n: number) => (n ? String(n).replace('.', ',') : '');
 
   const potrdi = async () => {
     if (locked) { onClose(); return; }
@@ -190,19 +197,19 @@ export const DnevnoPorociloBlagajneDialog = ({ date, report, onClose, onSaved }:
             <div className="font-semibold text-sm mb-2" style={{ color: '#1a3a6a' }}>Blagajna {r.register_id}</div>
             <div className="grid grid-cols-[90px_1fr_90px_1fr] gap-2 items-center">
               <span className="text-sm">Gotovina:</span>
-              <RetroInput disabled={locked} value={r.cash || ''} onChange={e => update(idx, 'cash', e.target.value)} />
+              <RetroInput disabled={locked} value={dispVal(r.cash)} placeholder="0,00" onChange={e => update(idx, 'cash', e.target.value)} />
               <span className="text-sm">Visa:</span>
-              <RetroInput disabled={locked} value={r.visa || ''} onChange={e => update(idx, 'visa', e.target.value)} />
+              <RetroInput disabled={locked} value={dispVal(r.visa)} placeholder="0,00" onChange={e => update(idx, 'visa', e.target.value)} />
               <span className="text-sm">Master:</span>
-              <RetroInput disabled={locked} value={r.master || ''} onChange={e => update(idx, 'master', e.target.value)} />
+              <RetroInput disabled={locked} value={dispVal(r.master)} placeholder="0,00" onChange={e => update(idx, 'master', e.target.value)} />
               <span className="text-sm">Diners:</span>
-              <RetroInput disabled={locked} value={r.diners || ''} onChange={e => update(idx, 'diners', e.target.value)} />
+              <RetroInput disabled={locked} value={dispVal(r.diners)} placeholder="0,00" onChange={e => update(idx, 'diners', e.target.value)} />
               <span className="text-sm">Amex:</span>
-              <RetroInput disabled={locked} value={r.amex || ''} onChange={e => update(idx, 'amex', e.target.value)} />
+              <RetroInput disabled={locked} value={dispVal(r.amex)} placeholder="0,00" onChange={e => update(idx, 'amex', e.target.value)} />
               <span className="text-sm">Drugo:</span>
-              <RetroInput disabled={locked} value={r.other || ''} onChange={e => update(idx, 'other', e.target.value)} />
+              <RetroInput disabled={locked} value={dispVal(r.other)} placeholder="0,00" onChange={e => update(idx, 'other', e.target.value)} />
               <span className="text-sm font-semibold">Skupaj:</span>
-              <RetroInput readOnly value={r.total.toFixed(2)} />
+              <RetroInput readOnly value={fmtSI(r.total)} />
               <span /><span />
             </div>
           </div>

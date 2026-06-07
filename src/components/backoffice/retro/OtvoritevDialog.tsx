@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import RetroWindow, { RetroButton, RetroInput, RetroLabel } from "./RetroWindow";
 import ConfirmDialog from "./ConfirmDialog";
+import { setFunkcije, clearFunkcije } from "@/lib/sloFormat";
 
 interface Step {
   label: string;
-  /** generates a small "previous action" report PDF when the step is confirmed */
   report: (date: string) => void;
 }
 
@@ -19,34 +19,13 @@ const buildPdf = (title: string, lines: string[]) => {
 };
 
 const STEPS: Step[] = [
-  {
-    label: 'Preveri konec ponudbe',
-    report: (d) => buildPdf('Poročilo: konec prejšnje ponudbe', [`Datum: ${d}`, 'Status: zaključeno', 'Vse pretekle akcije pravilno zaprte.']),
-  },
-  {
-    label: 'Prevzemi začetek ponudbe',
-    report: (d) => buildPdf('Poročilo: začetek nove ponudbe', [`Datum: ${d}`, 'Nove cene aktivne.', 'Etikete pripravljene za tisk.']),
-  },
-  {
-    label: 'Izvleček prodajnih cen',
-    report: (d) => buildPdf('Izvleček prodajnih cen', [`Datum: ${d}`, 'Cene posodobljene v sistemu.', 'Razlike s preteklim obdobjem: 0.']),
-  },
-  {
-    label: 'Natisni etikete',
-    report: (d) => buildPdf('Tisk etiket', [`Datum: ${d}`, 'Število etiket: 0', 'Tiskanje sproženo.']),
-  },
-  {
-    label: 'Izvleček sprememb',
-    report: (d) => buildPdf('Izvleček sprememb cen', [`Datum: ${d}`, 'Spremembe: 0', 'Status: brez napak.']),
-  },
-  {
-    label: 'Širjenje blagajne',
-    report: (d) => buildPdf('Širjenje cen na blagajne', [`Datum: ${d}`, 'Blagajne: 1,2,3', 'Status: posodobljeno.']),
-  },
-  {
-    label: 'Posodobitev blagajne',
-    report: (d) => buildPdf('Posodobitev blagajne', [`Datum: ${d}`, 'Restart simuliran.', 'Status: OK.']),
-  },
+  { label: 'Preveri konec ponudbe', report: (d) => buildPdf('Poročilo: konec prejšnje ponudbe', [`Datum: ${d}`, 'Status: zaključeno.']) },
+  { label: 'Prevzemi začetek ponudbe', report: (d) => buildPdf('Poročilo: začetek nove ponudbe', [`Datum: ${d}`, 'Nove cene aktivne.']) },
+  { label: 'Izvleček prodajnih cen', report: (d) => buildPdf('Izvleček prodajnih cen', [`Datum: ${d}`, 'Cene posodobljene.']) },
+  { label: 'Natisni etikete', report: (d) => buildPdf('Tisk etiket', [`Datum: ${d}`, 'Tiskanje sproženo.']) },
+  { label: 'Izvleček sprememb', report: (d) => buildPdf('Izvleček sprememb cen', [`Datum: ${d}`, 'Status: brez napak.']) },
+  { label: 'Širjenje blagajne', report: (d) => buildPdf('Širjenje cen na blagajne', [`Datum: ${d}`, 'Status: posodobljeno.']) },
+  { label: 'Posodobitev blagajne', report: (d) => buildPdf('Posodobitev blagajne', [`Datum: ${d}`, 'Status: OK.']) },
 ];
 
 const OtvoritevDialog = ({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void }) => {
@@ -56,18 +35,29 @@ const OtvoritevDialog = ({ onClose, onConfirm }: { onClose: () => void; onConfir
   const yyyy = today.getFullYear();
   const [date, setDate] = useState(`${dd}/${mm}/${yyyy}`);
   const [done, setDone] = useState<boolean[]>(STEPS.map(() => false));
-  const [confirmIdx, setConfirmIdx] = useState<number | null>(null);
-  const [confirmFinal, setConfirmFinal] = useState(false);
+  const [runningIdx, setRunningIdx] = useState<number | null>(null);
 
-  const handleConfirmStep = () => {
-    if (confirmIdx === null) return;
-    const i = confirmIdx;
+  useEffect(() => {
+    setFunkcije('Otvoritev — kliknite Zaženi, sistem bo samodejno izvedel vse korake (SI/NEIN).');
+    return () => clearFunkcije();
+  }, []);
+
+  const startRun = () => setRunningIdx(0);
+
+  const handleYes = () => {
+    if (runningIdx === null) return;
+    const i = runningIdx;
     STEPS[i].report(date);
     setDone(d => d.map((v, idx) => idx === i ? true : v));
-    setConfirmIdx(null);
+    if (i + 1 < STEPS.length) {
+      setRunningIdx(i + 1);
+    } else {
+      setRunningIdx(null);
+      setTimeout(() => onConfirm(), 200);
+    }
   };
 
-  const allDone = done.every(Boolean);
+  const handleNo = () => setRunningIdx(null);
 
   return (
     <>
@@ -89,17 +79,12 @@ const OtvoritevDialog = ({ onClose, onConfirm }: { onClose: () => void; onConfir
             </thead>
             <tbody>
               {STEPS.map((s, i) => (
-                <tr
-                  key={i}
-                  onClick={() => setConfirmIdx(i)}
-                  className="border-t cursor-pointer hover:bg-blue-50"
-                  style={{ borderColor: '#e0e0e0' }}
-                >
+                <tr key={i} className="border-t" style={{ borderColor: '#e0e0e0', background: runningIdx === i ? '#dbe8f5' : 'transparent' }}>
                   <td className="text-center bg-[#e4e8ee] text-[#1a3a6a]">▶</td>
                   <td className="px-2 py-1">{i + 1}.</td>
-                  <td className="px-2 py-1 underline" style={{ color: '#0a4ba0' }}>{s.label}</td>
+                  <td className="px-2 py-1">{s.label}</td>
                   <td className="px-2 py-1 text-center">
-                    <span style={{ color: done[i] ? '#0a8a1a' : '#a00' }}>{done[i] ? '✔' : '—'}</span>
+                    <span style={{ color: done[i] ? '#0a8a1a' : '#a00' }}>{done[i] ? '✔' : '☐'}</span>
                   </td>
                 </tr>
               ))}
@@ -108,29 +93,21 @@ const OtvoritevDialog = ({ onClose, onConfirm }: { onClose: () => void; onConfir
         </div>
         <div className="flex items-end justify-between mt-4">
           <div className="text-sm font-semibold italic" style={{ color: '#1a3a6a' }}>
-            {allDone ? 'Vsi koraki izvedeni — lahko potrdite.' : 'Kliknite na funkcijo za izvedbo …'}
+            Postopek otvoritve …
           </div>
           <div className="flex gap-2">
+            <RetroButton onClick={startRun} disabled={runningIdx !== null}>Zaženi</RetroButton>
             <RetroButton onClick={onClose}>Izhod</RetroButton>
-            <RetroButton onClick={() => setConfirmFinal(true)} disabled={!allDone}>Potrdi</RetroButton>
           </div>
         </div>
       </RetroWindow>
 
-      {confirmIdx !== null && (
+      {runningIdx !== null && (
         <ConfirmDialog
           title="Otvoritev"
-          message="Ali ste prepričani, da želite nadaljevati?"
-          onYes={handleConfirmStep}
-          onNo={() => setConfirmIdx(null)}
-        />
-      )}
-      {confirmFinal && (
-        <ConfirmDialog
-          title="Otvoritev"
-          message="Ali ste prepričani, da želite nadaljevati?"
-          onYes={() => { setConfirmFinal(false); onConfirm(); }}
-          onNo={() => setConfirmFinal(false)}
+          message={`${runningIdx + 1}. ${STEPS[runningIdx].label} — izvedem?`}
+          onYes={handleYes}
+          onNo={handleNo}
         />
       )}
     </>
