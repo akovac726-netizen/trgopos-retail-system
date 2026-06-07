@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import RetroWindow, { RetroButton, RetroInput } from "./RetroWindow";
+import { fmtSI, setFunkcije, clearFunkcije } from "@/lib/sloFormat";
 
 export type DocMode = 'vracilo' | 'narocilo' | 'prevzem';
 
@@ -65,6 +66,16 @@ const DocumentDialog = ({ mode, onClose, internaKoda = '900001' }: { mode: DocMo
     const n = (parseInt(localStorage.getItem(key) || '0', 10) || 0) + 1;
     localStorage.setItem(key, String(n));
     setStDokumenta(String(n).padStart(6, '0'));
+  }, [mode]);
+
+  useEffect(() => {
+    const titleMap: Record<DocMode, string> = {
+      vracilo: 'Prenos blaga med oddelki — vnesite kodo artikla in Enter za dodajanje vrstice.',
+      narocilo: 'Naročilo — naročilo bo poslano skladišču po Shrani.',
+      prevzem: 'Prevzem — vpišite št. dobavnice v Št. dok.',
+    };
+    setFunkcije(titleMap[mode]);
+    return () => clearFunkcije();
   }, [mode]);
 
   // load locations
@@ -238,10 +249,10 @@ const DocumentDialog = ({ mode, onClose, internaKoda = '900001' }: { mode: DocMo
                     <td className="px-2 py-1">{r.koda}</td>
                     <td className="px-2 py-1">{r.naziv}</td>
                     <td className="px-2 py-1">{r.paket}</td>
-                    <td className="px-2 py-1">{r.kolicina.toFixed(2)}</td>
-                    <td className="px-2 py-1">{(r.kolicina * r.cena * (1 - r.popust/100)).toFixed(2)}</td>
+                    <td className="px-2 py-1">{fmtSI(r.kolicina)}</td>
+                    <td className="px-2 py-1">{fmtSI(r.kolicina * r.cena * (1 - r.popust/100))}</td>
                     <td className="px-2 py-1">{r.popust}</td>
-                    <td className="px-2 py-1">{r.cena.toFixed(2)}</td>
+                    <td className="px-2 py-1">{fmtSI(r.cena)}</td>
                   </tr>
                 );
               })}
@@ -299,7 +310,7 @@ const DocumentDialog = ({ mode, onClose, internaKoda = '900001' }: { mode: DocMo
       </div>
 
       <div className="flex justify-between items-center mt-3">
-        <div className="text-sm">Skupna vrednost: <b>{total.toFixed(2)} €</b></div>
+        <div className="text-sm">Skupna vrednost: <b>{fmtSI(total)} €</b></div>
         <div className="flex gap-2">
           <RetroButton onClick={save}>Shrani</RetroButton>
           <RetroButton onClick={onClose}>Izhod</RetroButton>
