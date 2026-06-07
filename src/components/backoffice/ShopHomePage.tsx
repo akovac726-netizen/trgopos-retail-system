@@ -37,6 +37,7 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
   const [dialog, setDialog] = useState<null | 'otvoritev' | 'artikli' | 'financna' | 'nalepke' | 'planograma'>(null);
   const [docDialog, setDocDialog] = useState<DocMode | null>(null);
   const [docList, setDocList] = useState<DocMode | null>(null);
+  const [funkcije, setFunkcije] = useState<string>('');
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +46,12 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenu(null);
     };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const onFn = (e: Event) => setFunkcije(String((e as CustomEvent).detail || ''));
+    window.addEventListener('funkcije:set', onFn);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      window.removeEventListener('funkcije:set', onFn);
+    };
   }, []);
 
   const variantStyle = (v?: Variant): React.CSSProperties => {
@@ -237,7 +243,9 @@ const ShopHomePage = ({ onNavigate, onOpenBackend, onLogout, userLabel }: ShopHo
         <div className="px-3 h-full flex items-center border-r border-black/20" style={{ background: '#5a8a9a' }}>
           Negoizo: {getNegoizo(userLabel)}
         </div>
-        <div className="px-3 h-full flex items-center flex-1">Funkcije:</div>
+        <div className="px-3 h-full flex items-center flex-1 truncate" title={funkcije}>
+          Funkcije:{funkcije ? <span className="ml-2 text-yellow-200">{funkcije}</span> : null}
+        </div>
       </div>
     </div>
   );
