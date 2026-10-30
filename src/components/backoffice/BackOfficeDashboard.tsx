@@ -8,6 +8,7 @@ import PrevzemnicaModule from "./PrevzemnicaModule";
 import ShopHomePage from "./ShopHomePage";
 import SkladiscaTrgovinDialog from "./retro/SkladiscaTrgovinDialog";
 import PrejetaNarocilaDialog from "./retro/PrejetaNarocilaDialog";
+import ShopSupportDialog from "./ShopSupportDialog";
 
 
 interface DBProduct {
@@ -58,7 +59,7 @@ type Tab =
   | 'prevzem' | 'zaloga' | 'dobavnice' | 'prenosi'
   | 'dobavitelji' | 'nabava' | 'analitika' | 'marze'
   | 'finance' | 'racuni' | 'ddv' | 'stroski' | 'export'
-  | 'poslovalnice' | 'uporabniki' | 'nastavitve' | 'sistem';
+  | 'poslovalnice' | 'uporabniki' | 'nastavitve' | 'sistem' | 'backoffice_trgovine';
 type ArtikliSubTab = 'sifrant' | 'cene' | 'akcije' | 'popusti' | 'trgovina';
 type BackendTab = 'zaposleni' | 'zahtevki' | 'pregled' | 'blagajne';
 type PromoType = 'akcijska_cena' | 'popust_percent' | 'kolicinska';
@@ -73,6 +74,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   const [activeTab, setActiveTab] = useState<Tab>('poslovanje');
   const [showSklTrg, setShowSklTrg] = useState(false);
   const [showPrejNar, setShowPrejNar] = useState(false);
+  const [showShopSupport, setShowShopSupport] = useState(false);
 
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -699,6 +701,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
         { id: 'partnerji', label: 'Partnerji' },
       ]},
       { id: 'sistem_g', label: 'Sistem', items: [
+        { id: 'backoffice_trgovine', label: 'BackOffice Trgovine' },
         { id: 'poslovalnice', label: 'Poslovalnice' },
         { id: 'uporabniki', label: 'Uporabniki' },
         { id: 'nastavitve', label: 'Nastavitve' },
@@ -1240,6 +1243,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
   // ===== MAIN BACKOFFICE =====
   return (
     <div className="h-screen flex relative overflow-hidden" style={{ background: 'radial-gradient(ellipse at center, #3a3a3a 0%, #1a1a1a 50%, #0d0d0d 100%)' }}>
+      {role === 'admin' && showShopSupport && <ShopSupportDialog onClose={() => setShowShopSupport(false)} />}
       {role === 'skladisce' && (
         <>
           <div className="absolute top-2 right-4 z-[60] flex gap-2">
@@ -1347,7 +1351,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
                   </button>
                 )}
                 {(flat || isOpen) && group.items.map(item => (
-                  <button key={item.id} onClick={() => setActiveTab(item.id)}
+                  <button key={item.id} onClick={() => item.id === 'backoffice_trgovine' ? setShowShopSupport(true) : setActiveTab(item.id)}
                     className={`text-left w-full px-4 py-2 text-sm font-medium border-t border-gray-400/50 transition-colors ${
                       activeTab === item.id ? 'bg-sky-400 text-white' : 'text-gray-800 hover:bg-gray-200'
                     }`}>

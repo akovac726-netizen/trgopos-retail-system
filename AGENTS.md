@@ -1,0 +1,3 @@
+# Architecture rules
+- BackOffice Trgovine uses the shop-support edge function for credential verification and every product, image and location-stock operation; signed, short-lived capability tokens stay only in React memory to avoid client-side privilege checks and persistent credentials.
+- Support product editing keeps location_stock separate from products.stock so stores and the main warehouse never overwrite each other's quantities.
