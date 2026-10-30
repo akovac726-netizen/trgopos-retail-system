@@ -1,12 +1,13 @@
-import { test, expect } from 'bun:test';
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 test('administrator uses the requested username on both login screens', () => {
   const login = readFileSync(new URL('./LoginScreen.tsx', import.meta.url), 'utf8');
   const backend = readFileSync(new URL('../backoffice/BackOfficeDashboard.tsx', import.meta.url), 'utf8');
-  expect(login).toContain("username === 'podporaS'");
-  expect(backend).toContain("backendUsername === 'podporaS'");
+  assert.ok(login.includes("username === 'podporaS'"));
+  assert.ok(backend.includes("backendUsername === 'podporaS'"));
   for (const source of [login, backend]) {
-    expect(source).not.toMatch(/(?:username|backendUsername) === '(?:StBy-core|BB\.admin|SB-admin)'/);
+    assert.doesNotMatch(source, /(?:username|backendUsername) === '(?:StBy-core|BB\.admin|SB-admin)'/);
   }
 });
