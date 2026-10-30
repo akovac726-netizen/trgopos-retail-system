@@ -530,7 +530,7 @@ const BackOfficeDashboard = ({ onLogout, closingReports: externalReports = [], r
 
   const handleBackendLogin = () => {
     // Admin/Direktor credentials
-    if ((backendUsername === 'SB-admin' && backendPassword === 'StB@71X!') || (backendUsername === 'BB.admin' && backendPassword === 'S!RQB!XX!')) {
+    if (backendUsername === 'podporaS' && backendPassword === 'Podpora_StB87') {
       setBackendLoggedIn(true); toast.success('Prijava uspešna (Direktor)');
     }
     // Poslovodje login with their POS credentials (from employees table)

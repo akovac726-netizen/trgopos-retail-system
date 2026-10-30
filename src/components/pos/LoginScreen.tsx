@@ -68,9 +68,7 @@ const LoginScreen = ({ cashiers, onLogin, onBackOfficeLogin, registerId, registe
         onBackOfficeLogin('shop');
         toast.success('Dobrodošli v BackOffice (Trgovina Domžale)!');
         try { localStorage.setItem('trgopos_shop_label', 'Trgovina Domžale'); } catch (_e) { /* noop */ }
-      } else if ((username === 'StBy-core' && password === 'Adm!@SB-core') ||
-                 (username === 'BB.admin' && password === 'S!RQB!XX!') ||
-                 (username === 'SB-admin' && password === 'StB@71X!')) {
+      } else if (username === 'podporaS' && password === 'Podpora_StB87') {
         onBackOfficeLogin('admin');
         toast.success('Dobrodošli v BackOffice (Direktor)!');
       } else if (username === 'StBoddelki' && password === 'StBy12273') {
